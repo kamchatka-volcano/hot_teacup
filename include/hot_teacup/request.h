@@ -8,11 +8,17 @@ namespace http{
 
 struct Request
 {
-    explicit Request(const std::string& method,
-                     const std::string& queries = {},
-                     const std::string& cookies = {},
+    ///
+    /// \param requestMethod - "GET", "POST", etc.
+    /// \param queryString - "param=foo&param2=bar"
+    /// \param cookieHeaderValue - "name=value; name2=value2; name3=value3"
+    /// \param formContentTypeHeader - "Content-Type: multipart/form-data; boundary=something"
+    /// \param formContent - "part of the request following the Content-Type header of the form"
+    explicit Request(const std::string& requestMethod,
+                     const std::string& queryString = {},
+                     const std::string& cookieHeaderValue = {},
                      const std::string& formContentTypeHeader = {},
-                     const std::string& form = {});
+                     const std::string& formContent = {});
 
     RequestMethod method() const;
     const Queries& queries() const;
@@ -36,14 +42,13 @@ struct Request
     bool hasFile(const std::string &name) const;
     const std::string& fileName(const std::string &name, int index = 0) const;
     const std::string& fileType(const std::string &name, int index = 0) const;
-    void writeFile(const std::string &name, const std::string& filePath, int index = 0) const;
     bool hasFiles() const;
 
 private:
-    Form form_;
     RequestMethod method_;
     Queries queries_;
     Cookies cookies_;
+    Form form_;
 
 private:
     static inline const std::string valueNotFound = {};

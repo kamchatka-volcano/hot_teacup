@@ -17,8 +17,8 @@ public:
     const std::string& name() const;
     const std::string& value() const;
 
-    void setDomain(const std::string& domain);
-    void setPath(const std::string& domain);
+    void setDomain(std::string domain);
+    void setPath(std::string path);
     void setMaxAge(int maxAgeSec);
 
     void secure();

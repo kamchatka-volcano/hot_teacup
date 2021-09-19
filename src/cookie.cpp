@@ -33,15 +33,15 @@ const std::string& Cookie::value() const
     return value_;
 }
 
-void Cookie::setDomain(const std::string& domain)
+void Cookie::setDomain(std::string domain)
 {
     if (!domain.empty())
-        header_.setParam("Domain", domain);
+        header_.setParam("Domain", std::move(domain));
 }
-void Cookie::setPath(const std::string& path)
+void Cookie::setPath(std::string path)
 {
     if (!path.empty())
-        header_.setParam("Path", path);
+        header_.setParam("Path", std::move(path));
 }
 
 void Cookie::setMaxAge(int maxAgeSec)

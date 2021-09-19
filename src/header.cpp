@@ -6,8 +6,6 @@
 namespace http{
 namespace str = sfun::string_utils;
 
-Header::Header() = default;
-
 Header::Header(std::string name, std::string value)
     : name_(std::move(name))
     , value_(std::move(value))
@@ -17,6 +15,9 @@ Header::Header(std::string name, std::string value)
 
 void Header::setParam(std::string name, std::string value)
 {
+    if (name.empty())
+        return;
+
     for (auto& param : params_)
         if (param.name == name){
             param.value = std::move(value);
@@ -111,27 +112,37 @@ std::string unquoted(const std::string& str)
 }
 }
 
-void Header::fromString(const std::string& input)
+Header headerFromString(const std::string& input)
 {
-    auto parts = str::split(input, ";", false);
+    const auto parts = str::split(input, ";", false);
     if (parts.empty())
-        return;
-    name_ = str::before(parts[0], ":");
-    value_ = unquoted(str::trimFront(str::after(parts[0], ":")));
+        return Header{"", ""};
 
-    auto addParam = [this](const std::string& paramPart)
+    auto name = str::trim(str::before(parts[0], ":"));
+    auto value = unquoted(str::trimFront(str::after(parts[0], ":")));
+    if (name.empty())
+        return Header{"", ""};
+
+    auto addParamToHeader = [](Header& header, const std::string& paramPart)
     {
         auto name = str::trimFront(str::before(paramPart,"="));
         auto value = unquoted(str::after(paramPart,"="));
-        setParam(name, value);
+        header.setParam(name, value);
     };
-    auto valueIsParam = (value_.find('=') != std::string::npos);
+    const auto valueIsParam = (value.find('=') != std::string::npos);
     if (valueIsParam){
-        addParam(value_);
-        value_.clear();
+        auto header = Header{std::move(name), ""};
+        addParamToHeader(header, value);
+        for (auto i = 1u; i < parts.size(); ++i)
+            addParamToHeader(header, parts[i]);
+        return header;
     }
-    for (auto i = 1u; i < parts.size(); ++i)
-        addParam(parts[i]);
+    else{
+        auto header = Header{std::move(name), std::move(value)};
+        for (auto i = 1u; i < parts.size(); ++i)
+            addParamToHeader(header, parts[i]);
+        return header;
+    }
 }
 
 const std::string& Header::name() const

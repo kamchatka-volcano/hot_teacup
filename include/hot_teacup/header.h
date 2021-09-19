@@ -16,11 +16,9 @@ public:
     };
 
 public:
-    Header();
     Header(std::string name, std::string value);
     void setParam(std::string name, std::string value);
     void setQuotingMode(QuotingMode mode);
-    void fromString(const std::string&);
     std::string toString() const;
 
     const std::string& name() const;
@@ -46,5 +44,6 @@ private:
 };
 
 using Headers = std::vector<Header>;
+Header headerFromString(const std::string&);
 
 }

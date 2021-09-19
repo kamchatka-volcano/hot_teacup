@@ -1,21 +1,18 @@
 #include <hot_teacup/form.h>
 #include <hot_teacup/header.h>
+#include <optional>
 
 namespace http{
 
-void FormField::setContentType(Header header)
+FormField::FormField(Header contentDispositionHeader, std::string value)
+    : contentDisposition_(std::move(contentDispositionHeader))
+    , value_(std::move(value))
 {
-    contentType_ = std::move(header);
 }
 
-void FormField::setContentDisposition(Header header)
+void FormField::setFileType(std::string fileType)
 {
-    contentDisposition_ = std::move(header);
-}
-
-void FormField::setValue(std::string value)
-{
-    value_ = std::move(value);
+    fileType_ = std::move(fileType);
 }
 
 bool FormField::isFile() const
@@ -40,7 +37,7 @@ const std::string& FormField::fileName() const
 
 const std::string& FormField::fileType() const
 {
-    return contentType_.value();
+    return fileType_;
 }
 
 const std::string& FormField::value() const
@@ -50,9 +47,8 @@ const std::string& FormField::value() const
 
 Form::Form(const std::string& contentTypeHeader, const std::string& contentFields)
 {
-    auto contentType = Header{};
-    contentType.fromString(contentTypeHeader);
-    if (contentType.value() == "multipart/form-data")
+    auto contentType = headerFromString(contentTypeHeader);
+    if (contentType.value() == "multipart/form-data" && contentType.hasParam("boundary"))
         parseFormFields(contentFields, contentType.param("boundary"));
     else if (contentType.value() == "application/x-www-form-urlencoded")
         parseUrlEncodedFields(contentFields);
@@ -87,28 +83,36 @@ void Form::parseFormFields(const std::string& input, const std::string& boundary
     auto pos = std::size_t{0};
     getStringLine(input, pos);
     while (pos < input.size()){
-        auto field = FormField{};
         auto headerLine = getStringLine(input, pos);
         if (headerLine.empty())
             continue;
         if (headerLine == "--")
             return;
+
+        auto contentDisposition = std::optional<Header>{};
+        auto fileType = std::string{};
         while (!headerLine.empty()){
-            auto header = Header{};
-            header.fromString(headerLine);
+            auto header = headerFromString(headerLine);
             if (header.name() == "Content-Disposition")
-                field.setContentDisposition(std::move(header));
+                contentDisposition = std::move(header);
             else if (header.name() == "Content-Type")
-                field.setContentType(std::move(header));
+                fileType = header.value();
 
             headerLine = getStringLine(input, pos);
         }
+
         auto content = getStringLine(input, pos, separator);
         content.resize(content.size() - 2); //remove \r\n
-        field.setValue(std::move(content));
 
-        if (!field.name().empty())
-            fields_.emplace_back(std::move(field));
+        if (!contentDisposition.has_value() ||
+            !contentDisposition->hasParam("name") ||
+            contentDisposition->param("name").empty())
+            continue;
+
+        auto field = FormField{std::move(*contentDisposition), std::move(content)};
+        if (!fileType.empty())
+            field.setFileType(fileType);
+        fields_.emplace_back(std::move(field));
     }
 }
 
@@ -132,12 +136,9 @@ void Form::parseUrlEncodedFields(const std::string &input)
         auto [paramName, paramValue] = parseUrlEncodedParamString(param);
         if (paramName.empty())
             continue;
-        auto field = FormField{};
-        field.setValue(paramValue);
-        auto header = Header{};
+        auto header = Header{"Content-Disposition", ""};
         header.setParam("name", std::move(paramName));
-        field.setContentDisposition(std::move(header));
-        fields_.emplace_back(std::move(field));
+        fields_.emplace_back(FormField{std::move(header), std::move(paramValue)});
     } while (pos < input.size());
 }
 

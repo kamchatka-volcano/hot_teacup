@@ -19,12 +19,14 @@ private:
 
 using Queries = std::vector<Query>;
 
-Queries queriesFromString(const std::string& input);
-std::string queriesToString(const Queries& queries,
-                            const std::vector<std::string>& queryBlackList = {});
 std::string pathWithQueries(const std::string& path,
                             const Queries& queries,
                             const std::vector<std::string>& queryBlackList = {});
 std::string pathWithQuery(const std::string& path, const Query& query);
+
+Queries queriesFromString(const std::string& input);
+
+std::string queriesToString(const Queries& queries,
+                            const std::vector<std::string>& queryBlackList = {});
 }
 

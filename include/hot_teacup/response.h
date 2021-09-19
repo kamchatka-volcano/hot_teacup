@@ -10,7 +10,7 @@ namespace http{
 class Response{
 public:
     template <typename TStr, std::enable_if_t<std::is_convertible_v<TStr, std::string >>* = nullptr>
-    explicit Response(TStr&& data)
+    Response(TStr&& data)
         : rawResponse_(std::forward<TStr>(data))
         , hasValue_(true)
     {}

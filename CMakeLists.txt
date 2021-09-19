@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.18)
 
+if(NOT DEFINED HOT_TEACUP_SUBPROJECT)
+    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+        set(HOT_TEACUP_SUBPROJECT OFF)
+    else()
+        set(HOT_TEACUP_SUBPROJECT ON)
+    endif()
+endif()
+
 project(hot_teacup VERSION 1.0.0 DESCRIPTION "Utilities for building CGI applications using FastCGI protocol")
 
 include(FetchContent)
@@ -24,13 +32,11 @@ set(SRC
     
 set(PUBLIC_HEADERS
     "include/hot_teacup/cookie.h"
+    "include/hot_teacup/form.h"
     "include/hot_teacup/header.h"
     "include/hot_teacup/query.h"
     "include/hot_teacup/request.h"
-    "include/hot_teacup/requestprocessor.h"
-    "include/hot_teacup/requestrouter.h"
     "include/hot_teacup/response.h"
-    "include/hot_teacup/responsevalue.h" 
     "include/hot_teacup/types.h")
 
 include(CheckPIESupported)
@@ -50,14 +56,14 @@ target_include_directories(hot_teacup PRIVATE include/)
 target_include_directories(hot_teacup PRIVATE src)
 
 option(ENABLE_TESTS "Enable tests" OFF)
-if (ENABLE_TESTS)
+if (ENABLE_TESTS AND NOT HOT_TEACUP_SUBPROJECT)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 include(GNUInstallDirs)
+if (NOT HOT_TEACUP_SUBPROJECT)
 install(TARGETS hot_teacup
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hot_teacup)
-install(DIRECTORY include/hot_teacup/detail
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hot_teacup)
+endif()

@@ -1,18 +1,17 @@
 #include <hot_teacup/request.h>
 #include <algorithm>
-#include <fstream>
 
 namespace http{
 
-Request::Request(const std::string& method,
-                 const std::string& queries,
-                 const std::string& cookies,
+Request::Request(const std::string& requestMethod,
+                 const std::string& queryString,
+                 const std::string& cookieHeaderValue,
                  const std::string& formContentTypeHeader,
-                 const std::string& form)
-    : form_(formContentTypeHeader, form)
-    , method_(detail::methodFromString(method))
-    , queries_(queriesFromString(queries))
-    , cookies_(cookiesFromString(cookies))
+                 const std::string& formContent)
+    : method_(methodFromString(requestMethod))
+    , queries_(queriesFromString(queryString))
+    , cookies_(cookiesFromString(cookieHeaderValue))
+    , form_(formContentTypeHeader, formContent)
 {}
 
 RequestMethod Request::method() const
@@ -129,18 +128,6 @@ const std::string& Request::fileType(const std::string &name, int index) const
                 return formField.fileType();
 
     return valueNotFound;
-}
-
-void Request::writeFile(const std::string &name, const std::string& filePath, int index) const
-{
-    auto i = 0;
-    for (const auto& formField : form_.fields())
-        if (formField.hasFile() && formField.name() == name)
-            if (i++ == index){
-                auto stream = std::ofstream(filePath);
-                stream.write(formField.value().c_str(), static_cast<std::streamsize>(formField.value().size()));
-                return;
-            }
 }
 
 const Queries& Request::queries() const

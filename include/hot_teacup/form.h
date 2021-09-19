@@ -7,9 +7,8 @@ namespace http{
 
 class FormField{
 public:
-    void setContentDisposition(Header header);
-    void setContentType(Header header);
-    void setValue(std::string value);
+    FormField(Header contentDispositionHeader, std::string value);
+    void setFileType(std::string fileType);
 
     bool isFile() const;
     bool hasFile() const;
@@ -20,7 +19,7 @@ public:
 
 private:
     Header contentDisposition_;
-    Header contentType_;
+    std::string fileType_;
     std::string value_;
 };
 

@@ -96,6 +96,7 @@ enum class RequestMethod{
     Unknown,
     Any,
 };
+RequestMethod methodFromString(const std::string& typeStr);
 
 namespace detail{
 constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)
@@ -204,7 +205,6 @@ constexpr const char* contentTypeToString(ContentType type)
     return nullptr;
 }
 
-RequestMethod methodFromString(const std::string& typeStr);
 }
 
 }

@@ -1,7 +1,6 @@
 #include <hot_teacup/types.h>
 
 namespace http{
-namespace detail {
 
 RequestMethod methodFromString(const std::string& typeStr)
 {
@@ -27,5 +26,4 @@ RequestMethod methodFromString(const std::string& typeStr)
         return RequestMethod::Unknown;
 }
 
-}
 }
