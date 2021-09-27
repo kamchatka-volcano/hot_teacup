@@ -10,7 +10,7 @@ endif()
 
 project(hot_teacup
         VERSION 1.0.0
-        DESCRIPTION "Data types for parsing a subset of HTTP request data and forming HTTP responses")
+        DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses.")
 
 include(FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
