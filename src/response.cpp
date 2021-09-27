@@ -12,18 +12,7 @@ Response::Response(ResponseStatus status,
     , body_(std::move(body))
     , cookies_(std::move(cookies))
     , headers_(std::move(headers))
-    , hasValue_(true)
 {
-}
-
-bool Response::hasValue() const
-{
-    return hasValue_;
-}
-
-Response::operator bool() const
-{
-    return hasValue_;
 }
 
 ResponseStatus Response::status() const

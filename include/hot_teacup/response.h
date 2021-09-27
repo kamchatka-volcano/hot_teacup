@@ -12,7 +12,6 @@ public:
     template <typename TStr, std::enable_if_t<std::is_convertible_v<TStr, std::string >>* = nullptr>
     Response(TStr&& data)
         : rawResponse_(std::forward<TStr>(data))
-        , hasValue_(true)
     {}
 
     explicit Response(ResponseStatus status,
@@ -24,16 +23,12 @@ public:
     const std::string& body() const;
     const Cookies& cookies() const;
     const Headers& headers() const;
+    std::string data() const;
 
     void addCookie(Cookie cookie);
     void addHeader(Header header);
     void addCookies(const Cookies& cookies);
     void addHeaders(const Headers& headers);
-
-    std::string data() const;
-
-    bool hasValue() const;
-    operator bool() const;
 
 public:
     static Response Text(const std::string& text,
@@ -63,7 +58,6 @@ private:
     Cookies cookies_;
     Headers headers_;
     std::string rawResponse_;
-    bool hasValue_ = false;
 };
 
 }
