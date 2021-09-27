@@ -11,7 +11,7 @@ Request::Request(const std::string& requestMethod,
     : method_(methodFromString(requestMethod))
     , queries_(queriesFromString(queryString))
     , cookies_(cookiesFromString(cookieHeaderValue))
-    , form_(formContentTypeHeader, formContent)
+    , form_(formFromString(formContentTypeHeader, formContent))
 {}
 
 RequestMethod Request::method() const
@@ -60,8 +60,8 @@ bool Request::hasCookie(const std::string& name) const
 const std::string& Request::formField(const std::string &name, int index) const
 {
     auto i = 0;
-    for (const auto& formField :form_.fields()){
-        if (formField.name() == name && !formField.isFile()){
+    for (const auto& formField : form_){
+        if (formField.name() == name && formField.type() == FormField::Type::Param){
             if (i++ == index)
                 return formField.value();
         }
@@ -72,8 +72,8 @@ const std::string& Request::formField(const std::string &name, int index) const
 int Request::formFieldCount(const std::string& name) const
 {
     auto result = 0;
-    for (const auto& formField : form_.fields())
-        if (formField.name() == name && !formField.isFile())
+    for (const auto& formField : form_)
+        if (formField.name() == name && formField.type() == FormField::Type::Param)
             result++;
     return result;
 }
@@ -86,7 +86,7 @@ bool Request::hasFormField(const std::string &name) const
 const std::string& Request::fileData(const std::string &name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile() && formField.name() == name)
             if (i++ == index)
                 return formField.value();
@@ -97,7 +97,7 @@ const std::string& Request::fileData(const std::string &name, int index) const
 int Request::fileCount(const std::string &name) const
 {
     auto result = 0;
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile() && formField.name() == name)
             result++;
     return result;
@@ -111,7 +111,7 @@ bool Request::hasFile(const std::string &name) const
 const std::string& Request::fileName(const std::string &name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile() && formField.name() == name)
             if (i++ == index)
                 return formField.fileName();
@@ -122,7 +122,7 @@ const std::string& Request::fileName(const std::string &name, int index) const
 const std::string& Request::fileType(const std::string &name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile() && formField.name() == name)
             if (i++ == index)
                 return formField.fileType();
@@ -159,8 +159,8 @@ std::vector<std::string> Request::cookieList() const
 std::vector<std::string> Request::formFieldList() const
 {
     auto result = std::vector<std::string>{};
-    for (const auto& formField : form_.fields())
-        if (!formField.isFile())
+    for (const auto& formField : form_)
+        if (formField.type() == FormField::Type::Param)
             result.push_back(formField.name());
     return result;
 }
@@ -168,7 +168,7 @@ std::vector<std::string> Request::formFieldList() const
 std::vector<std::string> Request::fileList() const
 {
     auto result = std::vector<std::string>{};
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile())
             result.push_back(formField.name());
     return result;
@@ -176,7 +176,7 @@ std::vector<std::string> Request::fileList() const
 
 bool Request::hasFiles() const
 {
-    for (const auto& formField : form_.fields())
+    for (const auto& formField : form_)
         if (formField.hasFile())
             return true;
 

@@ -52,62 +52,6 @@ TEST(Request, Cookies)
     EXPECT_EQ(request.cookie("param3"), "");
 }
 
-TEST(Request, MultipartFormWithoutFile)
-{
-    const auto formContentType = "Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
-    const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
-
-    const auto request = http::Request{"GET", {}, {}, formContentType, formData};
-    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
-
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar ");
-
-    EXPECT_FALSE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_FALSE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "");
-    EXPECT_EQ(request.fileName("param3"), "");
-    EXPECT_EQ(request.fileType("param3"), "");
-}
-
-TEST(Request, MultipartFormWithEmptyFile)
-{
-    const auto formContentType = "Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
-    const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param3\"; filename=\"\"\r\n"
-                          "Content-Type: application/octet-stream\r\n\r\n\r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
-
-    const auto request = http::Request{"GET", {}, {}, formContentType, formData};
-    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar ");
-
-    EXPECT_FALSE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_FALSE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "");
-    EXPECT_EQ(request.fileName("param3"), "");
-    EXPECT_EQ(request.fileType("param3"), "");
-}
-
 TEST(Request, MultipartFormWithFile)
 {
     const auto formContentType = "Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
@@ -137,7 +81,7 @@ TEST(Request, MultipartFormWithFile)
     EXPECT_EQ(request.fileType("param3"), "image/gif");
 }
 
-TEST(Request, UrlEncodedWithoutFile)
+TEST(Request, UrlEncodedForm)
 {
     const auto formContentType = "Content-Type: application/x-www-form-urlencoded";
     const auto formData = "param1=foo&param2=bar&flag&param4=";
@@ -160,4 +104,3 @@ TEST(Request, UrlEncodedWithoutFile)
     EXPECT_EQ(request.fileName("param3"), "");
     EXPECT_EQ(request.fileType("param3"), "");
 }
-

@@ -8,7 +8,9 @@ if(NOT DEFINED HOT_TEACUP_SUBPROJECT)
     endif()
 endif()
 
-project(hot_teacup VERSION 1.0.0 DESCRIPTION "Utilities for building CGI applications using FastCGI protocol")
+project(hot_teacup
+        VERSION 1.0.0
+        DESCRIPTION "Data types for parsing a subset of HTTP request data and forming HTTP responses")
 
 include(FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)

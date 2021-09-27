@@ -93,8 +93,7 @@ enum class RequestMethod{
     OPTIONS,
     TRACE,
     PATCH,
-    Unknown,
-    Any,
+    Unknown
 };
 RequestMethod methodFromString(const std::string& typeStr);
 

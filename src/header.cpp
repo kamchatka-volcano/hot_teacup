@@ -110,25 +110,32 @@ std::string unquoted(const std::string& str)
         res.resize(res.size() - 1);
     return res;
 }
+
+void addParamToHeader(Header& header, const std::string& paramPart)
+{
+    if (paramPart.find('=') == std::string::npos)
+        return;
+    auto name = str::trimFront(str::before(paramPart,"="));
+    auto value = unquoted(str::after(paramPart,"="));
+    header.setParam(name, value);
+};
+
 }
 
-Header headerFromString(const std::string& input)
+std::optional<Header> headerFromString(const std::string& input)
 {
     const auto parts = str::split(input, ";", false);
     if (parts.empty())
-        return Header{"", ""};
+        return {};
+
+    if (parts[0].find(':') == std::string::npos)
+        return {};
 
     auto name = str::trim(str::before(parts[0], ":"));
     auto value = unquoted(str::trimFront(str::after(parts[0], ":")));
     if (name.empty())
-        return Header{"", ""};
+        return {};
 
-    auto addParamToHeader = [](Header& header, const std::string& paramPart)
-    {
-        auto name = str::trimFront(str::before(paramPart,"="));
-        auto value = unquoted(str::after(paramPart,"="));
-        header.setParam(name, value);
-    };
     const auto valueIsParam = (value.find('=') != std::string::npos);
     if (valueIsParam){
         auto header = Header{std::move(name), ""};

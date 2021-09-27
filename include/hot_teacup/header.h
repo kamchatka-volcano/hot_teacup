@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <optional>
 
 namespace http{
 
@@ -44,6 +45,6 @@ private:
 };
 
 using Headers = std::vector<Header>;
-Header headerFromString(const std::string&);
+std::optional<Header> headerFromString(const std::string&);
 
 }

@@ -7,10 +7,20 @@ namespace http{
 
 class FormField{
 public:
-    FormField(Header contentDispositionHeader, std::string value);
-    void setFileType(std::string fileType);
+    enum class Type{
+        Param,
+        File
+    };
 
-    bool isFile() const;
+public:
+    FormField(Header contentDispositionHeader,
+              Header contentTypeHeader,
+              std::string value);
+
+    FormField(Header contentDispositionHeader,
+              std::string value);
+
+    Type type() const;
     bool hasFile() const;
     const std::string& name() const;
     const std::string& fileName() const;
@@ -19,22 +29,14 @@ public:
 
 private:
     Header contentDisposition_;
-    std::string fileType_;
+    std::optional<Header> contentType_;
     std::string value_;
+
+    static inline const std::string valueNotFound = {};
 };
 
-class Form
-{
-public:
-    Form(const std::string& contentTypeHeader, const std::string& contentFields);
-    const std::vector<FormField>& fields() const;
-
-private:
-    void parseFormFields(const std::string& input, const std::string& boundary);
-    void parseUrlEncodedFields(const std::string& input);
-
-private:
-    std::vector<FormField> fields_;
-};
+using Form = std::vector<FormField>;
+Form formFromString(const std::string& contentTypeHeader, const std::string& contentFields);
 
 }
+
