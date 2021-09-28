@@ -2,9 +2,9 @@
 
 
 **hot_teacup** - is a C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses.  
-It supports reading of HTTP headers, cookies, query strings, URL encoded and multipart forms. 
-The library is designed to work with requests received over the FastCGI connection so input data is expected to be percent-decoded by the web server.  
-The headers are self-explanatory, so there's no documentation. You can also check the unit tests if you need examples of usage.   
+It supports reading of HTTP headers, cookies, query strings, URL encoded and multipart forms.   
+The library is designed to be used with the FastCGI protocol, so input data is expected to be percent-decoded by the web server.
+The headers are self-explanatory, so there's no documentation. You can also check the unit tests if you need examples of usage.
 
 ### Installation
 Download and link the library from your project's CMakeLists.txt:
