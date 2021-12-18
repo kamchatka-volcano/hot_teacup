@@ -68,15 +68,15 @@ std::vector<std::string> Header::paramList() const
     return result;
 }
 
-const std::string& Header::param(const std::string& name) const
+const std::string& Header::param(std::string_view name) const
 {
     for (const auto& param: params_)
         if (param.name == name)
             return param.value;
-    throw std::out_of_range{"Header doesn't contain param '" + name + "'"};
+    throw std::out_of_range{"Header doesn't contain param '" + std::string{name} + "'"};
 }
 
-bool Header::hasParam(const std::string &name) const
+bool Header::hasParam(std::string_view name) const
 {
     for (const auto& param: params_)
         if (param.name == name)
@@ -101,28 +101,27 @@ std::string Header::toString() const
 }
 
 namespace {
-std::string unquoted(const std::string& str)
+std::string unquoted(std::string_view str)
 {
-    auto res = std::string(str);
-    if (str::startsWith(res, "\""))
-        res.erase(0,1);
-    if (str::endsWith(res, "\""))
-        res.resize(res.size() - 1);
-    return res;
+    if (str::startsWith(str, "\""))
+        str.remove_prefix(1);
+    if (str::endsWith(str, "\""))
+        str.remove_suffix(1);
+    return std::string{str};
 }
 
-void addParamToHeader(Header& header, const std::string& paramPart)
+void addParamToHeader(Header& header, std::string_view paramPart)
 {
     if (paramPart.find('=') == std::string::npos)
         return;
     auto name = str::trimFront(str::before(paramPart,"="));
     auto value = unquoted(str::after(paramPart,"="));
-    header.setParam(name, value);
+    header.setParam(std::move(name), std::move(value));
 };
 
 }
 
-std::optional<Header> headerFromString(const std::string& input)
+std::optional<Header> headerFromString(std::string_view input)
 {
     const auto parts = str::split(input, ";", false);
     if (parts.empty())

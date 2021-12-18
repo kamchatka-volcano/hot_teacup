@@ -14,11 +14,11 @@ struct Request
     /// \param cookieHeaderValue - "name=value; name2=value2; name3=value3"
     /// \param formContentTypeHeader - "Content-Type: multipart/form-data; boundary=something"
     /// \param formContent - "part of the request following the Content-Type header of the form"
-    explicit Request(const std::string& requestMethod,
-                     const std::string& queryString = {},
-                     const std::string& cookieHeaderValue = {},
-                     const std::string& formContentTypeHeader = {},
-                     const std::string& formContent = {});
+    explicit Request(std::string_view requestMethod,
+                     std::string_view queryString = {},
+                     std::string_view cookieHeaderValue = {},
+                     std::string_view formContentTypeHeader = {},
+                     std::string_view formContent = {});
 
     RequestMethod method() const;
     const Queries& queries() const;

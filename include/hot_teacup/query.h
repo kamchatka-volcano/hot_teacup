@@ -24,7 +24,7 @@ std::string pathWithQueries(const std::string& path,
                             const std::vector<std::string>& queryBlackList = {});
 std::string pathWithQuery(const std::string& path, const Query& query);
 
-Queries queriesFromString(const std::string& input);
+Queries queriesFromString(std::string_view input);
 
 std::string queriesToString(const Queries& queries,
                             const std::vector<std::string>& queryBlackList = {});

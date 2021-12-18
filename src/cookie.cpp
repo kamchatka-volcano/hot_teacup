@@ -71,7 +71,7 @@ bool Cookie::operator==(const Cookie& other) const
            value_ == other.value_;
 }
 
-Cookies cookiesFromString(const std::string& input)
+Cookies cookiesFromString(std::string_view input)
 {
     auto result = Cookies{};
     std::vector<std::string> cookies = str::split(input, ";");

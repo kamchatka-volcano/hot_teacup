@@ -3,11 +3,11 @@
 
 namespace http{
 
-Request::Request(const std::string& requestMethod,
-                 const std::string& queryString,
-                 const std::string& cookieHeaderValue,
-                 const std::string& formContentTypeHeader,
-                 const std::string& formContent)
+Request::Request(std::string_view requestMethod,
+                 std::string_view queryString,
+                 std::string_view cookieHeaderValue,
+                 std::string_view formContentTypeHeader,
+                 std::string_view formContent)
     : method_(methodFromString(requestMethod))
     , queries_(queriesFromString(queryString))
     , cookies_(cookiesFromString(cookieHeaderValue))

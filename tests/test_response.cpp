@@ -213,11 +213,13 @@ TEST(Response, StatusWithCookiesAndHeaders)
 
 TEST(Response, Text)
 {
-    auto response = http::Response::Text("Hello world", http::ContentType::HTML);
+    auto response = http::Response{"Hello world"};
     EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/html\r\n\r\nHello world");
-    response = http::Response::Text("Hello world", http::ContentType::XHTML);
+    response = http::Response::Content("Hello world", http::ContentType::HTML);
+    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/html\r\n\r\nHello world");
+    response = http::Response::Content("Hello world", http::ContentType::XHTML);
     EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: application/xhtml+xml\r\n\r\nHello world");
-    response = http::Response::Text("Hello world", http::ContentType::PlainText);
+    response = http::Response::Content("Hello world", http::ContentType::PlainText);
     EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/plain\r\n\r\nHello world");
 }
 
@@ -227,7 +229,7 @@ TEST(Response, TextWithCookies)
                             "ContentType: text/html\r\n"
                             + cookiesResponsePart +
                             "\r\nHello world";
-    auto response = http::Response::Text("Hello world", http::ContentType::HTML);
+    auto response = http::Response::Content("Hello world", http::ContentType::HTML);
     testResponseWithCookies(response, expectedResponse);
 }
 
@@ -236,7 +238,7 @@ TEST(Response, TextWithHeaders){
                             "ContentType: text/html\r\n"
                             + headersResponsePart +
                             "\r\nHello world";
-    auto response = http::Response::Text("Hello world", http::ContentType::HTML);
+    auto response = http::Response::Content("Hello world", http::ContentType::HTML);
     testResponseWithHeaders(response, expectedResponse);
 }
 
@@ -246,7 +248,7 @@ TEST(Response, TextWithCookiesAndHeaders)
                             "ContentType: text/html\r\n"
                             + cookiesAndHeadersResponsePart +
                             "\r\nHello world";
-    auto response = http::Response::Text("Hello world", http::ContentType::HTML);
+    auto response = http::Response::Content("Hello world", http::ContentType::HTML);
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
 
@@ -300,15 +302,6 @@ TEST(Response, RawResponse)
 {
     auto expectedResponse = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
                                         "\r\n"};
-    auto response = http::Response{expectedResponse};
-    EXPECT_EQ(response.data(), expectedResponse);
-}
-
-TEST(Response, RawResponseCStr)
-{
-    auto expectedResponse = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                                        "\r\n"};
-    auto response = http::Response{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                                           "\r\n"};
+    auto response = http::Response::Raw(expectedResponse);
     EXPECT_EQ(response.data(), expectedResponse);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <hot_teacup/header.h>
+#include <string_view>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,7 @@ private:
 };
 
 using Form = std::vector<FormField>;
-Form formFromString(const std::string& contentTypeHeader, const std::string& contentFields);
+Form formFromString(std::string_view contentTypeHeader, std::string_view contentFields);
 
 }
 

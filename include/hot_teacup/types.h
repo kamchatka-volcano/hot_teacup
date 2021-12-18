@@ -95,7 +95,7 @@ enum class RequestMethod{
     PATCH,
     Unknown
 };
-RequestMethod methodFromString(const std::string& typeStr);
+RequestMethod methodFromString(std::string_view typeStr);
 
 namespace detail{
 constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)

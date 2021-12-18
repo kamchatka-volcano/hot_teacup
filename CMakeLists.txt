@@ -12,16 +12,7 @@ project(hot_teacup
         VERSION 1.0.0
         DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses.")
 
-include(FetchContent)
-Set(FETCHCONTENT_QUIET FALSE)
-
-FetchContent_Declare(sfun
-        GIT_REPOSITORY "https://github.com/kamchatka-volcano/sfun.git"
-        GIT_TAG fe5b60f3fd7a545515ca2e50a406c6bc2c924ac7
-        GIT_SHALLOW    ON
-        GIT_PROGRESS TRUE
-        )
-FetchContent_MakeAvailable(sfun)
+include(external/sfun)
 
 set(SRC
     src/cookie.cpp

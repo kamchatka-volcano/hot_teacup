@@ -4,6 +4,13 @@
 
 namespace http{
 
+Response::Response(std::string data)
+    : Response(ResponseStatus::Code_200_Ok,
+               std::move(data),
+               {},
+               {{"ContentType", detail::contentTypeToString(ContentType::HTML)}})
+{}
+
 Response::Response(ResponseStatus status,
                    std::string body,
                    Cookies cookies,
@@ -78,8 +85,8 @@ std::string Response::headersData() const
 
 std::string Response::data() const
 {
-    if (!rawResponse_.empty())
-        return rawResponse_;
+    if (!rawResponse_.data.empty())
+        return rawResponse_.data;
 
     return statusData() +
            headersData() +
@@ -102,13 +109,13 @@ Response Response::Redirect(const std::string &path,
     return responseValue;
 }
 
-Response Response::Text(const std::string &text,
-                        ContentType contentType,
-                        const Cookies &cookies,
-                        const Headers &headers)
+Response Response::Content(std::string text,
+                           ContentType contentType,
+                           const Cookies &cookies,
+                           const Headers &headers)
 {
     auto responseValue = Response{ResponseStatus::Code_200_Ok,
-                                  text,
+                                  std::move(text),
                                   cookies,
                                   {{"ContentType", detail::contentTypeToString(contentType)}}
     };
@@ -117,19 +124,15 @@ Response Response::Text(const std::string &text,
     return responseValue;
 }
 
-Response Response::Status(ResponseStatus status,
-                          const std::string& body,
-                          const Cookies& cookies,
-                          const Headers& headers)
+Response::Response(RawResponse rawResponse)
+    : rawResponse_(std::move(rawResponse))
 {
-    auto responseValue = Response{status,
-                                  body,
-                                  cookies,
-                                  headers
-    };
-    return responseValue;
 }
 
+Response Response::Raw(std::string value)
+{
+    return RawResponse{std::move(value)};
+}
 
 }
 

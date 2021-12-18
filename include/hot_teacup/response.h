@@ -9,15 +9,11 @@ namespace http{
 
 class Response{
 public:
-    template <typename TStr, std::enable_if_t<std::is_convertible_v<TStr, std::string >>* = nullptr>
-    Response(TStr&& data)
-        : rawResponse_(std::forward<TStr>(data))
-    {}
-
-    explicit Response(ResponseStatus status,
-                      std::string body = {},
-                      Cookies cookies = {},
-                      Headers headers = {});
+    Response(std::string data);
+    Response(ResponseStatus status,
+             std::string body = {},
+             Cookies cookies = {},
+             Headers headers = {});
 
     ResponseStatus status() const;
     const std::string& body() const;
@@ -31,10 +27,10 @@ public:
     void addHeaders(const Headers& headers);
 
 public:
-    static Response Text(const std::string& text,
-                         ContentType contentType = ContentType::HTML,
-                         const Cookies& cookies = {},
-                         const Headers& headers = {});
+    static Response Content(std::string text,
+                            ContentType contentType = ContentType::HTML,
+                            const Cookies& cookies = {},
+                            const Headers& headers = {});
 
     static Response Redirect(const std::string& path,
                              RedirectType type = RedirectType::Found,
@@ -42,10 +38,7 @@ public:
                              const Cookies& cookies = {},
                              const Headers& headers = {});
 
-    static Response Status(ResponseStatus status,
-                           const std::string& body = {},
-                           const Cookies& cookies = {},
-                           const Headers& headers = {});
+    static Response Raw(std::string value);
 
 private:
     std::string statusData() const;
@@ -57,7 +50,12 @@ private:
     std::string body_;
     Cookies cookies_;
     Headers headers_;
-    std::string rawResponse_;
+
+private:
+    struct RawResponse{
+        std::string data;
+    } rawResponse_;
+    Response(RawResponse);
 };
 
 }

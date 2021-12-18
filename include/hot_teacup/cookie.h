@@ -1,5 +1,6 @@
 #pragma once
 #include "header.h"
+#include <string_view>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,7 @@ private:
 };
 
 using Cookies = std::vector<Cookie>;
-Cookies cookiesFromString(const std::string& input);
+Cookies cookiesFromString(std::string_view input);
 
 }
 

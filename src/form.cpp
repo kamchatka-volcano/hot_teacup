@@ -56,7 +56,7 @@ const std::string& FormField::value() const
 }
 
 namespace {
-std::string getStringLine(const std::string& input, std::size_t& pos, const std::string& lineSeparator = "\r\n")
+std::string getStringLine(std::string_view input, std::size_t& pos, std::string_view lineSeparator = "\r\n")
 {
     auto lastPos = input.find(lineSeparator, pos);
     auto separatorSize = lineSeparator.size();
@@ -67,7 +67,7 @@ std::string getStringLine(const std::string& input, std::size_t& pos, const std:
     auto lineSize = lastPos - pos;
     auto linePos = pos;
     pos += lineSize + separatorSize;
-    return input.substr(linePos, lineSize);
+    return std::string{input.substr(linePos, lineSize)};
 }
 
 /// Reads HTTP headers between two blank lines
@@ -75,8 +75,8 @@ std::string getStringLine(const std::string& input, std::size_t& pos, const std:
 ///                   Content-Disposition header if found,
 ///                   Content-Type header if found
 ///                 }
-std::tuple<bool, std::optional<Header>, std::optional<Header>> readContentHeaders(const std::string& input,
-                                                                        std::size_t& pos)
+std::tuple<bool, std::optional<Header>, std::optional<Header>>
+    readContentHeaders(std::string_view input, std::size_t& pos)
 {
     auto headerLine = getStringLine(input, pos);
     if (!headerLine.empty() || pos == input.size())
@@ -100,7 +100,7 @@ std::tuple<bool, std::optional<Header>, std::optional<Header>> readContentHeader
 }
 
 
-Form parseFormFields(const std::string& input, const std::string& boundary)
+Form parseFormFields(std::string_view input, const std::string& boundary)
 {
     const auto separator = "--" + boundary;
     const auto endSeparator = "--" + boundary + "--";
@@ -135,7 +135,7 @@ Form parseFormFields(const std::string& input, const std::string& boundary)
     return result;
 }
 
-std::tuple<std::string, std::string> parseUrlEncodedParamString(const std::string& paramStr)
+std::tuple<std::string, std::string> parseUrlEncodedParamString(std::string_view paramStr)
 {
     auto delimiterPos = paramStr.find('=');
     if (delimiterPos == std::string::npos)
@@ -146,7 +146,7 @@ std::tuple<std::string, std::string> parseUrlEncodedParamString(const std::strin
 }
 
 
-Form parseUrlEncodedFields(const std::string& input)
+Form parseUrlEncodedFields(std::string_view input)
 {
     auto pos = std::size_t{0u};
     auto result = Form{};
@@ -163,7 +163,7 @@ Form parseUrlEncodedFields(const std::string& input)
 }
 }
 
-Form formFromString(const std::string& contentTypeHeader, const std::string& contentFields)
+Form formFromString(std::string_view contentTypeHeader, std::string_view contentFields)
 {
     auto contentType = headerFromString(contentTypeHeader);
     if (!contentType.has_value())

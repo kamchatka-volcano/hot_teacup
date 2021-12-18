@@ -33,7 +33,7 @@ bool Query::operator==(const Query& other) const
            value_ == other.value_;
 }
 
-Queries queriesFromString(const std::string& input)
+Queries queriesFromString(std::string_view input)
 {
     auto result = Queries{};
     std::vector<std::string> queries = str::split(input, "&");

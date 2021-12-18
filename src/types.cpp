@@ -2,7 +2,7 @@
 
 namespace http{
 
-RequestMethod methodFromString(const std::string& typeStr)
+RequestMethod methodFromString(std::string_view typeStr)
 {
     if (typeStr == "GET")
         return RequestMethod::GET;

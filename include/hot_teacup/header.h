@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <string_view>
 #include <map>
 #include <vector>
 #include <optional>
@@ -25,8 +26,8 @@ public:
     const std::string& name() const;
     const std::string& value() const;
     std::vector<std::string> paramList() const;
-    const std::string& param(const std::string& paramName) const;
-    bool hasParam(const std::string& paramName) const;
+    const std::string& param(std::string_view name) const;
+    bool hasParam(std::string_view name) const;
 
 private:
     std::string valueStr(const std::string& value, bool hasParams) const;
@@ -45,6 +46,6 @@ private:
 };
 
 using Headers = std::vector<Header>;
-std::optional<Header> headerFromString(const std::string&);
+std::optional<Header> headerFromString(std::string_view);
 
 }
