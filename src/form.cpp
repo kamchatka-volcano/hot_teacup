@@ -71,16 +71,17 @@ std::string getStringLine(std::string_view input, std::size_t& pos, std::string_
 }
 
 /// Reads HTTP headers between two blank lines
-/// Returns a tuple { the end of the form or invalid input state,
-///                   Content-Disposition header if found,
+/// Returns a tuple { Content-Disposition header if found,
 ///                   Content-Type header if found
 ///                 }
-std::tuple<bool, std::optional<Header>, std::optional<Header>>
+/// if input is not at the end and has a valid state
+///
+std::optional<std::tuple<std::optional<Header>, std::optional<Header>>>
     readContentHeaders(std::string_view input, std::size_t& pos)
 {
     auto headerLine = getStringLine(input, pos);
     if (!headerLine.empty() || pos == input.size())
-        return {true, {}, {}};
+        return {};
     else
         headerLine = getStringLine(input, pos);
 
@@ -96,7 +97,7 @@ std::tuple<bool, std::optional<Header>, std::optional<Header>>
         }
         headerLine = getStringLine(input, pos);
     }
-    return {false, std::move(contentDisposition), std::move(contentType)};
+    return std::make_tuple(std::move(contentDisposition), std::move(contentType));
 }
 
 
@@ -112,10 +113,11 @@ Form parseFormFields(std::string_view input, const std::string& boundary)
 
     auto result = Form{};
     while (pos < input.size()){
-        auto [atEnd, contentDisposition, contentType] = readContentHeaders(input, pos);
-        if (atEnd)
+        auto contentHeaders = readContentHeaders(input, pos);
+        if (!contentHeaders)
             return result;
 
+        auto& [contentDisposition, contentType] = *contentHeaders;
         auto content = getStringLine(input, pos, separator);
         if (!contentDisposition.has_value() ||
             !contentDisposition->hasParam("name") ||
