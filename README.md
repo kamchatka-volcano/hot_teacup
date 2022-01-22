@@ -17,10 +17,13 @@ FetchContent_Declare(hot_teacup
     GIT_REPOSITORY "https://github.com/kamchatka-volcano/hot_teacup.git"
     GIT_TAG "origin/master"
 )
+
+#uncomment if you need to install hot_teacup with your target
+#set(INSTALL_SFUN ON)
 FetchContent_MakeAvailable(hot_teacup)
 
 add_executable(${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} PRIVATE hot_teacup)
+target_link_libraries(${PROJECT_NAME} PRIVATE hot_teacup::hot_teacup)
 ```
 
 For the system-wide installation use these commands:
@@ -30,6 +33,12 @@ cd hot_teacup
 cmake -S . -B build
 cmake --build build
 cmake --install build
+```
+
+Afterwards, you can use find_package() command to make installed library available inside your project:
+```
+find_package(hot_teacup 1.0.0 REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE hot_teacup::hot_teacup)
 ```
 
 ### Running tests
