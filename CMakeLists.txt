@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(hot_teacup
-        VERSION 1.0.0
-        DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses.")
+        VERSION 1.0.1
+        DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses."
+)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(HOT_TEACUP_SUBPROJECT OFF)
@@ -17,16 +18,18 @@ set(SRC
     src/query.cpp
     src/request.cpp
     src/response.cpp
-    src/types.cpp)
+    src/types.cpp
+)
     
 set(PUBLIC_HEADERS
-    "include/hot_teacup/cookie.h"
-    "include/hot_teacup/form.h"
-    "include/hot_teacup/header.h"
-    "include/hot_teacup/query.h"
-    "include/hot_teacup/request.h"
-    "include/hot_teacup/response.h"
-    "include/hot_teacup/types.h")
+    include/hot_teacup/cookie.h
+    include/hot_teacup/form.h
+    include/hot_teacup/header.h
+    include/hot_teacup/query.h
+    include/hot_teacup/request.h
+    include/hot_teacup/response.h
+    include/hot_teacup/types.h
+)
 
 include(CheckPIESupported)
 check_pie_supported()
@@ -71,11 +74,13 @@ if (NOT HOT_TEACUP_SUBPROJECT OR INSTALL_HOT_TEACUP)
     install(TARGETS hot_teacup
             EXPORT hot_teacup-targets
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hot_teacup)
+            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hot_teacup
+    )
     install(EXPORT hot_teacup-targets
             FILE hot_teacupTargets.cmake
             NAMESPACE hot_teacup::
-            DESTINATION ${HOT_TEACUP_PACK_PATH})
+            DESTINATION ${HOT_TEACUP_PACK_PATH}
+    )
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(

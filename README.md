@@ -19,7 +19,7 @@ FetchContent_Declare(hot_teacup
 )
 
 #uncomment if you need to install hot_teacup with your target
-#set(INSTALL_SFUN ON)
+#set(INSTALL_HOT_TEACUP ON)
 FetchContent_MakeAvailable(hot_teacup)
 
 add_executable(${PROJECT_NAME})
