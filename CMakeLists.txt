@@ -18,7 +18,6 @@ set(SRC
     src/query.cpp
     src/request.cpp
     src/response.cpp
-    src/types.cpp
 )
     
 set(PUBLIC_HEADERS

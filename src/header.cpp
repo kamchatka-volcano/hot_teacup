@@ -6,11 +6,62 @@
 namespace http{
 namespace str = sfun::string_utils;
 
-Header::Header(std::string name, std::string value)
-    : name_(std::move(name))
-    , value_(std::move(value))
-    , quotingMode_(QuotingMode::None)
+Header::Param::Param(std::string name)
+    : name_{std::move(name)}
+    , hasValue_{false}
+{}
+
+Header::Param::Param(std::string name, std::string value)
+    : name_{std::move(name)}
+    , value_{std::move(value)}
+    , hasValue_{true}
+{}
+
+const std::string& Header::Param::name() const
 {
+    return name_;
+}
+
+const std::string& Header::Param::value() const
+{
+    return value_;
+}
+
+std::string Header::Param::toString(QuotingMode quotingMode) const
+{
+    auto res = name_;
+    if (!hasValue_)
+        return res;
+    res += "=";
+    switch (quotingMode) {
+        case QuotingMode::ParamValue:
+        case QuotingMode::AllValues:
+            res += "\"" + value_ + "\"";
+        break;
+        default:
+            res += value_;
+    }
+    return res;
+}
+
+Header::Header(std::string name, std::string value)
+    : name_{std::move(name)}
+    , value_{std::move(value)}
+    , quotingMode_{QuotingMode::None}
+{
+}
+
+void Header::setParam(std::string name)
+{
+    if (name.empty())
+        return;
+
+    for (auto& param : params_)
+        if (param.name() == name){
+            param = Param{std::move(name)};
+            return;
+        }
+    params_.emplace_back(std::move(name));
 }
 
 void Header::setParam(std::string name, std::string value)
@@ -19,12 +70,11 @@ void Header::setParam(std::string name, std::string value)
         return;
 
     for (auto& param : params_)
-        if (param.name == name){
-            param.value = std::move(value);
+        if (param.name() == name){
+            param = Param{std::move(name), std::move(value)};
             return;
         }
-
-    params_.push_back({std::move(name), std::move(value)});
+    params_.emplace_back(std::move(name), std::move(value));
 }
 
 void Header::setQuotingMode(QuotingMode mode)
@@ -32,7 +82,8 @@ void Header::setQuotingMode(QuotingMode mode)
     quotingMode_ = mode;
 }
 
-std::string Header::valueStr(const std::string& value, bool hasParams) const
+namespace {
+std::string valueStr(const std::string& value, bool hasParams, Header::QuotingMode quotingMode)
 {
     if (value.empty()){
         if (!hasParams)
@@ -41,58 +92,45 @@ std::string Header::valueStr(const std::string& value, bool hasParams) const
             return {};
     }
 
-    switch (quotingMode_){
-    case QuotingMode::HeaderValue:
-    case QuotingMode::AllValues:
-        return "\"" + value + "\"";
-    default: return value;
+    switch (quotingMode) {
+        case Header::QuotingMode::HeaderValue:
+        case Header::QuotingMode::AllValues:
+            return "\"" + value + "\"";
+        default:
+            return value;
     }
 }
 
-
-std::string Header::paramValueStr(const std::string& value) const
-{
-    switch (quotingMode_){
-    case QuotingMode::ParamValue:
-    case QuotingMode::AllValues:
-        return "\"" + value + "\"";
-    default: return value;
-    }
 }
 
-std::vector<std::string> Header::paramList() const
+const std::vector<Header::Param>& Header::params() const
 {
-    auto result = std::vector<std::string>{};
-    for (const auto& param : params_)
-        result.push_back(param.name);
-    return result;
+    return params_;
 }
 
 const std::string& Header::param(std::string_view name) const
 {
     for (const auto& param: params_)
-        if (param.name == name)
-            return param.value;
+        if (param.name() == name)
+            return param.value();
     throw std::out_of_range{"Header doesn't contain param '" + std::string{name} + "'"};
 }
 
 bool Header::hasParam(std::string_view name) const
 {
     for (const auto& param: params_)
-        if (param.name == name)
+        if (param.name() == name)
             return true;
     return false;
 }
 
 std::string Header::toString() const
 {
-    auto result = name_ + ": " + valueStr(value_, !params_.empty());
+    auto result = name_ + ": " + valueStr(value_, !params_.empty(), quotingMode_);
     if (!value_.empty() && !params_.empty())
         result += "; ";
     for (const auto& param : params_){
-        result += param.name;
-        if (!param.value.empty())
-            result += "=" + paramValueStr(param.value);
+        result += param.toString(quotingMode_);
         result += + "; ";
     }
     if (!params_.empty())

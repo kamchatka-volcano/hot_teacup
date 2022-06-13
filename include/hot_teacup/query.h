@@ -10,7 +10,7 @@ public:
     const std::string& name() const;
     const std::string& value() const;
     std::string toString() const;
-    bool operator==(const Query& other) const;
+    friend bool operator==(const Query& lhs, const Query& rhs);
 
 private:
     std::string name_;
@@ -18,7 +18,7 @@ private:
 };
 
 using Queries = std::vector<Query>;
-
+bool operator==(const Query& lhs, const Query& rhs);
 std::string pathWithQueries(const std::string& path,
                             const Queries& queries,
                             const std::vector<std::string>& queryBlackList = {});

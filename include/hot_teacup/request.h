@@ -3,49 +3,66 @@
 #include <hot_teacup/cookie.h>
 #include <hot_teacup/types.h>
 #include <hot_teacup/form.h>
+#include <map>
+#include <string>
 
 namespace http{
 
-struct Request
+struct RequestFcgiData{
+    std::map<std::string, std::string> params;
+    std::string stdIn;
+};
+
+class Request
 {
-    ///
-    /// \param requestMethod - "GET", "POST", etc.
-    /// \param queryString - "param=foo&param2=bar"
-    /// \param cookieHeaderValue - "name=value; name2=value2; name3=value3"
-    /// \param formContentTypeHeader - "Content-Type: multipart/form-data; boundary=something"
-    /// \param formContent - "part of the request following the Content-Type header of the form"
-    explicit Request(std::string_view requestMethod,
-                     std::string_view queryString = {},
-                     std::string_view cookieHeaderValue = {},
-                     std::string_view formContentTypeHeader = {},
-                     std::string_view formContent = {});
+public:
+    Request(std::string_view fcgiParamRequestMethod,
+            std::string_view fcgiParamRemoteAddr,
+            std::string_view fcgiParamHttpHost,
+            std::string_view fcgiParamRequestUri,
+            std::string_view fcgiParamQueryString,
+            std::string_view fcgiParamHttpCookie,
+            std::string_view fcgiParamContentType,
+            std::string_view fcgiStdIn);
+
+    explicit Request(RequestMethod, std::string path, Queries = {}, Cookies = {}, Form = {});
+
+    void setIpAddress(const std::string& ipAddress);
+    void setDomain(const std::string& domain);
 
     RequestMethod method() const;
+    const std::string& ipAddress() const;
+    const std::string& domainName() const;
+    const std::string& path() const;
+
     const Queries& queries() const;
-    std::vector<std::string> queryList() const;
-    const std::string& query(const std::string& name) const;
-    bool hasQuery(const std::string& name) const;
-    const std::string& cookie(const std::string& name) const;
+    const std::string& query(std::string_view name) const;
+    bool hasQuery(std::string_view name) const;
 
     const Cookies& cookies() const;
-    std::vector<std::string> cookieList() const;
-    bool hasCookie(const std::string& name) const;
-    const std::string& formField(const std::string &name, int index = 0) const;
+    const std::string& cookie(std::string_view name) const;
+    bool hasCookie(std::string_view name) const;
 
+    const std::string& formField(std::string_view name, int index = 0) const;
     std::vector<std::string> formFieldList() const;
     std::vector<std::string> fileList() const;
-    int formFieldCount(const std::string& name) const;
-    bool hasFormField(const std::string &name) const;
+    int formFieldCount(std::string_view name) const;
+    bool hasFormField(std::string_view name) const;
 
-    const std::string& fileData(const std::string &name, int index = 0) const;
-    int fileCount(const std::string &name) const;
-    bool hasFile(const std::string &name) const;
-    const std::string& fileName(const std::string &name, int index = 0) const;
-    const std::string& fileType(const std::string &name, int index = 0) const;
+    const std::string& fileData(std::string_view name, int index = 0) const;
+    int fileCount(std::string_view name) const;
+    bool hasFile(std::string_view name) const;
+    const std::string& fileName(std::string_view name, int index = 0) const;
+    const std::string& fileType(std::string_view name, int index = 0) const;
     bool hasFiles() const;
+
+    RequestFcgiData toFcgiData(FormType) const;
 
 private:
     RequestMethod method_;
+    std::string ipAddress_;
+    std::string domainName_;
+    std::string path_;
     Queries queries_;
     Cookies cookies_;
     Form form_;

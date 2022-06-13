@@ -3,41 +3,49 @@
 #include <string_view>
 #include <string>
 #include <vector>
+#include <variant>
+#include <map>
 
 namespace http{
 
+enum class FormFieldType {
+    Param,
+    File
+};
+
+enum class FormType{
+    UrlEncoded,
+    Multipart
+};
+
 class FormField{
-public:
-    enum class Type{
-        Param,
-        File
+    struct FormFile{
+        std::string fileData;
+        std::string fileName;
+        std::optional<std::string> mimeType;
     };
 
 public:
-    FormField(Header contentDispositionHeader,
-              Header contentTypeHeader,
-              std::string value);
+    explicit FormField(std::string value = {});
+    FormField(std::string fileData, std::string fileName, std::optional<std::string> fileType = {});
 
-    FormField(Header contentDispositionHeader,
-              std::string value);
-
-    Type type() const;
+    FormFieldType type() const;
     bool hasFile() const;
-    const std::string& name() const;
+
     const std::string& fileName() const;
     const std::string& fileType() const;
     const std::string& value() const;
 
 private:
-    Header contentDisposition_;
-    std::optional<Header> contentType_;
-    std::string value_;
-
+    std::variant<std::string, FormFile> value_;
     static inline const std::string valueNotFound = {};
 };
 
-using Form = std::vector<FormField>;
+using Form = std::map<std::string, FormField>;
+
 Form formFromString(std::string_view contentTypeHeader, std::string_view contentFields);
+std::string multipartFormToString(const Form& form, const std::string& formBoundary);
+std::string urlEncodedFormToString(const Form& form);
 
 }
 

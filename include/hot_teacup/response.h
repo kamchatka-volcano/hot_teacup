@@ -8,6 +8,11 @@
 namespace http{
 
 class Response{
+    struct RawResponse{
+        std::string data;
+    };
+    explicit Response(RawResponse);
+
 public:
     Response(std::string data);
     Response(ResponseStatus status,
@@ -50,12 +55,9 @@ private:
     std::string body_;
     Cookies cookies_;
     Headers headers_;
-
-private:
-    struct RawResponse{
-        std::string data;
-    } rawResponse_;
-    Response(RawResponse);
+    RawResponse rawResponse_;
 };
+
+std::optional<Response> responseFromString(const std::string&);
 
 }

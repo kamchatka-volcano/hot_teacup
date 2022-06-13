@@ -27,10 +27,11 @@ std::string Query::toString() const
     return name_ + "=" + value_;
 }
 
-bool Query::operator==(const Query& other) const
+
+bool operator==(const Query& lhs, const Query& rhs)
 {
-    return name_ == other.name_ &&
-           value_ == other.value_;
+    return lhs.name_ == rhs.name_ &&
+           lhs.value_ == rhs.value_;
 }
 
 Queries queriesFromString(std::string_view input)

@@ -84,15 +84,14 @@ TEST(Header, FromString)
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "test");
-        EXPECT_TRUE(header->paramList().empty());
+        EXPECT_TRUE(header->params().empty());
     }
     {
         auto header = http::headerFromString("Test-Header: test; name=foo; name2=bar");
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "test");
-        auto expectedParamList = std::vector<std::string>{"name", "name2"};
-        EXPECT_EQ(header->paramList(), expectedParamList);
+        EXPECT_EQ(header->params().size(), 2);
         ASSERT_TRUE(header->hasParam("name"));
         EXPECT_EQ(header->param("name"), "foo");
         ASSERT_TRUE(header->hasParam("name2"));
@@ -107,15 +106,14 @@ TEST(Header, FromStringWithoutHeaderValue)
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "");
-        EXPECT_TRUE(header->paramList().empty());
+        EXPECT_TRUE(header->params().empty());
     }
     {
         auto header = http::headerFromString("Test-Header: name=foo; name2=bar");
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "");
-        auto expectedParamList = std::vector<std::string>{"name", "name2"};
-        EXPECT_EQ(header->paramList(), expectedParamList);
+        EXPECT_EQ(header->params().size(), 2);
         ASSERT_TRUE(header->hasParam("name"));
         EXPECT_EQ(header->param("name"), "foo");
         ASSERT_TRUE(header->hasParam("name2"));
@@ -130,15 +128,14 @@ TEST(Header, FromStringWithQuoting)
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "test");
-        EXPECT_TRUE(header->paramList().empty());
+        EXPECT_TRUE(header->params().empty());
     }
     {
         auto header = http::headerFromString("Test-Header: \"test\"; name=\"foo\"; name2=bar");
         ASSERT_TRUE(header.has_value());
         EXPECT_EQ(header->name(), "Test-Header");
         EXPECT_EQ(header->value(), "test");
-        auto expectedParamList = std::vector<std::string>{"name", "name2"};
-        EXPECT_EQ(header->paramList(), expectedParamList);
+        EXPECT_EQ(header->params().size(), 2);
         ASSERT_TRUE(header->hasParam("name"));
         EXPECT_EQ(header->param("name"), "foo");
         ASSERT_TRUE(header->hasParam("name2"));
@@ -152,8 +149,7 @@ TEST(Header, FromStringWithoutHeaderValueWithQuoting)
     ASSERT_TRUE(header.has_value());
     EXPECT_EQ(header->name(), "Test-Header");
     EXPECT_EQ(header->value(), "");
-    auto expectedParamList = std::vector<std::string>{"name", "name2"};
-    EXPECT_EQ(header->paramList(), expectedParamList);
+    EXPECT_EQ(header->params().size(), 2);
     ASSERT_TRUE(header->hasParam("name"));
     EXPECT_EQ(header->param("name"), "foo");
     ASSERT_TRUE(header->hasParam("name2"));

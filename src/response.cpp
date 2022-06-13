@@ -1,6 +1,8 @@
 #include <hot_teacup/response.h>
 #include <algorithm>
 #include <utility>
+#include <sstream>
+#include <regex>
 
 namespace http{
 
@@ -131,7 +133,59 @@ Response::Response(RawResponse rawResponse)
 
 Response Response::Raw(std::string value)
 {
-    return RawResponse{std::move(value)};
+    return Response{RawResponse{std::move(value)}};
+}
+
+namespace{
+std::optional<ResponseStatus> statusCodeFromString(const std::string &statusStr)
+{
+    static const auto statusRegex = std::regex{"HTTP/1.1 (\\d+) ?(.*)"};
+    auto statusMatch = std::smatch{};
+    if (!std::regex_match(statusStr, statusMatch, statusRegex))
+        return std::nullopt;
+    auto statusCode = std::stoi(statusMatch[1]);
+    return detail::statusFromCode(statusCode);
+}
+
+std::string lineFromStream(std::istream& stream)
+{
+    auto res = std::string{};
+    std::getline(stream, res);
+    if (!res.empty())
+        res.resize(res.size() - 1); //remove \r
+    return res;
+}
+}
+
+std::optional<Response> responseFromString(const std::string& data)
+{
+    auto stream = std::stringstream{data};
+    auto statusLine = lineFromStream(stream);
+    auto status = statusCodeFromString(statusLine);
+    if (status == std::nullopt)
+        return std::nullopt;
+
+    auto cookies = Cookies{};
+    auto headers = Headers{};
+    while (true){
+        auto headerLine = lineFromStream(stream);
+        if (headerLine.empty())
+            break;
+
+        auto header = headerFromString(headerLine);
+        if (header == std::nullopt)
+            return std::nullopt;
+        if (header->name() == "Set-Cookie"){
+            auto cookie = cookieFromHeader(*header);
+            if (cookie)
+                cookies.emplace_back(std::move(*cookie));
+        }
+        else
+            headers.emplace_back(*header);
+    }
+    stream >> std::noskipws;
+    auto body = std::string{std::istream_iterator<char>{stream}, {}};
+    return Response{*status, std::move(body), std::move(cookies), std::move(headers)};
 }
 
 }

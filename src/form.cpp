@@ -3,56 +3,57 @@
 #include <sfun/string_utils.h>
 #include <optional>
 
-namespace http{
+namespace http {
 namespace str = sfun::string_utils;
 
-FormField::FormField(Header contentDispositionHeader, Header contentTypeHeader, std::string value)
-        : contentDisposition_(std::move(contentDispositionHeader))
-        , contentType_(std::move(contentTypeHeader))
-        , value_(std::move(value))
+FormField::FormField(std::string value)
+        : value_{std::move(value)}
 {
 }
 
-FormField::FormField(Header contentDispositionHeader, std::string value)
-    : contentDisposition_(std::move(contentDispositionHeader))
-    , value_(std::move(value))
+FormField::FormField(std::string fileData, std::string fileName, std::optional<std::string> fileType)
+        : value_{FormFile{std::move(fileData),
+                          std::move(fileName),
+                          std::move(fileType)}}
 {
 }
 
-FormField::Type FormField::type() const
+FormFieldType FormField::type() const
 {
-    if (contentDisposition_.hasParam("filename"))
-        return Type::File;
-    else
-        return Type::Param;
+    return std::holds_alternative<std::string>(value_) ? FormFieldType::Param : FormFieldType::File;
 }
 
 bool FormField::hasFile() const
 {
-    return contentDisposition_.hasParam("filename") && !contentDisposition_.param("filename").empty();
-}
-
-const std::string& FormField::name() const
-{
-    return contentDisposition_.param("name");
+    if (type() == FormFieldType::File && !std::get<FormFile>(value_).fileName.empty())
+        return true;
+    else
+        return false;
 }
 
 const std::string& FormField::fileName() const
 {
-    return contentDisposition_.param("filename");
+    if (type() == FormFieldType::File)
+        return std::get<FormFile>(value_).fileName;
+    else
+        return valueNotFound;
 }
 
 const std::string& FormField::fileType() const
 {
-    if (!contentType_.has_value())
+    if (type() == FormFieldType::File) {
+        const auto& res = std::get<FormFile>(value_).mimeType;
+        return res ? *res : valueNotFound;
+    } else
         return valueNotFound;
-
-    return contentType_->value();
 }
 
 const std::string& FormField::value() const
 {
-    return value_;
+    if (type() == FormFieldType::Param)
+        return std::get<std::string>(value_);
+    else
+        return std::get<FormFile>(value_).fileData;
 }
 
 namespace {
@@ -77,7 +78,7 @@ std::string getStringLine(std::string_view input, std::size_t& pos, std::string_
 /// if input is not at the end and has a valid state
 ///
 std::optional<std::tuple<std::optional<Header>, std::optional<Header>>>
-    readContentHeaders(std::string_view input, std::size_t& pos)
+readContentHeaders(std::string_view input, std::size_t& pos)
 {
     auto headerLine = getStringLine(input, pos);
     if (!headerLine.empty() || pos == input.size())
@@ -112,7 +113,7 @@ Form parseFormFields(std::string_view input, const std::string& boundary)
         return {};
 
     auto result = Form{};
-    while (pos < input.size()){
+    while (pos < input.size()) {
         auto contentHeaders = readContentHeaders(input, pos);
         if (!contentHeaders)
             return result;
@@ -127,12 +128,15 @@ Form parseFormFields(std::string_view input, const std::string& boundary)
         if (content.size() >= 2)
             content.resize(content.size() - 2); //remove \r\n
 
-        if (!contentType.has_value())
-            result.emplace_back(FormField{std::move(*contentDisposition), std::move(content)});
-        else
-            result.emplace_back(FormField{std::move(*contentDisposition),
-                                          std::move(*contentType),
-                                          std::move(content)});
+        const auto& paramName = contentDisposition->param("name");
+        if (contentDisposition->hasParam("filename")) {
+            const auto& fileName = contentDisposition->param("filename");
+            auto fileType = std::optional<std::string>{};
+            if (contentType.has_value())
+                fileType = contentType->value();
+            result.emplace(paramName, FormField{std::move(content), fileName, std::move(fileType)});
+        } else
+            result.emplace(paramName, FormField{std::move(content)});
     }
     return result;
 }
@@ -154,19 +158,18 @@ Form parseUrlEncodedFields(std::string_view input)
     auto result = Form{};
     do {
         auto param = getStringLine(input, pos, "&");
-        auto[paramName, paramValue] = parseUrlEncodedParamString(param);
+        auto [paramName, paramValue] = parseUrlEncodedParamString(param);
         if (paramName.empty())
             continue;
-        auto header = Header{"Content-Disposition", ""};
-        header.setParam("name", std::move(paramName));
-        result.emplace_back(FormField{std::move(header), std::move(paramValue)});
+        result.emplace(paramName, FormField{std::move(paramValue)});
     } while (pos < input.size());
     return result;
 }
 }
 
-Form formFromString(std::string_view contentTypeHeader, std::string_view contentFields)
+Form formFromString(std::string_view contentParam, std::string_view contentFields)
 {
+    auto contentTypeHeader = "Content-Type: " + std::string{contentParam};
     auto contentType = headerFromString(contentTypeHeader);
     if (!contentType.has_value())
         return {};
@@ -177,6 +180,44 @@ Form formFromString(std::string_view contentTypeHeader, std::string_view content
         return parseUrlEncodedFields(contentFields);
 
     return {};
+}
+
+std::string urlEncodedFormToString(const Form& form)
+{
+    auto result = std::string{};
+    for (const auto& [name, field] : form) {
+        if (!result.empty())
+            result += "&";
+        result += name + "=" + (field.type() == http::FormFieldType::Param ? field.value() : field.fileName());
+    }
+    return result;
+}
+
+std::string multipartFormToString(const Form& form, const std::string& formBoundary)
+{
+    auto result = std::string{};
+    for (const auto& [name, field]: form) {
+        result += "--" + formBoundary + "\r\n";
+        auto header = http::Header{"Content-Disposition", "form-data"};
+        header.setQuotingMode(http::Header::QuotingMode::ParamValue);
+        header.setParam("name", name);
+        if (field.type() == FormFieldType::Param)
+            result += header.toString() + "\r\n\r\n" + field.value() + "\r\n";
+        else {
+            header.setParam("filename", field.fileName());
+            auto fileHeader = std::optional<http::Header>{};
+            if (!field.fileType().empty())
+                fileHeader = http::Header{"Content-Type", field.fileType()};
+
+            result += header.toString() + "\r\n";
+            if (fileHeader)
+                result += fileHeader->toString() + "\r\n";
+            result += "\r\n";
+            result += field.value() + "\r\n";
+        }
+    }
+    result += "--" + formBoundary + "--\r\n";
+    return result;
 }
 
 }

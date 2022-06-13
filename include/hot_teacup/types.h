@@ -92,10 +92,57 @@ enum class RequestMethod{
     CONNECT,
     OPTIONS,
     TRACE,
-    PATCH,
-    Unknown
+    PATCH
 };
-RequestMethod methodFromString(std::string_view typeStr);
+
+constexpr RequestMethod methodFromString(std::string_view typeStr)
+{
+    if (typeStr == "GET")
+        return RequestMethod::GET;
+    else if (typeStr == "HEAD")
+        return RequestMethod::HEAD;
+    else if (typeStr == "POST")
+        return RequestMethod::POST;
+    else if (typeStr == "PUT")
+        return RequestMethod::PUT;
+    else if (typeStr == "DELETE")
+        return RequestMethod::DELETE;
+    else if (typeStr == "CONNECT")
+        return RequestMethod::CONNECT;
+    else if (typeStr == "OPTIONS")
+        return RequestMethod::OPTIONS;
+    else if (typeStr == "TRACE")
+        return RequestMethod::TRACE;
+    else if (typeStr == "PATCH")
+        return RequestMethod::PATCH;
+    else
+        return {};
+}
+
+constexpr const char* methodToString(RequestMethod method)
+{
+    switch (method)
+    {
+    case RequestMethod::GET:
+        return "GET";
+    case RequestMethod::HEAD:
+        return "HEAD";
+    case RequestMethod::POST:
+        return "POST";
+    case RequestMethod::PUT:
+        return "PUT";
+    case RequestMethod::DELETE:
+        return "DELETE";
+    case RequestMethod::CONNECT:
+        return "CONNECT";
+    case RequestMethod::OPTIONS:
+        return "OPTIONS";
+    case RequestMethod::TRACE:
+        return "TRACE";
+    case RequestMethod::PATCH:
+        return "PATCH";
+    }
+}
 
 namespace detail{
 constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)
@@ -118,7 +165,6 @@ constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)
     case Type::NotModified:
         return Status::Code_304_Not_Modified;
     }
-    return Status::Code_302_Found;
 }
 
 constexpr const char* statusToString(ResponseStatus status)
@@ -187,21 +233,150 @@ constexpr const char* statusToString(ResponseStatus status)
     case Status::Code_510_Not_Extended: return "510 Not Extended";
     case Status::Code_511_Network_Authentication_Required: return "511 Network Authentication Required";
     }
-    return nullptr;
 }
+
+constexpr ResponseStatus statusFromCode(int statusCode)
+{
+    using Status = ResponseStatus;
+    switch (statusCode) {
+        case 100:
+            return Status::Code_100_Continue;
+        case 101:
+            return Status::Code_101_Switching_Protocol;
+        case 102:
+            return Status::Code_102_Processing;
+        case 103:
+            return Status::Code_103_Early_Hints;
+        case 200:
+            return Status::Code_200_Ok;
+        case 201:
+            return Status::Code_201_Created;
+        case 202:
+            return Status::Code_202_Accepted;
+        case 203:
+            return Status::Code_203_Non_Authoritative_Information;
+        case 204:
+            return Status::Code_204_No_Content;
+        case 205:
+            return Status::Code_205_Reset_Content;
+        case 206:
+            return Status::Code_206_Partial_Content;
+        case 207:
+            return Status::Code_207_Multi_Status;
+        case 208:
+            return Status::Code_208_Already_Reported;
+        case 226:
+            return Status::Code_226_IM_Used;
+        case 300:
+            return Status::Code_300_Multiple_Choice;
+        case 301:
+            return Status::Code_301_Moved_Permanently;
+        case 302:
+            return Status::Code_302_Found;
+        case 303:
+            return Status::Code_303_See_Other;
+        case 304:
+            return Status::Code_304_Not_Modified;
+        case 307:
+            return Status::Code_307_Temporary_Redirect;
+        case 308:
+            return Status::Code_308_Permanent_Redirect;
+        case 400:
+            return Status::Code_400_Bad_Request;
+        case 401:
+            return Status::Code_401_Unauthorized;
+        case 402:
+            return Status::Code_402_Payment_Required;
+        case 403:
+            return Status::Code_403_Forbidden;
+        case 404:
+            return Status::Code_404_Not_Found;
+        case 405:
+            return Status::Code_405_Method_Not_Allowed;
+        case 406:
+            return Status::Code_406_Not_Acceptable;
+        case 407:
+            return Status::Code_407_Proxy_Authentication_Required;
+        case 408:
+            return Status::Code_408_Request_Timeout;
+        case 409:
+            return Status::Code_409_Conflict;
+        case 410:
+            return Status::Code_410_Gone;
+        case 411:
+            return Status::Code_411_Length_Required;
+        case 412:
+            return Status::Code_412_Precondition_Failed;
+        case 413:
+            return Status::Code_413_Payload_Too_Large;
+        case 414:
+            return Status::Code_414_URI_Too_Long;
+        case 415:
+            return Status::Code_415_Unsupported_Media_Type;
+        case 416:
+            return Status::Code_416_Range_Not_Satisfiable;
+        case 417:
+            return Status::Code_417_Expectation_Failed;
+        case 418:
+            return Status::Code_418_Im_a_teapot;
+        case 421:
+            return Status::Code_421_Misdirected_Request;
+        case 422:
+            return Status::Code_422_Unprocessable_Entity;
+        case 423:
+            return Status::Code_423_Locked;
+        case 424:
+            return Status::Code_424_Failed_Dependency;
+        case 425:
+            return Status::Code_425_Too_Early;
+        case 426:
+            return Status::Code_426_Upgrade_Required;
+        case 428:
+            return Status::Code_428_Precondition_Required;
+        case 429:
+            return Status::Code_429_Too_Many_Requests;
+        case 431:
+            return Status::Code_431_Request_Header_Fields_Too_Large;
+        case 451:
+            return Status::Code_451_Unavailable_For_Legal_Reasons;
+        case 500:
+            return Status::Code_500_Internal_Server_Error;
+        case 501:
+            return Status::Code_501_Not_Implemented;
+        case 502:
+            return Status::Code_502_Bad_Gateway;
+        case 503:
+            return Status::Code_503_Service_Unavailable;
+        case 504:
+            return Status::Code_504_Gateway_Timeout;
+        case 505:
+            return Status::Code_505_HTTP_Version_Not_Supported;
+        case 506:
+            return Status::Code_506_Variant_Also_Negotiates;
+        case 507:
+            return Status::Code_507_Insufficient_Storage;
+        case 508:
+            return Status::Code_508_Loop_Detected;
+        case 510:
+            return Status::Code_510_Not_Extended;
+        case 511:
+            return Status::Code_511_Network_Authentication_Required;
+        default:
+            return {};
+    }
+}
+
 
 constexpr const char* contentTypeToString(ContentType type)
 {
-    using Type = ContentType;
     switch (type){
-    case Type::HTML:
+    case ContentType::HTML:
         return "text/html";
-    case Type::XHTML:
+    case ContentType::XHTML:
         return "application/xhtml+xml";
-    case Type::PlainText:
+    case ContentType::PlainText:
         return "text/plain";
     }
-    return nullptr;
 }
 
 }

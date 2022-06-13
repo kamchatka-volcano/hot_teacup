@@ -20,8 +20,8 @@ void testResponseWithCookies(const http::Response& testResponse, const std::stri
     }
 }
 
-const auto cookiesResponsePart = std::string{"Set-Cookie: name=foo; Version=1\r\n"
-                                             "Set-Cookie: age=77; Version=1\r\n"};
+const auto cookiesResponsePart = std::string{"Set-Cookie: name=foo\r\n"
+                                             "Set-Cookie: age=77\r\n"};
 
 void testResponseWithHeaders(const http::Response& testResponse, const std::string& expectedResponse)
 {
@@ -52,8 +52,8 @@ void testResponseWithCookiesAndHeaders(const http::Response& testResponse, const
 }
 
 const auto cookiesAndHeadersResponsePart = std::string{"Host: HotTeacup\r\n"
-                                                       "Set-Cookie: name=foo; Version=1\r\n"
-                                                       "Set-Cookie: age=77; Version=1\r\n"};
+                                                       "Set-Cookie: name=foo\r\n"
+                                                       "Set-Cookie: age=77\r\n"};
 
 }
 
@@ -304,4 +304,55 @@ TEST(Response, RawResponse)
                                         "\r\n"};
     auto response = http::Response::Raw(expectedResponse);
     EXPECT_EQ(response.data(), expectedResponse);
+}
+
+TEST(Response, ResponseFromString)
+{
+    auto responseString = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
+                                        "\r\n"};
+    auto response = http::responseFromString(responseString);
+    ASSERT_TRUE(response);
+    EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);
+    EXPECT_EQ(response->headers().at(0).name(), "Location");
+    EXPECT_EQ(response->headers().at(0).value(), "/");
+    EXPECT_EQ(response->body(), "");
+}
+
+TEST(Response, ResponseFromString2)
+{
+    auto responseString = std::string{"HTTP/1.1 200 OK\r\nSet-Cookie: id=hello; Max-Age=60\r\nLocation: /\r\n"
+                                        "\r\nHello world"};
+    auto response = http::responseFromString(responseString);
+    ASSERT_TRUE(response);
+    EXPECT_EQ(response->status(), http::ResponseStatus::Code_200_Ok);
+    EXPECT_EQ(response->cookies().at(0).name(), "id");
+    EXPECT_EQ(response->cookies().at(0).value(), "hello");
+    EXPECT_EQ(response->cookies().at(0).maxAge(), std::chrono::minutes{1});
+    EXPECT_EQ(response->headers().at(0).name(), "Location");
+    EXPECT_EQ(response->headers().at(0).value(), "/");
+    EXPECT_EQ(response->body(), "Hello world");
+}
+
+TEST(Response, ResponseFromStringPartialStatus)
+{
+    auto responseString = std::string{"HTTP/1.1 302 \r\nLocation: /\r\n"
+                                        "\r\n"};
+    auto response = http::responseFromString(responseString);
+    ASSERT_TRUE(response);
+    EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);
+    EXPECT_EQ(response->headers().at(0).name(), "Location");
+    EXPECT_EQ(response->headers().at(0).value(), "/");
+    EXPECT_EQ(response->body(), "");
+}
+
+TEST(Response, ResponseFromStringPartialStatus2)
+{
+    auto responseString = std::string{"HTTP/1.1 302\r\nLocation: /\r\n"
+                                        "\r\n"};
+    auto response = http::responseFromString(responseString);
+    ASSERT_TRUE(response);
+    EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);
+    EXPECT_EQ(response->headers().at(0).name(), "Location");
+    EXPECT_EQ(response->headers().at(0).value(), "/");
+    EXPECT_EQ(response->body(), "");
 }
