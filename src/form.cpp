@@ -216,7 +216,8 @@ std::string multipartFormToString(const Form& form, const std::string& formBound
             result += field.value() + "\r\n";
         }
     }
-    result += "--" + formBoundary + "--\r\n";
+    if (!form.empty())
+        result += "--" + formBoundary + "--\r\n";
     return result;
 }
 

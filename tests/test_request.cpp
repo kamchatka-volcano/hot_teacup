@@ -216,6 +216,19 @@ TEST(Request, ToFcgiDataWithPathOnly)
     EXPECT_EQ(fcgiData.params.at("REQUEST_URI"), "/");
 }
 
+TEST(Request, ToFcgiDataWithPathOnlyMultipart)
+{
+    const auto request = http::Request{http::RequestMethod::GET, "/"};
+    const auto fcgiData = request.toFcgiData(http::FormType::Multipart);
+
+    EXPECT_EQ(fcgiData.params.size(), 2);
+    EXPECT_TRUE(fcgiData.stdIn.empty());
+    ASSERT_TRUE(fcgiData.params.count("REQUEST_METHOD"));
+    EXPECT_EQ(fcgiData.params.at("REQUEST_METHOD"), "GET");
+    ASSERT_TRUE(fcgiData.params.count("REQUEST_URI"));
+    EXPECT_EQ(fcgiData.params.at("REQUEST_URI"), "/");
+}
+
 TEST(Request, ToFcgiDataWithQueries)
 {
     const auto request = http::Request{http::RequestMethod::GET, "/",{{"id", "100"}}};
@@ -285,3 +298,4 @@ TEST(Request, ToFcgiDataWithMultipartForm)
     ASSERT_TRUE(fcgiData.params.count("CONTENT_TYPE"));
     EXPECT_EQ(fcgiData.params.at("CONTENT_TYPE"), "multipart/form-data; boundary=----asyncgiFormBoundary");
 }
+
