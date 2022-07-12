@@ -1,9 +1,9 @@
 #pragma once
-#include <string>
 #include "cookie.h"
 #include "header.h"
 #include "query.h"
 #include "types.h"
+#include <string>
 
 namespace http{
 

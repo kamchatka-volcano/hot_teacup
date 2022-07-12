@@ -1,8 +1,8 @@
 #pragma once
-#include <hot_teacup/query.h>
-#include <hot_teacup/cookie.h>
-#include <hot_teacup/types.h>
-#include <hot_teacup/form.h>
+#include "query.h"
+#include "cookie.h"
+#include "types.h"
+#include "form.h"
 #include <map>
 #include <string>
 
