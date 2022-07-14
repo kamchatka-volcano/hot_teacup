@@ -19,7 +19,7 @@ set(SRC
     src/request.cpp
     src/response.cpp
 )
-    
+
 set(PUBLIC_HEADERS
     include/hot_teacup/cookie.h
     include/hot_teacup/form.h
@@ -42,14 +42,13 @@ set_target_properties(hot_teacup PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(hot_teacup PROPERTIES PUBLIC_HEADER "${PUBLIC_HEADERS}")
 set_target_properties(hot_teacup PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-if (NOT USE_SYSTEM_SFUN)
-    set(INSTALL_SFUN ON)
+find_package(sfun 1.1.0 QUIET)
+if (NOT sfun_FOUND)
+    message("Configuration info: sfun library wasn't found on your system, downloading it from the GitHub repository")
     include(external/sfun)
-else()
-    find_package(sfun 1.0 REQUIRED)
 endif()
 
-target_link_libraries(hot_teacup PRIVATE sfun::sfun)
+target_link_libraries(hot_teacup PRIVATE "$<BUILD_INTERFACE:sfun::sfun>")
 target_include_directories(hot_teacup PRIVATE include/)
 target_include_directories(hot_teacup PRIVATE src)
 target_include_directories(
