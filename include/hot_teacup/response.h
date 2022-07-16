@@ -6,6 +6,7 @@
 #include <string>
 
 namespace http{
+class ResponseView;
 
 class Response{
     struct RawResponse{
@@ -14,34 +15,35 @@ class Response{
     explicit Response(RawResponse);
 
 public:
+    explicit Response(const ResponseView&);
     Response(std::string data);
     Response(ResponseStatus status,
              std::string body = {},
-             Cookies cookies = {},
-             Headers headers = {});
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
 
     ResponseStatus status() const;
     const std::string& body() const;
-    const Cookies& cookies() const;
-    const Headers& headers() const;
+    const std::vector<Cookie>& cookies() const;
+    const std::vector<Header>& headers() const;
     std::string data() const;
 
     void addCookie(Cookie cookie);
     void addHeader(Header header);
-    void addCookies(const Cookies& cookies);
-    void addHeaders(const Headers& headers);
+    void addCookies(const std::vector<Cookie>& cookies);
+    void addHeaders(const std::vector<Header>& headers);
 
 public:
     static Response Content(std::string text,
                             ContentType contentType = ContentType::HTML,
-                            const Cookies& cookies = {},
-                            const Headers& headers = {});
+                            const std::vector<Cookie>& cookies = {},
+                            const std::vector<Header>& headers = {});
 
     static Response Redirect(const std::string& path,
                              RedirectType type = RedirectType::Found,
-                             const Queries& queries = {},
-                             const Cookies& cookies = {},
-                             const Headers& headers = {});
+                             const std::vector<Query>& queries = {},
+                             const std::vector<Cookie>& cookies = {},
+                             const std::vector<Header>& headers = {});
 
     static Response Raw(std::string value);
 
@@ -53,11 +55,9 @@ private:
 private:
     ResponseStatus status_ = ResponseStatus::Code_404_Not_Found;
     std::string body_;
-    Cookies cookies_;
-    Headers headers_;
+    std::vector<Cookie> cookies_;
+    std::vector<Header> headers_;
     RawResponse rawResponse_;
 };
-
-std::optional<Response> responseFromString(const std::string&);
 
 }

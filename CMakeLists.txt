@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(hot_teacup
-        VERSION 1.0.1
+        VERSION 2.0.0
         DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses."
 )
 
@@ -13,11 +13,17 @@ endif()
 
 set(SRC
     src/cookie.cpp
+    src/cookie_view.cpp
     src/form.cpp
+    src/form_view.cpp
     src/header.cpp
+    src/header_view.cpp
     src/query.cpp
+    src/query_view.cpp
     src/request.cpp
+    src/request_view.cpp
     src/response.cpp
+    src/response_view.cpp
 )
 
 set(PUBLIC_HEADERS
@@ -42,7 +48,7 @@ set_target_properties(hot_teacup PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(hot_teacup PROPERTIES PUBLIC_HEADER "${PUBLIC_HEADERS}")
 set_target_properties(hot_teacup PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-find_package(sfun 1.1.0 QUIET)
+find_package(sfun 2.0.0 QUIET)
 if (NOT sfun_FOUND)
     message("Configuration info: sfun library wasn't found on your system, downloading it from the GitHub repository")
     include(external/sfun)

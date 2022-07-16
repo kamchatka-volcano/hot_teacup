@@ -1,4 +1,5 @@
 #include <hot_teacup/query.h>
+#include <hot_teacup/query_view.h>
 #include <gtest/gtest.h>
 
 TEST(Query, ToStringSingle)
@@ -10,11 +11,11 @@ TEST(Query, ToStringSingle)
 TEST(Query, ToString)
 {
     {
-        auto queries = http::Queries{{"name", "test"}, {"foo", "bar"}};
+        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         EXPECT_EQ(http::queriesToString(queries), "name=test&foo=bar");
     }
     {
-        auto queries = http::Queries{{"name", "test"}, {"foo", "bar"}};
+        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         EXPECT_EQ(http::queriesToString(queries, {"foo"}), "name=test");
     }
 }
@@ -27,50 +28,58 @@ TEST(Query, PathWithQueries)
         EXPECT_EQ(http::pathWithQuery(path, query), "/test/?name=test");
     }
     {
-        auto queries = http::Queries{{"name", "test"}, {"foo", "bar"}};
+        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         auto path = "/test/";
         EXPECT_EQ(http::pathWithQueries(path, queries), "/test/?name=test&foo=bar");
     }
     {
-        auto queries = http::Queries{{"name", "test"}, {"foo", "bar"}};
+        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         auto path = "/test/";
         EXPECT_EQ(http::pathWithQueries(path, queries, {"name"}), "/test/?foo=bar");
     }
 }
 
-TEST(Query, FromString)
+TEST(QueryView, FromString)
 {
     {
         auto queries = http::queriesFromString("name=test&foo=bar");
-        auto expectedQueries = http::Queries{{"name", "test"}, {"foo", "bar"}};
+        auto expectedQueries = std::vector<http::QueryView>{{"name", "test"}, {"foo", "bar"}};
         EXPECT_EQ(queries, expectedQueries);
     }
 
     {
         auto queries = http::queriesFromString("");
-        auto expectedQueries = http::Queries{};
+        auto expectedQueries = std::vector<http::QueryView>{};
         EXPECT_EQ(queries, expectedQueries);
     }
 
     {
         auto queries = http::queriesFromString("=");
-        auto expectedQueries = http::Queries{};
+        auto expectedQueries = std::vector<http::QueryView>{};
         EXPECT_EQ(queries, expectedQueries);
     }
     {
         auto queries = http::queriesFromString("&");
-        auto expectedQueries = http::Queries{};
+        auto expectedQueries = std::vector<http::QueryView>{};
         EXPECT_EQ(queries, expectedQueries);
     }
     {
         auto queries = http::queriesFromString("&&");
-        auto expectedQueries = http::Queries{};
+        auto expectedQueries = std::vector<http::QueryView>{};
         EXPECT_EQ(queries, expectedQueries);
     }
     {
         auto queries = http::queriesFromString("=&=&=");
-        auto expectedQueries = http::Queries{};
+        auto expectedQueries = std::vector<http::QueryView>{};
         EXPECT_EQ(queries, expectedQueries);
     }
 }
+
+TEST(QueryView, QueryFromQueryView)
+{
+    auto queries = http::queriesFromString("name=test&foo=bar");
+    auto expectedQueries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
+    EXPECT_EQ(http::makeQueries(queries), expectedQueries);
+}
+
 

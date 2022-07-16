@@ -1,5 +1,7 @@
 #include <hot_teacup/cookie.h>
+#include <hot_teacup/cookie_view.h>
 #include <hot_teacup/header.h>
+#include <hot_teacup/header_view.h>
 #include <gtest/gtest.h>
 
 TEST(Cookie, ToString)
@@ -88,61 +90,62 @@ TEST(Cookie, ToString)
     }
 
     {
-        auto cookies = http::Cookies{};
+        auto cookies = std::vector<http::Cookie>{};
         cookies.emplace_back(http::Cookie{"foo", "bar"});
         cookies.emplace_back(http::Cookie{"Hello", "world"});
         EXPECT_EQ(cookiesToString(cookies), "foo=bar; Hello=world");
     }
 }
 
-TEST(Cookie, FromString)
+TEST(CookieView, FromString)
 {
     {
         auto cookies = http::cookiesFromString("name=foo");
-        auto expectedCookies = http::Cookies{{"name", "foo"}};
+        auto expectedCookies = std::vector<http::CookieView>{{"name", "foo"}};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString("name=foo;test=bar");
-        auto expectedCookies = http::Cookies{{"name", "foo"}, {"test", "bar"}};
+        auto expectedCookies = std::vector<http::CookieView>{{"name", "foo"}, {"test", "bar"}};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString("");
-        auto expectedCookies = http::Cookies{};
+        auto expectedCookies = std::vector<http::CookieView>{};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString("=");
-        auto expectedCookies = http::Cookies{};
+        auto expectedCookies = std::vector<http::CookieView>{};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString(";");
-        auto expectedCookies = http::Cookies{};
+        auto expectedCookies = std::vector<http::CookieView>{};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString(";;");
-        auto expectedCookies = http::Cookies{};
+        auto expectedCookies = std::vector<http::CookieView>{};
         EXPECT_EQ(cookies, expectedCookies);
     }
     {
         auto cookies = http::cookiesFromString("=;=;=");
-        auto expectedCookies = http::Cookies{};
+        auto expectedCookies = std::vector<http::CookieView>{};
         EXPECT_EQ(cookies, expectedCookies);
     }
 }
 
-TEST(Cookie, FromHeader)
+TEST(CookieView, FromHeader)
 {
    {
-        auto header = http::Header{"Set-Cookie", ""};
-        header.setParam("foo", "bar");
-        header.setParam("Max-Age", "10");
-        header.setParam("Domain", "localhost");
-        header.setParam("Path", "/test");
-        header.setParam("Secure", "");
+        auto header = http::HeaderView{"Set-Cookie", "", {
+                {"foo", "bar"},
+                {"Max-Age", "10"},
+                {"Domain", "localhost"},
+                {"Path", "/test"},
+                {"Secure", ""}}
+        };
         auto cookie = http::cookieFromHeader(header);
         ASSERT_TRUE(cookie);
         EXPECT_EQ(cookie->name(), "foo");
@@ -152,13 +155,33 @@ TEST(Cookie, FromHeader)
         EXPECT_EQ(cookie->isSecure(), true);
     }
     {
-        auto header = http::Header{"Set-Cookie", ""};
-        header.setParam("foo", "bar");
-        header.setParam("Max-Age", "0");
+        auto header = http::HeaderView{"Set-Cookie", "", {
+                {"foo", "bar"},
+                {"Max-Age", "0"}}
+        };
         auto cookie = http::cookieFromHeader(header);
         ASSERT_TRUE(cookie);
         EXPECT_EQ(cookie->name(), "foo");
         EXPECT_EQ(cookie->value(), "bar");
         EXPECT_EQ(cookie->isRemoved(), true);
     }
+}
+
+TEST(CookieView, CookieFormCookieView)
+{
+    auto header = http::HeaderView{"Set-Cookie", "", {
+            {"foo", "bar"},
+            {"Max-Age", "10"},
+            {"Domain", "localhost"},
+            {"Path", "/test"},
+            {"Secure", ""}}
+    };
+    auto cookieView = http::cookieFromHeader(header);
+    ASSERT_TRUE(cookieView);
+    auto cookie = http::Cookie{*cookieView};
+    EXPECT_EQ(cookie.name(), "foo");
+    EXPECT_EQ(cookie.value(), "bar");
+    EXPECT_EQ(cookie.maxAge(), std::chrono::seconds{10});
+    EXPECT_EQ(cookie.domain(), "localhost");
+    EXPECT_EQ(cookie.isSecure(), true);
 }

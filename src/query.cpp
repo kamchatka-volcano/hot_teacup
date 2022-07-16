@@ -1,4 +1,5 @@
 #include <hot_teacup/query.h>
+#include <hot_teacup/query_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
 #include <utility>
@@ -6,9 +7,14 @@
 namespace http{
 namespace str = sfun::string_utils;
 
+Query::Query(const QueryView& queryView)
+    : name_{queryView.name()}
+    , value_{queryView.value()}
+{}
+
 Query::Query(std::string name, std::string value)
-    : name_(std::move(name))
-    , value_(std::move(value))
+    : name_{std::move(name)}
+    , value_{std::move(value)}
 {
 }
 
@@ -34,21 +40,7 @@ bool operator==(const Query& lhs, const Query& rhs)
            lhs.value_ == rhs.value_;
 }
 
-Queries queriesFromString(std::string_view input)
-{
-    auto result = Queries{};
-    std::vector<std::string> queries = str::split(input, "&");
-    for(const std::string& query : queries){
-        auto name = str::before(query, "=");
-        auto value = str::after(query, "=");
-        if (name.empty())
-            continue;
-        result.emplace_back(str::trim(name), str::trim(value));
-    }
-    return result;
-}
-
-std::string queriesToString(const Queries& queries, const std::vector<std::string>& queryBlackList)
+std::string queriesToString(const std::vector<Query>& queries, const std::vector<std::string>& queryBlackList)
 {
     auto result = std::string{};
     for (const auto& query : queries){
@@ -61,7 +53,7 @@ std::string queriesToString(const Queries& queries, const std::vector<std::strin
 }
 
 std::string pathWithQueries(const std::string& path,
-                            const Queries& queries,
+                            const std::vector<Query>& queries,
                             const std::vector<std::string>& queryBlackList)
 {
     if (queries.empty())
@@ -72,6 +64,16 @@ std::string pathWithQueries(const std::string& path,
 std::string pathWithQuery(const std::string& path, const Query& query)
 {
     return pathWithQueries(path, {query});
+}
+
+std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
+{
+    auto result = std::vector<Query>{};
+    std::transform(queryViewList.begin(), queryViewList.end(), std::back_inserter(result),
+               [](const auto& queryView) {
+                   return Query{queryView};
+               });
+    return result;
 }
 
 }

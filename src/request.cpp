@@ -1,36 +1,36 @@
 #include <hot_teacup/request.h>
+#include <hot_teacup/request_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
 
 
 using namespace std::string_literals;
 
-namespace http{
+namespace http {
 namespace str = sfun::string_utils;
 
-Request::Request(std::string_view fcgiParamRequestMethod,
-                 std::string_view fcgiParamRemoteAddr,
-                 std::string_view fcgiParamHttpHost,
-                 std::string_view fcgiParamRequestUri,
-                 std::string_view fcgiParamQueryString,
-                 std::string_view fcgiParamHttpCookie,
-                 std::string_view fcgiParamContentType,
-                 std::string_view fcgiStdIn)
-    : method_(methodFromString(fcgiParamRequestMethod))
-    , ipAddress_(fcgiParamRemoteAddr)
-    , domainName_(str::before(fcgiParamHttpHost, ":"))
-    , path_(str::before(fcgiParamRequestUri, "?"))
-    , queries_(queriesFromString(fcgiParamQueryString))
-    , cookies_(cookiesFromString(fcgiParamHttpCookie))
-    , form_(formFromString(fcgiParamContentType, fcgiStdIn))
-{}
+Request::Request(const RequestView& requestView)
+    : method_{requestView.method()}
+    , ipAddress_{requestView.ipAddress()}
+    , domainName_{requestView.domainName()}
+    , path_{requestView.path()}
+    , queries_{makeQueries(requestView.queries())}
+    , cookies_{makeCookies(requestView.cookies())}
+    , form_{makeForm(requestView.form())}
+{
+}
 
-Request::Request(RequestMethod method, std::string path,  Queries queries, Cookies cookies, Form form)
-    : method_(method)
-    , path_(std::move(path))
-    , queries_(std::move(queries))
-    , cookies_(std::move(cookies))
-    , form_(std::move(form))
+Request::Request(
+        RequestMethod method,
+        std::string path,
+        std::vector<Query> queries,
+        std::vector<Cookie> cookies,
+        Form form)
+    : method_{method},
+      path_{std::move(path)},
+      queries_{std::move(queries)},
+      cookies_{std::move(cookies)},
+      form_{std::move(form)}
 {
 }
 
@@ -66,7 +66,7 @@ const std::string& Request::path() const
 
 const std::string& Request::query(std::string_view name) const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query){
+    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
         return query.name() == name;
     });
     if (it != queries_.end())
@@ -77,7 +77,7 @@ const std::string& Request::query(std::string_view name) const
 
 bool Request::hasQuery(std::string_view name) const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query){
+    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
         return query.name() == name;
     });
     return (it != queries_.end());
@@ -85,7 +85,7 @@ bool Request::hasQuery(std::string_view name) const
 
 const std::string& Request::cookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie){
+    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
         return cookie.name() == name;
     });
     if (it != cookies_.end())
@@ -96,10 +96,15 @@ const std::string& Request::cookie(std::string_view name) const
 
 bool Request::hasCookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie){
+    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
         return cookie.name() == name;
     });
     return (it != cookies_.end());
+}
+
+const Form& Request::form() const
+{
+    return form_;
 }
 
 const std::string& Request::formField(std::string_view name, int index) const
@@ -174,12 +179,12 @@ const std::string& Request::fileType(std::string_view name, int index) const
     return valueNotFound;
 }
 
-const Queries& Request::queries() const
+const std::vector<Query>& Request::queries() const
 {
     return queries_;
 }
 
-const Cookies& Request::cookies() const
+const std::vector<Cookie>& Request::cookies() const
 {
     return cookies_;
 }

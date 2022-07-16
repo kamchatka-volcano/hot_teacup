@@ -3,9 +3,11 @@
 #include <string>
 
 namespace http{
+class QueryView;
 
 class Query{
 public:
+    explicit Query(const QueryView&);
     Query(std::string name, std::string value);
     const std::string& name() const;
     const std::string& value() const;
@@ -17,16 +19,15 @@ private:
     std::string value_;
 };
 
-using Queries = std::vector<Query>;
 bool operator==(const Query& lhs, const Query& rhs);
 std::string pathWithQueries(const std::string& path,
-                            const Queries& queries,
+                            const std::vector<Query>& queries,
                             const std::vector<std::string>& queryBlackList = {});
 std::string pathWithQuery(const std::string& path, const Query& query);
 
-Queries queriesFromString(std::string_view input);
-
-std::string queriesToString(const Queries& queries,
+std::string queriesToString(const std::vector<Query>& queries,
                             const std::vector<std::string>& queryBlackList = {});
+
+std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList);
 }
 

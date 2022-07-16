@@ -144,6 +144,23 @@ constexpr const char* methodToString(RequestMethod method)
     }
 }
 
+enum class FormFieldType {
+    Param,
+    File
+};
+
+enum class FormType{
+    UrlEncoded,
+    Multipart
+};
+
+enum class HeaderQuotingMode{
+    None,
+    HeaderValue,
+    ParamValue,
+    AllValues
+};
+
 namespace detail{
 constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)
 {

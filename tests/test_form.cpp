@@ -1,7 +1,8 @@
 #include <hot_teacup/form.h>
+#include <hot_teacup/form_view.h>
 #include <gtest/gtest.h>
 
-TEST(Form, WithoutFile)
+TEST(FormView, WithoutFileFromString)
 {
     const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
@@ -39,7 +40,7 @@ TEST(Form, WithoutFileToString)
     EXPECT_EQ(http::multipartFormToString(form, "----WebKitFormBoundaryHQl9TEASIs9QyFWx"), expectedMultipartFormData);
 }
 
-TEST(Form, WithEmptyFile)
+TEST(FormView, WithEmptyFileFromString)
 {
     const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
@@ -90,7 +91,7 @@ TEST(Form, WithEmptyFileToString)
 
 
 
-TEST(Form, WithFile)
+TEST(FormView, WithFileFromString)
 {
     const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
@@ -117,6 +118,36 @@ TEST(Form, WithFile)
     EXPECT_EQ(form.at("param3").fileName(), "test.gif");
     EXPECT_EQ(form.at("param3").fileType(), "image/gif");
     EXPECT_EQ(form.at("param3").value(), "test-gif-data");
+}
+
+TEST(FormView, FormFromFormView)
+{
+    const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
+    const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
+                          "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+
+    const auto formView = http::formFromString(formContentType, formData);
+    const auto form = http::makeForm(formView);
+    ASSERT_EQ(form.size(), 3);
+    EXPECT_EQ(form.count("param1"), 1);
+    EXPECT_EQ(form.at("param1").value(), "foo");
+    EXPECT_EQ(form.at("param1").type(), http::FormFieldType::Param);
+    EXPECT_EQ(form.count("param2"), 1);
+    EXPECT_EQ(form.at("param2").value(), "bar ");
+    EXPECT_EQ(form.at("param2").type(), http::FormFieldType::Param);
+    EXPECT_EQ(form.count("param3"), 1);
+    EXPECT_EQ(form.at("param3").type(), http::FormFieldType::File);
+    EXPECT_EQ(form.at("param3").hasFile(), true);
+    EXPECT_EQ(form.at("param3").fileName(), "test.gif");
+    EXPECT_EQ(form.at("param3").fileType(), "image/gif");
+    EXPECT_EQ(form.at("param3").value(), "test-gif-data");
+
 }
 
 TEST(Form, WithFileToString)
@@ -163,7 +194,7 @@ TEST(Form, WithFileWithoutFileTypeToString)
 }
 
 
-TEST(Form, WithoutName)
+TEST(FormView, WithoutNameFromString)
 {
     {
         const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
@@ -185,7 +216,7 @@ TEST(Form, WithoutName)
     }
 }
 
-TEST(Form, WithoutBoundary)
+TEST(FormView, WithoutBoundaryFromString)
 {
     {
         const auto formContentType = "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx";
@@ -218,7 +249,7 @@ TEST(Form, WithoutBoundary)
     }
 }
 
-TEST(Form, UrlEncoded)
+TEST(FormView, UrlEncodedFromString)
 {
     const auto formContentType = "application/x-www-form-urlencoded";
     const auto formData = "param1=foo&param2=bar&flag&param4=";
@@ -233,7 +264,23 @@ TEST(Form, UrlEncoded)
     EXPECT_EQ(form.at("param4").value(), "");
 }
 
-TEST(Form, UrlEncodedWithoutName)
+TEST(FormView, FormFromUrlEncodedFormView)
+{
+    const auto formContentType = "application/x-www-form-urlencoded";
+    const auto formData = "param1=foo&param2=bar&flag&param4=";
+
+    const auto formView = http::formFromString(formContentType, formData);
+    const auto form = http::makeForm(formView);
+    ASSERT_EQ(form.size(), 3);
+    EXPECT_EQ(form.count("param1"), 1);
+    EXPECT_EQ(form.at("param1").value(), "foo");
+    EXPECT_EQ(form.count("param2"), 1);
+    EXPECT_EQ(form.at("param2").value(), "bar");
+    EXPECT_EQ(form.count("param4"), 1);
+    EXPECT_EQ(form.at("param4").value(), "");
+}
+
+TEST(FormView, UrlEncodedWithoutNameFromString)
 {
     const auto formContentType = "application/x-www-form-urlencoded";
     {

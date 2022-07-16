@@ -7,6 +7,7 @@
 #include <string>
 
 namespace http{
+class RequestView;
 
 struct RequestFcgiData{
     std::map<std::string, std::string> params;
@@ -16,17 +17,8 @@ struct RequestFcgiData{
 class Request
 {
 public:
-    Request(std::string_view fcgiParamRequestMethod,
-            std::string_view fcgiParamRemoteAddr,
-            std::string_view fcgiParamHttpHost,
-            std::string_view fcgiParamRequestUri,
-            std::string_view fcgiParamQueryString,
-            std::string_view fcgiParamHttpCookie,
-            std::string_view fcgiParamContentType,
-            std::string_view fcgiStdIn);
-
-    explicit Request(RequestMethod, std::string path, Queries = {}, Cookies = {}, Form = {});
-
+    explicit Request(const RequestView&);
+    Request(RequestMethod, std::string path, std::vector<Query> = {}, std::vector<Cookie> = {}, Form = {});
     void setIpAddress(const std::string& ipAddress);
     void setDomain(const std::string& domain);
 
@@ -35,14 +27,15 @@ public:
     const std::string& domainName() const;
     const std::string& path() const;
 
-    const Queries& queries() const;
+    const std::vector<Query>& queries() const;
     const std::string& query(std::string_view name) const;
     bool hasQuery(std::string_view name) const;
 
-    const Cookies& cookies() const;
+    const std::vector<Cookie>& cookies() const;
     const std::string& cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
+    const Form& form() const;
     const std::string& formField(std::string_view name, int index = 0) const;
     std::vector<std::string> formFieldList() const;
     std::vector<std::string> fileList() const;
@@ -63,8 +56,8 @@ private:
     std::string ipAddress_;
     std::string domainName_;
     std::string path_;
-    Queries queries_;
-    Cookies cookies_;
+    std::vector<Query> queries_;
+    std::vector<Cookie> cookies_;
     Form form_;
 
 private:

@@ -1,4 +1,5 @@
 #include <hot_teacup/header.h>
+#include <hot_teacup/header_view.h>
 #include <sfun/string_utils.h>
 #include <stdexcept>
 #include <utility>
@@ -6,48 +7,61 @@
 namespace http{
 namespace str = sfun::string_utils;
 
-Header::Param::Param(std::string name)
+HeaderParam::HeaderParam(const HeaderParamView& paramView)
+    : name_{paramView.name()}
+{
+    if (paramView.hasValue())
+        value_ = std::string{paramView.value()};
+}
+
+HeaderParam::HeaderParam(std::string name)
     : name_{std::move(name)}
-    , hasValue_{false}
 {}
 
-Header::Param::Param(std::string name, std::string value)
+HeaderParam::HeaderParam(std::string name, std::string value)
     : name_{std::move(name)}
     , value_{std::move(value)}
-    , hasValue_{true}
 {}
 
-const std::string& Header::Param::name() const
+const std::string& HeaderParam::name() const
 {
     return name_;
 }
 
-const std::string& Header::Param::value() const
+const std::string& HeaderParam::value() const
 {
-    return value_;
+    if (value_)
+        return *value_;
+    return valueNotFound;
 }
 
-std::string Header::Param::toString(QuotingMode quotingMode) const
+std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
 {
     auto res = name_;
-    if (!hasValue_)
+    if (!value_)
         return res;
     res += "=";
     switch (quotingMode) {
-        case QuotingMode::ParamValue:
-        case QuotingMode::AllValues:
-            res += "\"" + value_ + "\"";
+        case HeaderQuotingMode::ParamValue:
+        case HeaderQuotingMode::AllValues:
+            res += "\"" + *value_ + "\"";
         break;
         default:
-            res += value_;
+            res += *value_;
     }
     return res;
+}
+
+Header::Header(const HeaderView& headerView)
+    : name_{headerView.name()}
+    , value_{headerView.value()}
+    , params_{makeHeaderParams(headerView.params())}
+{
 }
 
 Header::Header(std::string name, std::string value)
     : name_{std::move(name)}
     , value_{std::move(value)}
-    , quotingMode_{QuotingMode::None}
 {
 }
 
@@ -58,7 +72,7 @@ void Header::setParam(std::string name)
 
     for (auto& param : params_)
         if (param.name() == name){
-            param = Param{std::move(name)};
+            param = HeaderParam{std::move(name)};
             return;
         }
     params_.emplace_back(std::move(name));
@@ -71,19 +85,19 @@ void Header::setParam(std::string name, std::string value)
 
     for (auto& param : params_)
         if (param.name() == name){
-            param = Param{std::move(name), std::move(value)};
+            param = HeaderParam{std::move(name), std::move(value)};
             return;
         }
     params_.emplace_back(std::move(name), std::move(value));
 }
 
-void Header::setQuotingMode(QuotingMode mode)
+void Header::setQuotingMode(HeaderQuotingMode mode)
 {
     quotingMode_ = mode;
 }
 
 namespace {
-std::string valueStr(const std::string& value, bool hasParams, Header::QuotingMode quotingMode)
+std::string valueStr(const std::string& value, bool hasParams, HeaderQuotingMode quotingMode)
 {
     if (value.empty()){
         if (!hasParams)
@@ -93,8 +107,8 @@ std::string valueStr(const std::string& value, bool hasParams, Header::QuotingMo
     }
 
     switch (quotingMode) {
-        case Header::QuotingMode::HeaderValue:
-        case Header::QuotingMode::AllValues:
+        case HeaderQuotingMode::HeaderValue:
+        case HeaderQuotingMode::AllValues:
             return "\"" + value + "\"";
         default:
             return value;
@@ -103,7 +117,7 @@ std::string valueStr(const std::string& value, bool hasParams, Header::QuotingMo
 
 }
 
-const std::vector<Header::Param>& Header::params() const
+const std::vector<HeaderParam>& Header::params() const
 {
     return params_;
 }
@@ -154,39 +168,9 @@ void addParamToHeader(Header& header, std::string_view paramPart)
         return;
     auto name = str::trimFront(str::before(paramPart,"="));
     auto value = unquoted(str::after(paramPart,"="));
-    header.setParam(std::move(name), std::move(value));
+    header.setParam(std::string{name}, std::move(value));
 };
 
-}
-
-std::optional<Header> headerFromString(std::string_view input)
-{
-    const auto parts = str::split(input, ";", false);
-    if (parts.empty())
-        return {};
-
-    if (parts[0].find(':') == std::string::npos)
-        return {};
-
-    auto name = str::trim(str::before(parts[0], ":"));
-    auto value = unquoted(str::trimFront(str::after(parts[0], ":")));
-    if (name.empty())
-        return {};
-
-    const auto valueIsParam = (value.find('=') != std::string::npos);
-    if (valueIsParam){
-        auto header = Header{std::move(name), ""};
-        addParamToHeader(header, value);
-        for (auto i = 1u; i < parts.size(); ++i)
-            addParamToHeader(header, parts[i]);
-        return header;
-    }
-    else{
-        auto header = Header{std::move(name), std::move(value)};
-        for (auto i = 1u; i < parts.size(); ++i)
-            addParamToHeader(header, parts[i]);
-        return header;
-    }
 }
 
 const std::string& Header::name() const
@@ -197,6 +181,26 @@ const std::string& Header::name() const
 const std::string& Header::value() const
 {
     return value_;
+}
+
+std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)
+{
+    auto result = std::vector<HeaderParam>{};
+    std::transform(headerParamViewList.begin(), headerParamViewList.end(), std::back_inserter(result),
+            [](const auto& headerParamView) {
+                return HeaderParam{headerParamView};
+            });
+    return result;
+}
+
+std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
+{
+    auto result = std::vector<Header>{};
+    std::transform(headerViewList.begin(), headerViewList.end(), std::back_inserter(result),
+            [](const auto& headerView) {
+                return Header{headerView};
+            });
+    return result;
 }
 
 }

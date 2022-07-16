@@ -7,10 +7,12 @@
 #include <chrono>
 
 namespace http{
+class CookieView;
 
 class Cookie{
 
 public:
+    explicit Cookie(const CookieView& cookieView);
     Cookie(std::string name,
            std::string value);
 
@@ -31,7 +33,6 @@ public:
 
     std::string toString() const;
     friend bool operator==(const Cookie& lhs, const Cookie& rhs);
-    friend std::optional<Cookie> cookieFromHeader(const Header& header);
 
 private:
     explicit Cookie(Header header);
@@ -40,11 +41,10 @@ private:
     Header header_;
 };
 
-using Cookies = std::vector<Cookie>;
 bool operator==(const Cookie& lhs, const Cookie& rhs);
-Cookies cookiesFromString(std::string_view input);
-std::string cookiesToString(const Cookies& cookies);
-std::optional<Cookie> cookieFromHeader(const Header& header);
+std::string cookiesToString(const std::vector<Cookie>& cookies);
+
+std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);
 
 }
 

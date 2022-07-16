@@ -1,14 +1,15 @@
 #include <hot_teacup/request.h>
+#include <hot_teacup/request_view.h>
 #include <hot_teacup/types.h>
 #include <gtest/gtest.h>
 #include <functional>
 
 
-TEST(Request, RequestMethodParam)
+TEST(RequestView, RequestMethodParam)
 {
-    auto testRequestType = [&](const std::string& typeStr, http::RequestMethod expectedMethod)
+    auto testRequestType = [&](std::string_view typeStr, http::RequestMethod expectedMethod)
     {
-        auto request = http::Request{typeStr, {}, {}, {}, {}, {}, {}, {}};
+        auto request = http::RequestView{typeStr, {}, {}, {}, {}, {}, {}, {}};
         EXPECT_EQ(request.method(), expectedMethod);
     };
 
@@ -23,28 +24,56 @@ TEST(Request, RequestMethodParam)
     testRequestType("OPTIONS", http::RequestMethod::OPTIONS);
 }
 
-TEST(Request, RequestIpAddress)
+TEST(RequestView, RequestFromRequestViewWithMethodParam)
 {
-    auto request = http::Request{{}, "127.0.0.1", {}, {}, {}, {}, {}, {}};
+    auto requestView = http::RequestView{"GET", {}, {}, {}, {}, {}, {}, {}};
+    auto request = http::Request{requestView};
+    EXPECT_EQ(request.method(), http::RequestMethod::GET);
+}
+
+TEST(RequestView, RequestIpAddress)
+{
+    auto request = http::RequestView{{}, "127.0.0.1", {}, {}, {}, {}, {}, {}};
     EXPECT_EQ(request.ipAddress(), "127.0.0.1");
 }
 
-TEST(Request, RequestDomain)
+TEST(RequestView, RequestFromRequestViewWithIpAddress)
 {
-    auto request = http::Request{{}, {}, "localhost", {}, {}, {}, {}, {}};
+    auto requestView = http::RequestView{{}, "127.0.0.1", {}, {}, {}, {}, {}, {}};
+    auto request = http::Request{requestView};
+    EXPECT_EQ(request.ipAddress(), "127.0.0.1");
+}
+
+TEST(RequestView, RequestDomain)
+{
+    auto request = http::RequestView{{}, {}, "localhost", {}, {}, {}, {}, {}};
     EXPECT_EQ(request.domainName(), "localhost");
 }
 
-TEST(Request, RequestPath)
+TEST(RequestView, ReqeustFromRequestViewWithDomain)
 {
-    auto request = http::Request{{}, {}, {}, "/test", {}, {}, {}, {}};
+    auto requestView = http::RequestView{{}, {}, "localhost", {}, {}, {}, {}, {}};
+    auto request = http::Request{requestView};
+    EXPECT_EQ(request.domainName(), "localhost");
+}
+
+TEST(RequestView, RequestPath)
+{
+    auto request = http::RequestView{{}, {}, {}, "/test", {}, {}, {}, {}};
     EXPECT_EQ(request.path(), "/test");
 }
 
-TEST(Request, Queries)
+TEST(RequestView, RequestFromRequestViewWithPath)
 {
-    const auto request = http::Request{"GET", {}, {}, {}, "param1=foo&param2=bar", {}, {}, {}};
-    const auto expectedQueries = http::Queries{{"param1", std::string{"foo"}},
+    auto requestView = http::RequestView{{}, {}, {}, "/test", {}, {}, {}, {}};
+    auto request = http::Request{requestView};
+    EXPECT_EQ(request.path(), "/test");
+}
+
+TEST(RequestView, Queries)
+{
+    const auto request = http::RequestView{"GET", {}, {}, {}, "param1=foo&param2=bar", {}, {}, {}};
+    const auto expectedQueries = std::vector<http::QueryView>{{"param1", std::string{"foo"}},
                                                {"param2", std::string{"bar"}}};
     EXPECT_EQ(request.queries(), expectedQueries);
     EXPECT_TRUE(request.hasQuery("param1"));
@@ -56,9 +85,25 @@ TEST(Request, Queries)
     EXPECT_EQ(request.query("param3"), "");
 }
 
-TEST(Request, Queries2)
+TEST(RequestView, RequestFromRequestViewWithQueries)
 {
-    const auto expectedQueries = http::Queries{{"param1", std::string{"foo"}},
+    const auto requestView = http::RequestView{"GET", {}, {}, {}, "param1=foo&param2=bar", {}, {}, {}};
+    const auto request = http::Request{requestView};
+    const auto expectedQueries = std::vector<http::Query>{{"param1", std::string{"foo"}},
+                                               {"param2", std::string{"bar"}}};
+    EXPECT_EQ(request.queries(), expectedQueries);
+    EXPECT_TRUE(request.hasQuery("param1"));
+    EXPECT_EQ(request.query("param1"), "foo");
+    EXPECT_TRUE(request.hasQuery("param2"));
+    EXPECT_EQ(request.query("param2"), "bar");
+
+    EXPECT_FALSE(request.hasQuery("param3"));
+    EXPECT_EQ(request.query("param3"), "");
+}
+
+TEST(Request, Queries)
+{
+    const auto expectedQueries = std::vector<http::Query>{{"param1", std::string{"foo"}},
                                                {"param2", std::string{"bar"}}};
     const auto request = http::Request{http::RequestMethod::GET, "/", expectedQueries, {}, {}};
     EXPECT_EQ(request.queries(), expectedQueries);
@@ -71,9 +116,9 @@ TEST(Request, Queries2)
     EXPECT_EQ(request.query("param3"), "");
 }
 
-TEST(Request, Cookies)
+TEST(RequestView, Cookies)
 {
-    const auto request = http::Request{"GET", {}, {}, {}, {}, "param1=foo;param2=bar", {}, {}};
+    const auto request = http::RequestView{"GET", {}, {}, {}, {}, "param1=foo;param2=bar", {}, {}};
     const auto expectedCookieList = std::vector<std::string>{"param1", "param2"};
     EXPECT_TRUE(request.hasCookie("param1"));
     EXPECT_EQ(request.cookie("param1"), "foo");
@@ -84,11 +129,26 @@ TEST(Request, Cookies)
     EXPECT_EQ(request.cookie("param3"), "");
 }
 
-TEST(Request, Cookies2)
+TEST(RequestView, RequestFromRequestViewWithCookies)
 {
-    const auto expectedCookies = http::Cookies{{"param1", "foo"}, {"param2", "bar"}};
+    const auto requestView = http::RequestView{"GET", {}, {}, {}, {}, "param1=foo;param2=bar", {}, {}};
+    const auto request = http::Request{requestView};
+    const auto expectedCookieList = std::vector<std::string>{"param1", "param2"};
+    EXPECT_TRUE(request.hasCookie("param1"));
+    EXPECT_EQ(request.cookie("param1"), "foo");
+    EXPECT_TRUE(request.hasCookie("param2"));
+    EXPECT_EQ(request.cookie("param2"), "bar");
+
+    EXPECT_FALSE(request.hasCookie("param3"));
+    EXPECT_EQ(request.cookie("param3"), "");
+}
+
+
+TEST(Request, Cookies)
+{
+    const auto expectedCookies = std::vector<http::Cookie>{{"param1", "foo"}, {"param2", "bar"}};
     const auto request = http::Request{http::RequestMethod::GET, "/",
-                                       http::Queries{},
+                                       {},
                                        expectedCookies,
                                        {}};
     EXPECT_TRUE(request.hasCookie("param1"));
@@ -100,7 +160,7 @@ TEST(Request, Cookies2)
     EXPECT_EQ(request.cookie("param3"), "");
 }
 
-TEST(Request, MultipartFormWithFile)
+TEST(RequestView, MultipartFormWithFile)
 {
     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
                           "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
@@ -111,7 +171,7 @@ TEST(Request, MultipartFormWithFile)
                           "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
 
-    const auto request = http::Request{"GET", {}, {}, {}, {}, {}, "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx", formData};
+    const auto request = http::RequestView{"GET", {}, {}, {}, {}, {}, "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx", formData};
     const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
@@ -128,7 +188,36 @@ TEST(Request, MultipartFormWithFile)
     EXPECT_EQ(request.fileType("param3"), "image/gif");
 }
 
-TEST(Request, MultipartFormWithFile2)
+TEST(RequestView, FormFromMultipartFormViewWithFile)
+{
+    const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                          "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
+                          "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
+                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+
+    const auto requestView = http::RequestView{"GET", {}, {}, {}, {}, {}, "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx", formData};
+    const auto request = http::Request{requestView};
+    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
+    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
+    EXPECT_TRUE(request.hasFormField("param1"));
+    EXPECT_EQ(request.formField("param1"), "foo");
+    EXPECT_TRUE(request.hasFormField("param2"));
+    EXPECT_EQ(request.formField("param2"), "bar ");
+
+    EXPECT_TRUE(request.hasFiles());
+    EXPECT_FALSE(request.hasFormField("param3"));
+    EXPECT_EQ(request.formField("param3"), "");
+    EXPECT_TRUE(request.hasFile("param3"));
+    EXPECT_EQ(request.fileData("param3"), "test-gif-data");
+    EXPECT_EQ(request.fileName("param3"), "test.gif");
+    EXPECT_EQ(request.fileType("param3"), "image/gif");
+}
+
+TEST(Request, MultipartFormWithFile)
 {
     auto form = http::Form{
         {"param1", http::FormField{"foo"}},
@@ -152,11 +241,11 @@ TEST(Request, MultipartFormWithFile2)
     EXPECT_EQ(request.fileType("param3"), "image/gif");
 }
 
-TEST(Request, UrlEncodedForm)
+TEST(RequestView, UrlEncodedForm)
 {
     const auto formData = "param1=foo&param2=bar&flag&param4=";
 
-    const auto request = http::Request{"GET", {}, {}, {}, {}, {},
+    const auto request = http::RequestView{"GET", {}, {}, {}, {}, {},
                                        "application/x-www-form-urlencoded", formData};
     auto expectedFormFieldList = std::vector<std::string>{"param1", "param2", "param4"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
@@ -177,7 +266,7 @@ TEST(Request, UrlEncodedForm)
 }
 
 
-TEST(Request, UrlEncodedForm2)
+TEST(Request, UrlEncodedForm)
 {
     const auto form = http::Form{{"param1", http::FormField{"foo"}},
                                  {"param2", http::FormField{"bar"}},

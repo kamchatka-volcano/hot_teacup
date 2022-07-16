@@ -1,12 +1,16 @@
 #include <hot_teacup/cookie.h>
+#include <hot_teacup/cookie_view.h>
 #include <sfun/string_utils.h>
 
 namespace http {
 namespace str = sfun::string_utils;
 
-Cookie::Cookie(std::string name,
-               std::string value)
-        : header_("Set-Cookie", "")
+Cookie::Cookie(const CookieView& cookieView)
+    : Cookie{Header{cookieView.asHeader()}}
+{}
+
+Cookie::Cookie(std::string name, std::string value)
+    : header_{"Set-Cookie", ""}
 {
     header_.setParam(std::move(name), std::move(value));
 }
@@ -50,8 +54,7 @@ std::optional<std::chrono::seconds> Cookie::maxAge() const
         } catch (...) {
             return {};
         }
-    }
-    else
+    } else
         return {};
 }
 
@@ -100,24 +103,11 @@ std::string Cookie::toString() const
 
 bool operator==(const Cookie& lhs, const Cookie& rhs)
 {
-    return lhs.name()== rhs.name() &&
+    return lhs.name() == rhs.name() &&
            lhs.value() == rhs.value();
 }
 
-Cookies cookiesFromString(std::string_view input)
-{
-    auto result = Cookies{};
-    std::vector<std::string> cookies = str::split(input, ";");
-    for (const std::string& cookie: cookies) {
-        auto name = str::before(cookie, "=");
-        auto value = str::after(cookie, "=");
-        if (!name.empty() && !value.empty())
-            result.emplace_back(str::trim(name), str::trim(value));
-    }
-    return result;
-}
-
-std::string cookiesToString(const Cookies& cookies)
+std::string cookiesToString(const std::vector<Cookie>& cookies)
 {
     auto result = std::string{};
     for (const auto& cookie: cookies)
@@ -127,12 +117,14 @@ std::string cookiesToString(const Cookies& cookies)
     return result;
 }
 
-std::optional<Cookie> cookieFromHeader(const Header& header)
+std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
 {
-    if (header.params().empty())
-        return std::nullopt;
-
-    return Cookie{header};
+    std::vector<Cookie> result;
+    std::transform(cookieViewList.begin(), cookieViewList.end(), std::back_inserter(result),
+                   [](const auto& cookieView) {
+                       return Cookie{cookieView};
+                   });
+    return result;
 }
 
 }

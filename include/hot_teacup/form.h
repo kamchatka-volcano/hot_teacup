@@ -1,5 +1,5 @@
 #pragma once
-#include "header.h"
+#include "types.h"
 #include <string_view>
 #include <string>
 #include <vector>
@@ -7,16 +7,7 @@
 #include <map>
 
 namespace http{
-
-enum class FormFieldType {
-    Param,
-    File
-};
-
-enum class FormType{
-    UrlEncoded,
-    Multipart
-};
+class FormFieldView;
 
 class FormField{
     struct FormFile{
@@ -26,6 +17,7 @@ class FormField{
     };
 
 public:
+    explicit FormField(const FormFieldView&);
     explicit FormField(std::string value = {});
     FormField(std::string fileData, std::string fileName, std::optional<std::string> fileType = {});
 
@@ -42,10 +34,10 @@ private:
 };
 
 using Form = std::map<std::string, FormField>;
-
-Form formFromString(std::string_view contentTypeHeader, std::string_view contentFields);
 std::string multipartFormToString(const Form& form, const std::string& formBoundary);
 std::string urlEncodedFormToString(const Form& form);
+
+Form makeForm(const std::map<std::string, FormFieldView>& formView);
 
 }
 

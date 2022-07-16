@@ -1,4 +1,5 @@
 #include <hot_teacup/response.h>
+#include <hot_teacup/response_view.h>
 #include <gtest/gtest.h>
 #include <functional>
 
@@ -28,13 +29,13 @@ void testResponseWithHeaders(const http::Response& testResponse, const std::stri
     {
         auto response = testResponse;
         response.addHeader(http::Header{"Host", std::string{"HotTeacup"}});
-        response.addHeader(http::Header{"User-Agent", std::string{"gtest"}});        
+        response.addHeader(http::Header{"User-Agent", std::string{"gtest"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
     {
         auto response = testResponse;
         response.addHeaders({http::Header{"Host", std::string{"HotTeacup"}},
-                             http::Header{"User-Agent", std::string{"gtest"}}});        
+                             http::Header{"User-Agent", std::string{"gtest"}}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -306,7 +307,7 @@ TEST(Response, RawResponse)
     EXPECT_EQ(response.data(), expectedResponse);
 }
 
-TEST(Response, ResponseFromString)
+TEST(ResponseView, ResponseFromString)
 {
     auto responseString = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
                                         "\r\n"};
@@ -318,7 +319,7 @@ TEST(Response, ResponseFromString)
     EXPECT_EQ(response->body(), "");
 }
 
-TEST(Response, ResponseFromString2)
+TEST(ResponseView, ResponseFromString2)
 {
     auto responseString = std::string{"HTTP/1.1 200 OK\r\nSet-Cookie: id=hello; Max-Age=60\r\nLocation: /\r\n"
                                         "\r\nHello world"};
@@ -333,7 +334,24 @@ TEST(Response, ResponseFromString2)
     EXPECT_EQ(response->body(), "Hello world");
 }
 
-TEST(Response, ResponseFromStringPartialStatus)
+TEST(ResponseView, ResponseFromResponseView)
+{
+    auto responseString = std::string{"HTTP/1.1 200 OK\r\nSet-Cookie: id=hello; Max-Age=60\r\nLocation: /\r\n"
+                                        "\r\nHello world"};
+    auto responseView = http::responseFromString(responseString);
+    ASSERT_TRUE(responseView);
+    auto response = http::Response(*responseView);
+    EXPECT_EQ(response.status(), http::ResponseStatus::Code_200_Ok);
+    EXPECT_EQ(response.cookies().at(0).name(), "id");
+    EXPECT_EQ(response.cookies().at(0).value(), "hello");
+    EXPECT_EQ(response.cookies().at(0).maxAge(), std::chrono::minutes{1});
+    EXPECT_EQ(response.headers().at(0).name(), "Location");
+    EXPECT_EQ(response.headers().at(0).value(), "/");
+    EXPECT_EQ(response.body(), "Hello world");
+}
+
+
+TEST(ResponseView, ResponseFromStringPartialStatus)
 {
     auto responseString = std::string{"HTTP/1.1 302 \r\nLocation: /\r\n"
                                         "\r\n"};
@@ -345,7 +363,7 @@ TEST(Response, ResponseFromStringPartialStatus)
     EXPECT_EQ(response->body(), "");
 }
 
-TEST(Response, ResponseFromStringPartialStatus2)
+TEST(ResponseView, ResponseFromStringPartialStatus2)
 {
     auto responseString = std::string{"HTTP/1.1 302\r\nLocation: /\r\n"
                                         "\r\n"};
