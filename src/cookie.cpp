@@ -9,10 +9,26 @@ Cookie::Cookie(const CookieView& cookieView)
     : Cookie{Header{cookieView.asHeader()}}
 {}
 
-Cookie::Cookie(std::string name, std::string value)
+Cookie::Cookie(std::string name,
+               std::string value,
+               std::optional<std::string> domain,
+               std::optional<std::string> path,
+               std::optional<std::chrono::seconds> maxAge,
+               bool secure,
+               bool removed)
     : header_{"Set-Cookie", ""}
 {
     header_.setParam(std::move(name), std::move(value));
+    if (domain)
+        setDomain(*domain);
+    if (path)
+        setPath(*path);
+    if (maxAge)
+        setMaxAge(*maxAge);
+    if (secure)
+        setSecure();
+    if (removed)
+        setRemoved();
 }
 
 Cookie::Cookie(Header header)
@@ -70,28 +86,25 @@ bool Cookie::isRemoved() const
 
 void Cookie::setDomain(std::string domain)
 {
-    if (!domain.empty())
-        header_.setParam("Domain", std::move(domain));
+    header_.setParam("Domain", std::move(domain));
 }
 
 void Cookie::setPath(std::string path)
 {
-    if (!path.empty())
-        header_.setParam("Path", std::move(path));
+    header_.setParam("Path", std::move(path));
 }
 
 void Cookie::setMaxAge(const std::chrono::seconds& maxAge)
 {
-    if (maxAge.count() > 0)
-        header_.setParam("Max-Age", std::to_string(maxAge.count()));
+    header_.setParam("Max-Age", std::to_string(maxAge.count()));
 }
 
-void Cookie::remove()
+void Cookie::setRemoved()
 {
     header_.setParam("Max-Age", "0");
 }
 
-void Cookie::secure()
+void Cookie::setSecure()
 {
     header_.setParam("Secure");
 }

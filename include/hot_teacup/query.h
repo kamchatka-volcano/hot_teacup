@@ -18,16 +18,11 @@ private:
     std::string name_;
     std::string value_;
 };
-
 bool operator==(const Query& lhs, const Query& rhs);
+
 std::string pathWithQueries(const std::string& path,
-                            const std::vector<Query>& queries,
-                            const std::vector<std::string>& queryBlackList = {});
-std::string pathWithQuery(const std::string& path, const Query& query);
-
-std::string queriesToString(const std::vector<Query>& queries,
-                            const std::vector<std::string>& queryBlackList = {});
-
+                            const std::vector<Query>& queries);
+std::string queriesToString(const std::vector<Query>& queries);
 std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList);
 }
 

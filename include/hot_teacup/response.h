@@ -28,6 +28,7 @@ public:
     const std::vector<Header>& headers() const;
     std::string data() const;
 
+    void setBody(const std::string& body);
     void addCookie(Cookie cookie);
     void addHeader(Header header);
     void addCookies(const std::vector<Cookie>& cookies);
@@ -57,7 +58,7 @@ private:
     std::string body_;
     std::vector<Cookie> cookies_;
     std::vector<Header> headers_;
-    RawResponse rawResponse_;
+    std::optional<RawResponse> rawResponse_;
 };
 
 }

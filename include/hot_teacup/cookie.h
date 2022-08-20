@@ -14,22 +14,26 @@ class Cookie{
 public:
     explicit Cookie(const CookieView& cookieView);
     Cookie(std::string name,
-           std::string value);
+           std::string value,
+           std::optional<std::string> domain = {},
+           std::optional<std::string> path = {},
+           std::optional<std::chrono::seconds> maxAge = {},
+           bool secure  = false,
+           bool removed = false);
 
     const std::string& name() const;
     const std::string& value() const;
-
-    void setDomain(std::string domain);
-    void setPath(std::string path);
-    void setMaxAge(const std::chrono::seconds& maxAge);
-    void secure();
-    void remove();
-
     std::optional<std::string> domain() const;
     std::optional<std::string> path() const;
     std::optional<std::chrono::seconds> maxAge() const;
     bool isSecure() const;
     bool isRemoved() const;
+
+    void setDomain(std::string domain);
+    void setPath(std::string path);
+    void setMaxAge(const std::chrono::seconds& maxAge);
+    void setSecure();
+    void setRemoved();
 
     std::string toString() const;
     friend bool operator==(const Cookie& lhs, const Cookie& rhs);

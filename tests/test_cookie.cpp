@@ -68,7 +68,7 @@ TEST(Cookie, ToString)
         auto cookie = http::Cookie{"foo", "bar"};
         cookie.setDomain("localhost");
         cookie.setPath("/test");
-        cookie.remove();
+        cookie.setRemoved();
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost; Path=/test; Max-Age=0");
     }
 
@@ -76,7 +76,7 @@ TEST(Cookie, ToString)
         auto cookie = http::Cookie{"foo", "bar"};
         cookie.setDomain("localhost");
         cookie.setPath("/test");
-        cookie.secure();
+        cookie.setSecure();
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost; Path=/test; Secure");
     }
 
@@ -84,8 +84,8 @@ TEST(Cookie, ToString)
         auto cookie = http::Cookie{"foo", "bar"};
         cookie.setDomain("localhost");
         cookie.setPath("/test");
-        cookie.remove();
-        cookie.secure();
+        cookie.setRemoved();
+        cookie.setSecure();
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost; Path=/test; Max-Age=0; Secure");
     }
 

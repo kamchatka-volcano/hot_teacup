@@ -40,12 +40,11 @@ bool operator==(const Query& lhs, const Query& rhs)
            lhs.value_ == rhs.value_;
 }
 
-std::string queriesToString(const std::vector<Query>& queries, const std::vector<std::string>& queryBlackList)
+std::string queriesToString(const std::vector<Query>& queries)
 {
     auto result = std::string{};
     for (const auto& query : queries){
-        if (std::find(queryBlackList.begin(), queryBlackList.end(), query.name()) == queryBlackList.end())
-            result += query.toString() + "&";
+        result += query.toString() + "&";
     }
     if (!result.empty())
         result.resize(result.size() - 1); //remove last '&'
@@ -53,17 +52,11 @@ std::string queriesToString(const std::vector<Query>& queries, const std::vector
 }
 
 std::string pathWithQueries(const std::string& path,
-                            const std::vector<Query>& queries,
-                            const std::vector<std::string>& queryBlackList)
+                            const std::vector<Query>& queries)
 {
     if (queries.empty())
         return path;
-    return path + "?" + queriesToString(queries, queryBlackList);
-}
-
-std::string pathWithQuery(const std::string& path, const Query& query)
-{
-    return pathWithQueries(path, {query});
+    return path + "?" + queriesToString(queries);
 }
 
 std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)

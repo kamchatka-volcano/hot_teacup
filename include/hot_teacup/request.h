@@ -18,9 +18,13 @@ class Request
 {
 public:
     explicit Request(const RequestView&);
-    Request(RequestMethod, std::string path, std::vector<Query> = {}, std::vector<Cookie> = {}, Form = {});
-    void setIpAddress(const std::string& ipAddress);
-    void setDomain(const std::string& domain);
+    Request(RequestMethod,
+            std::string path,
+            std::string ipAddress = {},
+            std::string domain = {},
+            std::vector<Query> = {},
+            std::vector<Cookie> = {},
+            Form = {});
 
     RequestMethod method() const;
     const std::string& ipAddress() const;
@@ -50,6 +54,12 @@ public:
     bool hasFiles() const;
 
     RequestFcgiData toFcgiData(FormType) const;
+
+    void setIpAddress(const std::string& ipAddress);
+    void setDomain(const std::string& domain);
+    void setQueries(const std::vector<Query>&);
+    void setCookies(const std::vector<Cookie>&);
+    void setForm(const Form&);
 
 private:
     RequestMethod method_;

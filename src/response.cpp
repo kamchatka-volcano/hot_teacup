@@ -51,6 +51,11 @@ const std::vector<Header>& Response::headers() const
     return headers_;
 }
 
+void Response::setBody(const std::string& body)
+{
+    body_ = body;
+}
+
 void Response::addCookie(Cookie cookie)
 {
     cookies_.emplace_back(std::move(cookie));
@@ -94,8 +99,8 @@ std::string Response::headersData() const
 
 std::string Response::data() const
 {
-    if (!rawResponse_.data.empty())
-        return rawResponse_.data;
+    if (rawResponse_)
+        return rawResponse_->data;
 
     return statusData() +
            headersData() +

@@ -14,10 +14,6 @@ TEST(Query, ToString)
         auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         EXPECT_EQ(http::queriesToString(queries), "name=test&foo=bar");
     }
-    {
-        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
-        EXPECT_EQ(http::queriesToString(queries, {"foo"}), "name=test");
-    }
 }
 
 TEST(Query, PathWithQueries)
@@ -25,17 +21,12 @@ TEST(Query, PathWithQueries)
     {
         auto query = http::Query{"name", "test"};
         auto path = "/test/";
-        EXPECT_EQ(http::pathWithQuery(path, query), "/test/?name=test");
+        EXPECT_EQ(http::pathWithQueries(path, {query}), "/test/?name=test");
     }
     {
         auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
         auto path = "/test/";
         EXPECT_EQ(http::pathWithQueries(path, queries), "/test/?name=test&foo=bar");
-    }
-    {
-        auto queries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
-        auto path = "/test/";
-        EXPECT_EQ(http::pathWithQueries(path, queries, {"name"}), "/test/?foo=bar");
     }
 }
 

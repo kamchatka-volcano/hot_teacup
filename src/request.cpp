@@ -23,11 +23,15 @@ Request::Request(const RequestView& requestView)
 Request::Request(
         RequestMethod method,
         std::string path,
+        std::string ipAddress,
+        std::string domain,
         std::vector<Query> queries,
         std::vector<Cookie> cookies,
         Form form)
     : method_{method},
       path_{std::move(path)},
+      ipAddress_{std::move(ipAddress)},
+      domainName_{std::move(domain)},
       queries_{std::move(queries)},
       cookies_{std::move(cookies)},
       form_{std::move(form)}
@@ -42,6 +46,21 @@ void Request::setIpAddress(const std::string& ipAddress)
 void Request::setDomain(const std::string& domain)
 {
     domainName_ = domain;
+}
+
+void Request::setQueries(const std::vector<Query>& queries)
+{
+    queries_ = queries;
+}
+
+void Request::setCookies(const std::vector<Cookie>& cookies)
+{
+    cookies_ = cookies;
+}
+
+void Request::setForm(const Form& form)
+{
+    form_ = form;
 }
 
 RequestMethod Request::method() const
