@@ -152,27 +152,6 @@ std::string Header::toString() const
     return result;
 }
 
-namespace {
-std::string unquoted(std::string_view str)
-{
-    if (str::startsWith(str, "\""))
-        str.remove_prefix(1);
-    if (str::endsWith(str, "\""))
-        str.remove_suffix(1);
-    return std::string{str};
-}
-
-void addParamToHeader(Header& header, std::string_view paramPart)
-{
-    if (paramPart.find('=') == std::string::npos)
-        return;
-    auto name = str::trimFront(str::before(paramPart,"="));
-    auto value = unquoted(str::after(paramPart,"="));
-    header.setParam(std::string{name}, std::move(value));
-};
-
-}
-
 const std::string& Header::name() const
 {
     return name_;

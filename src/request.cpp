@@ -11,9 +11,9 @@ namespace str = sfun::string_utils;
 
 Request::Request(const RequestView& requestView)
     : method_{requestView.method()}
+    , path_{requestView.path()}
     , ipAddress_{requestView.ipAddress()}
     , domainName_{requestView.domainName()}
-    , path_{requestView.path()}
     , queries_{makeQueries(requestView.queries())}
     , cookies_{makeCookies(requestView.cookies())}
     , form_{makeForm(requestView.form())}

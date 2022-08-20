@@ -63,9 +63,9 @@ public:
 
 private:
     RequestMethod method_;
+    std::string path_;
     std::string ipAddress_;
     std::string domainName_;
-    std::string path_;
     std::vector<Query> queries_;
     std::vector<Cookie> cookies_;
     Form form_;
