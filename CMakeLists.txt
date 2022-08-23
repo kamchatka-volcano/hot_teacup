@@ -39,8 +39,15 @@ set(PUBLIC_HEADERS
 include(CheckPIESupported)
 check_pie_supported()
 
-add_library(hot_teacup STATIC ${SRC})
-add_library(hot_teacup::hot_teacup ALIAS hot_teacup)
+option(HOT_TEACUP_OBJECT_LIB "Use as object library" OFF)
+if (HOT_TEACUP_OBJECT_LIB)
+    add_library(hot_teacup OBJECT ${SRC})
+    add_library(hot_teacup::hot_teacup ALIAS hot_teacup)
+else()
+    add_library(hot_teacup STATIC ${SRC})
+    add_library(hot_teacup::hot_teacup ALIAS hot_teacup)
+endif()
+
 
 target_compile_features(hot_teacup PUBLIC cxx_std_17)
 set_target_properties(hot_teacup PROPERTIES CXX_EXTENSIONS OFF)
