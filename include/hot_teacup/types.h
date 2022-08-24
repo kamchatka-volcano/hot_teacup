@@ -3,6 +3,11 @@
 
 namespace http{
 
+enum class ResponseMode{
+    Standard,
+    CGI
+};
+
 enum class ResponseStatus{
     Code_100_Continue,
     Code_101_Switching_Protocol,

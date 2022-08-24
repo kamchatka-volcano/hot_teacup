@@ -26,7 +26,7 @@ public:
     const std::string& body() const;
     const std::vector<Cookie>& cookies() const;
     const std::vector<Header>& headers() const;
-    std::string data() const;
+    std::string data(ResponseMode mode = ResponseMode::Standard) const;
 
     void setBody(const std::string& body);
     void addCookie(Cookie cookie);
@@ -49,7 +49,7 @@ public:
     static Response Raw(std::string value);
 
 private:
-    std::string statusData() const;
+    std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
 

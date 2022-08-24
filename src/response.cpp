@@ -76,9 +76,12 @@ void Response::addHeaders(const std::vector<Header>& headers)
     std::copy(headers.begin(), headers.end(), std::back_inserter(headers_));
 }
 
-std::string Response::statusData() const
+std::string Response::statusData(ResponseMode mode) const
 {
-    return "HTTP/1.1 " + std::string{detail::statusToString(status_)} + "\r\n";
+    auto res = "HTTP/1.1 " + std::string{detail::statusToString(status_)} + "\r\n";
+    if (mode == ResponseMode::CGI)
+        res += "Status: " + std::string{detail::statusToString(status_)} + "\r\n";
+    return res;
 }
 
 std::string Response::cookiesData() const
@@ -97,12 +100,12 @@ std::string Response::headersData() const
     return result;
 }
 
-std::string Response::data() const
+std::string Response::data(ResponseMode mode) const
 {
     if (rawResponse_)
         return rawResponse_->data;
 
-    return statusData() +
+    return statusData(mode) +
            headersData() +
            cookiesData() +
            "\r\n" + body_;

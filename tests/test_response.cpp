@@ -185,6 +185,16 @@ TEST(Response, Status)
     EXPECT_EQ(response.data(), "HTTP/1.1 511 Network Authentication Required\r\n\r\n");
 }
 
+TEST(Response, StatusCGI)
+{
+    using Status = http::ResponseStatus;
+    auto response = http::Response{Status::Code_200_Ok};
+    EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 200 OK\r\nStatus: 200 OK\r\n\r\n");
+    response = http::Response{Status::Code_404_Not_Found};
+    EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\n\r\n");
+}
+
+
 TEST(Response, StatusWithCookies)
 {
     auto expectedResponse = "HTTP/1.1 404 Not Found\r\n"
