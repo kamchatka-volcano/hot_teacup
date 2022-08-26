@@ -75,7 +75,7 @@ std::optional<HeaderParamView> makeParam(std::string_view paramPart)
     auto name = str::trimFront(str::before(paramPart,"="));
     auto value = unquoted(str::after(paramPart,"="));
     return HeaderParamView{name, value};
-};
+}
 
 }
 

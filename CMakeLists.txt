@@ -55,7 +55,7 @@ set_target_properties(hot_teacup PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(hot_teacup PROPERTIES PUBLIC_HEADER "${PUBLIC_HEADERS}")
 set_target_properties(hot_teacup PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-find_package(sfun 2.1.1 QUIET)
+find_package(sfun 2.2.0 QUIET)
 if (NOT sfun_FOUND)
     message("Configuration info: sfun library wasn't found on your system, downloading it from the GitHub repository")
     include(external/sfun)
@@ -73,7 +73,6 @@ target_include_directories(
 
 option(ENABLE_TESTS "Enable tests" OFF)
 if (ENABLE_TESTS AND NOT HOT_TEACUP_SUBPROJECT)
-    enable_testing()
     add_subdirectory(tests)
 endif()
 

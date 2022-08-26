@@ -1,5 +1,6 @@
 #pragma once
 #include <string_view>
+#include <exception>
 
 namespace http{
 
@@ -100,6 +101,14 @@ enum class RequestMethod{
     PATCH
 };
 
+namespace detail {
+[[noreturn]]
+inline void ensureNotReachable() noexcept
+{
+    std::terminate();
+}
+}
+
 constexpr RequestMethod methodFromString(std::string_view typeStr)
 {
     if (typeStr == "GET")
@@ -147,6 +156,7 @@ constexpr const char* methodToString(RequestMethod method)
     case RequestMethod::PATCH:
         return "PATCH";
     }
+    detail::ensureNotReachable();
 }
 
 enum class FormFieldType {
@@ -187,6 +197,7 @@ constexpr ResponseStatus redirectTypeStatus(RedirectType redirectType)
     case Type::NotModified:
         return Status::Code_304_Not_Modified;
     }
+    detail::ensureNotReachable();
 }
 
 constexpr const char* statusToString(ResponseStatus status)
@@ -255,6 +266,7 @@ constexpr const char* statusToString(ResponseStatus status)
     case Status::Code_510_Not_Extended: return "510 Not Extended";
     case Status::Code_511_Network_Authentication_Required: return "511 Network Authentication Required";
     }
+    detail::ensureNotReachable();
 }
 
 constexpr ResponseStatus statusFromCode(int statusCode)
@@ -399,6 +411,7 @@ constexpr const char* contentTypeToString(ContentType type)
     case ContentType::PlainText:
         return "text/plain";
     }
+    detail::ensureNotReachable();
 }
 
 }
