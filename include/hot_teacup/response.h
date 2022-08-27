@@ -39,6 +39,10 @@ public:
                             ContentType contentType = ContentType::HTML,
                             const std::vector<Cookie>& cookies = {},
                             const std::vector<Header>& headers = {});
+    static Response Content(std::string text,
+                            std::string contentType,
+                            const std::vector<Cookie>& cookies = {},
+                            const std::vector<Header>& headers = {});
 
     static Response Redirect(const std::string& path,
                              RedirectType type = RedirectType::Found,

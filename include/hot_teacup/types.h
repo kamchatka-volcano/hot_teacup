@@ -76,7 +76,8 @@ enum class ResponseStatus{
 enum class ContentType{
     HTML,
     XHTML,
-    PlainText
+    PlainText,
+    JSON
 };
 
 enum class RedirectType{
@@ -410,6 +411,8 @@ constexpr const char* contentTypeToString(ContentType type)
         return "application/xhtml+xml";
     case ContentType::PlainText:
         return "text/plain";
+    case ContentType::JSON:
+        return "application/json";
     }
     detail::ensureNotReachable();
 }

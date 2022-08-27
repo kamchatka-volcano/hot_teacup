@@ -131,15 +131,24 @@ Response Response::Content(std::string text,
                            const std::vector<Cookie>& cookies,
                            const std::vector<Header>& headers)
 {
+    return Response::Content(std::move(text), detail::contentTypeToString(contentType), cookies, headers);
+}
+
+Response Response::Content(std::string text,
+                           std::string contentType,
+                           const std::vector<Cookie>& cookies,
+                           const std::vector<Header>& headers)
+{
     auto responseValue = Response{ResponseStatus::Code_200_Ok,
                                   std::move(text),
                                   cookies,
-                                  {{"ContentType", detail::contentTypeToString(contentType)}}
+                                  {{"ContentType", std::move(contentType)}}
     };
 
     responseValue.addHeaders(headers);
     return responseValue;
 }
+
 
 Response::Response(RawResponse rawResponse)
     : rawResponse_(std::move(rawResponse))
