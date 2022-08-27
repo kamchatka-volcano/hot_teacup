@@ -50,9 +50,9 @@ public:
 
 private:
     RequestMethod method_;
-    std::string ipAddress_;
-    std::string domainName_;
-    std::string path_;
+    std::string_view ipAddress_;
+    std::string_view domainName_;
+    std::string_view path_;
     std::vector<QueryView> queries_;
     std::vector<CookieView> cookies_;
     FormView form_;
