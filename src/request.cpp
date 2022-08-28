@@ -12,8 +12,6 @@ namespace str = sfun::string_utils;
 Request::Request(const RequestView& requestView)
     : method_{requestView.method()}
     , path_{requestView.path()}
-    , ipAddress_{requestView.ipAddress()}
-    , domainName_{requestView.domainName()}
     , queries_{makeQueries(requestView.queries())}
     , cookies_{makeCookies(requestView.cookies())}
     , form_{makeForm(requestView.form())}
@@ -23,29 +21,15 @@ Request::Request(const RequestView& requestView)
 Request::Request(
         RequestMethod method,
         std::string path,
-        std::string ipAddress,
-        std::string domain,
         std::vector<Query> queries,
         std::vector<Cookie> cookies,
         Form form)
     : method_{method},
       path_{std::move(path)},
-      ipAddress_{std::move(ipAddress)},
-      domainName_{std::move(domain)},
       queries_{std::move(queries)},
       cookies_{std::move(cookies)},
       form_{std::move(form)}
 {
-}
-
-void Request::setIpAddress(const std::string& ipAddress)
-{
-    ipAddress_ = ipAddress;
-}
-
-void Request::setDomain(const std::string& domain)
-{
-    domainName_ = domain;
 }
 
 void Request::setQueries(const std::vector<Query>& queries)
@@ -63,19 +47,14 @@ void Request::setForm(const Form& form)
     form_ = form;
 }
 
+void Request::setFcgiParams(const std::map<std::string, std::string>& params)
+{
+    fcgiParams_ = params;
+}
+
 RequestMethod Request::method() const
 {
     return method_;
-}
-
-const std::string& Request::ipAddress() const
-{
-    return ipAddress_;
-}
-
-const std::string& Request::domainName() const
-{
-    return domainName_;
 }
 
 const std::string& Request::path() const
@@ -240,12 +219,8 @@ RequestFcgiData Request::toFcgiData(FormType formType) const
     const auto formBoundary = "----asyncgiFormBoundary"s;
 
     auto makeFcgiParams = [&] {
-        auto res = std::map<std::string, std::string>{};
+        auto res = fcgiParams_;
         res["REQUEST_METHOD"] = methodToString(method_);
-        if (!ipAddress_.empty())
-            res["REMOTE_ADDR"] = ipAddress_;
-        if (!domainName_.empty())
-            res["HTTP_HOST"] = domainName_;
         if (!path_.empty())
             res["REQUEST_URI"] = path_;
         if (!queries_.empty())

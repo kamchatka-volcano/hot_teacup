@@ -20,15 +20,11 @@ public:
     explicit Request(const RequestView&);
     Request(RequestMethod,
             std::string path,
-            std::string ipAddress = {},
-            std::string domain = {},
             std::vector<Query> = {},
             std::vector<Cookie> = {},
             Form = {});
 
     RequestMethod method() const;
-    const std::string& ipAddress() const;
-    const std::string& domainName() const;
     const std::string& path() const;
 
     const std::vector<Query>& queries() const;
@@ -55,20 +51,18 @@ public:
 
     RequestFcgiData toFcgiData(FormType) const;
 
-    void setIpAddress(const std::string& ipAddress);
-    void setDomain(const std::string& domain);
     void setQueries(const std::vector<Query>&);
     void setCookies(const std::vector<Cookie>&);
     void setForm(const Form&);
+    void setFcgiParams(const std::map<std::string, std::string>& params);
 
 private:
     RequestMethod method_;
     std::string path_;
-    std::string ipAddress_;
-    std::string domainName_;
     std::vector<Query> queries_;
     std::vector<Cookie> cookies_;
     Form form_;
+    std::map<std::string, std::string> fcgiParams_;
 
 private:
     static inline const std::string valueNotFound = {};

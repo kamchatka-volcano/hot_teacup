@@ -9,16 +9,35 @@ namespace http{
 class ResponseView;
 
 class Response{
-    struct RawResponse{
-        std::string data;
-    };
-    explicit Response(RawResponse);
-
 public:
     explicit Response(const ResponseView&);
-    Response(std::string data);
     Response(ResponseStatus status,
              std::string body = {},
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(ResponseStatus status,
+         std::string body,
+         ContentType contentType,
+         std::vector<Cookie> cookies = {},
+         std::vector<Header> headers = {});
+    Response(ResponseStatus status,
+         std::string body,
+         std::string contentType,
+         std::vector<Cookie> cookies = {},
+         std::vector<Header> headers = {});
+    Response(std::string body,
+             ContentType contentType,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string body,
+             std::string contentType,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string path,
+             RedirectType type,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string body,
              std::vector<Cookie> cookies = {},
              std::vector<Header> headers = {});
 
@@ -34,24 +53,6 @@ public:
     void addCookies(const std::vector<Cookie>& cookies);
     void addHeaders(const std::vector<Header>& headers);
 
-public:
-    static Response Content(std::string text,
-                            ContentType contentType = ContentType::HTML,
-                            const std::vector<Cookie>& cookies = {},
-                            const std::vector<Header>& headers = {});
-    static Response Content(std::string text,
-                            std::string contentType,
-                            const std::vector<Cookie>& cookies = {},
-                            const std::vector<Header>& headers = {});
-
-    static Response Redirect(const std::string& path,
-                             RedirectType type = RedirectType::Found,
-                             const std::vector<Query>& queries = {},
-                             const std::vector<Cookie>& cookies = {},
-                             const std::vector<Header>& headers = {});
-
-    static Response Raw(std::string value);
-
 private:
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
@@ -62,7 +63,6 @@ private:
     std::string body_;
     std::vector<Cookie> cookies_;
     std::vector<Header> headers_;
-    std::optional<RawResponse> rawResponse_;
 };
 
 }

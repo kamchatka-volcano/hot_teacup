@@ -13,23 +13,79 @@ Response::Response(const ResponseView& responseView)
                makeHeaders(responseView.headers())}
 {}
 
-Response::Response(std::string data)
-    : Response{ResponseStatus::Code_200_Ok,
-               std::move(data),
-               {},
-               {{"ContentType", detail::contentTypeToString(ContentType::HTML)}}}
-{}
-
-Response::Response(ResponseStatus status,
-                   std::string body,
-                   std::vector<Cookie> cookies,
-                   std::vector<Header> headers)
+Response::Response(ResponseStatus status, std::string body, std::vector<Cookie> cookies, std::vector<Header> headers)
     : status_{status}
     , body_{std::move(body)}
     , cookies_{std::move(cookies)}
     , headers_{std::move(headers)}
 {
+    if (!body_.empty()) {
+        if (std::find_if(headers_.begin(), headers_.end(),
+                         [](const Header& header) {
+                             return header.name() == "ContentType";
+                         }) == headers_.end())
+            headers_.emplace_back("ContentType", detail::contentTypeToString(ContentType::HTML));
+    }
 }
+
+namespace{
+    std::vector<Header> concatHeaders(std::vector<Header> lhs, const Header& rhs)
+    {
+        lhs.push_back(rhs);
+        return lhs;
+    }
+}
+
+Response::Response(ResponseStatus status, std::string body, std::string contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{status,
+               std::move(body),
+               std::move(cookies),
+               concatHeaders(std::move(headers), {"ContentType", std::move(contentType)})}
+{
+}
+
+Response::Response(ResponseStatus status, std::string body, ContentType contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{status,
+               std::move(body),
+               detail::contentTypeToString(contentType),
+               std::move(cookies),
+               std::move(headers)}
+{}
+
+Response::Response(std::string body, std::string contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{ResponseStatus::Code_200_Ok,
+               std::move(body),
+               std::move(contentType),
+               std::move(cookies),
+               std::move(headers)}
+{
+}
+
+Response::Response(std::string body, ContentType contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{ResponseStatus::Code_200_Ok,
+               std::move(body),
+               contentType,
+               std::move(cookies),
+               std::move(headers)}
+{
+}
+
+Response::Response(std::string body, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{ResponseStatus::Code_200_Ok,
+               std::move(body),
+               std::move(cookies),
+               std::move(headers)}
+{}
+
+Response::Response(std::string path, RedirectType type, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{detail::redirectTypeStatus(type),
+               {},
+               std::move(cookies),
+               std::move(headers)}
+{
+   addHeader({"Location", std::move(path)});
+}
+
 
 ResponseStatus Response::status() const
 {
@@ -102,64 +158,11 @@ std::string Response::headersData() const
 
 std::string Response::data(ResponseMode mode) const
 {
-    if (rawResponse_)
-        return rawResponse_->data;
-
     return statusData(mode) +
            headersData() +
            cookiesData() +
            "\r\n" + body_;
 }
-
-Response Response::Redirect(const std::string &path,
-                            RedirectType type,
-                            const std::vector<Query>& queries,
-                            const std::vector<Cookie>& cookies,
-                            const std::vector<Header>& headers)
-{
-    auto responseValue = Response{detail::redirectTypeStatus(type),
-                                  {},
-                                  cookies,
-                                  {{"Location", pathWithQueries(path, queries)}}
-    };
-    responseValue.addHeaders(headers);
-    return responseValue;
-}
-
-Response Response::Content(std::string text,
-                           ContentType contentType,
-                           const std::vector<Cookie>& cookies,
-                           const std::vector<Header>& headers)
-{
-    return Response::Content(std::move(text), detail::contentTypeToString(contentType), cookies, headers);
-}
-
-Response Response::Content(std::string text,
-                           std::string contentType,
-                           const std::vector<Cookie>& cookies,
-                           const std::vector<Header>& headers)
-{
-    auto responseValue = Response{ResponseStatus::Code_200_Ok,
-                                  std::move(text),
-                                  cookies,
-                                  {{"ContentType", std::move(contentType)}}
-    };
-
-    responseValue.addHeaders(headers);
-    return responseValue;
-}
-
-
-Response::Response(RawResponse rawResponse)
-    : rawResponse_(std::move(rawResponse))
-{
-}
-
-Response Response::Raw(std::string value)
-{
-    return Response{RawResponse{std::move(value)}};
-}
-
 
 }
 
