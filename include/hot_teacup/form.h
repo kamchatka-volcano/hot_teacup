@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_FORM_H
+#define HOT_TEACUP_FORM_H
+
 #include "types.h"
 #include <string_view>
 #include <string>
@@ -40,4 +42,6 @@ std::string urlEncodedFormToString(const Form& form);
 Form makeForm(const std::map<std::string, FormFieldView>& formView);
 
 }
+
+#endif //HOT_TEACUP_FORM_H
 

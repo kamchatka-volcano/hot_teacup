@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_FORM_VIEW_H
+#define HOT_TEACUP_FORM_VIEW_H
+
 #include "types.h"
 #include <string_view>
 #include <string>
@@ -36,3 +38,4 @@ FormView formFromString(std::string_view contentTypeHeader, std::string_view con
 
 }
 
+#endif //HOT_TEACUP_FORM_VIEW_H

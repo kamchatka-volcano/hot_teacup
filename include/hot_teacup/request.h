@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_REQUEST_H
+#define HOT_TEACUP_REQUEST_H
+
 #include "query.h"
 #include "cookie.h"
 #include "types.h"
@@ -69,3 +71,5 @@ private:
 };
 
 }
+
+#endif //HOT_TEACUP_REQUEST_H

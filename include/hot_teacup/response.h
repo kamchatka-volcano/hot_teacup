@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_RESPONSE_H
+#define HOT_TEACUP_RESPONSE_H
+
 #include "cookie.h"
 #include "header.h"
 #include "query.h"
@@ -66,3 +68,5 @@ private:
 };
 
 }
+
+#endif //HOT_TEACUP_RESPONSE_H

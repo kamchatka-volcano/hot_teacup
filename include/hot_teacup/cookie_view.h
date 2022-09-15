@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_COOKIE_VIEW_H
+#define HOT_TEACUP_COOKIE_VIEW_H
+
 #include "header_view.h"
 #include <string_view>
 #include <string>
@@ -37,4 +39,7 @@ std::vector<CookieView> cookiesFromString(std::string_view input);
 std::optional<CookieView> cookieFromHeader(const HeaderView& header);
 
 }
+
+#endif //HOT_TEACUP_COOKIE_VIEW_H
+
 

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_RESPONSE_VIEW_H
+#define HOT_TEACUP_RESPONSE_VIEW_H
+
 #include "cookie_view.h"
 #include "header_view.h"
 #include "types.h"
@@ -28,3 +30,5 @@ private:
 std::optional<ResponseView> responseFromString(std::string_view);
 
 }
+
+#endif //HOT_TEACUP_RESPONSE_VIEW_H

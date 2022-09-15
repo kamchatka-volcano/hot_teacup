@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_QUERY_VIEW_H
+#define HOT_TEACUP_QUERY_VIEW_H
+
 #include <vector>
 #include <string>
 
@@ -20,3 +22,4 @@ bool operator==(const QueryView& lhs, const QueryView& rhs);
 std::vector<QueryView> queriesFromString(std::string_view input);
 }
 
+#endif //HOT_TEACUP_QUERY_VIEW_H

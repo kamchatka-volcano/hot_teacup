@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_TYPES_H
+#define HOT_TEACUP_TYPES_H
+
 #include <string_view>
 #include <exception>
 
@@ -420,3 +422,5 @@ constexpr const char* contentTypeToString(ContentType type)
 }
 
 }
+
+#endif //HOT_TEACUP_TYPES_H

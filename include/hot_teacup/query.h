@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_QUERY_H
+#define HOT_TEACUP_QUERY_H
+
 #include <vector>
 #include <string>
 
@@ -25,4 +27,6 @@ std::string pathWithQueries(const std::string& path,
 std::string queriesToString(const std::vector<Query>& queries);
 std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList);
 }
+
+#endif //HOT_TEACUP_QUERY_H
 

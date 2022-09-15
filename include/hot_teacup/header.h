@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_HEADER_H
+#define HOT_TEACUP_HEADER_H
+
 #include "types.h"
 #include <string>
 #include <string_view>
@@ -51,3 +53,5 @@ std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& he
 std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList);
 
 }
+
+#endif //HOT_TEACUP_HEADER_H

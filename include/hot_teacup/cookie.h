@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_COOKIE_H
+#define HOT_TEACUP_COOKIE_H
+
 #include "header.h"
 #include <string_view>
 #include <string>
@@ -52,3 +54,4 @@ std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);
 
 }
 
+#endif //HOT_TEACUP_COOKIE_H

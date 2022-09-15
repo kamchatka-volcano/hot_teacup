@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HOT_TEACUP_HEADER_VIEW_H
+#define HOT_TEACUP_HEADER_VIEW_H
+
 #include <string>
 #include <string_view>
 #include <map>
@@ -38,3 +40,5 @@ private:
 std::optional<HeaderView> headerFromString(std::string_view);
 
 }
+
+#endif //HOT_TEACUP_HEADER_VIEW_H
