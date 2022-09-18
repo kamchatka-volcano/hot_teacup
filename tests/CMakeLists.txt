@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(test_hot_teacup)
 
-SealLake_GoogleTest(test_hot_teacup
+SealLake_GoogleTest(
         SOURCES
             test_request.cpp
             test_response.cpp

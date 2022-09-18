@@ -5,7 +5,7 @@ project(hot_teacup
 )
 include(GNUInstallDirs)
 include(external/seal_lake)
-SealLake_FindOrDownload(
+SealLake_Import(
         sfun 2.4.0
         GIT_REPOSITORY https://github.com/kamchatka-volcano/sfun.git
         GIT_TAG cmake_maintenance
@@ -36,28 +36,14 @@ set(PUBLIC_HEADERS
     include/hot_teacup/types.h
 )
 
-option(HOT_TEACUP_OBJECT_LIB "Use as object library" OFF)
-if (HOT_TEACUP_OBJECT_LIB)
-    SealLake_ObjectLibrary(hot_teacup
+SealLake_StaticLibrary(
         SOURCES ${SRC}
-        PUBLIC_HEADERS "${PUBLIC_HEADERS}"
+        PUBLIC_HEADERS ${PUBLIC_HEADERS}
         COMPILE_FEATURES cxx_std_17
         PROPERTIES
             CXX_EXTENSIONS OFF
             VERSION ${PROJECT_VERSION}
             POSITION_INDEPENDENT_CODE ON
-    )
-else()
-    SealLake_StaticLibrary(hot_teacup
-            SOURCES ${SRC}
-            PUBLIC_HEADERS "${PUBLIC_HEADERS}"
-            COMPILE_FEATURES cxx_std_17
-            PROPERTIES
-                CXX_EXTENSIONS OFF
-                VERSION ${PROJECT_VERSION}
-                POSITION_INDEPENDENT_CODE ON
-    )
-endif()
-target_link_libraries(hot_teacup PRIVATE "$<BUILD_INTERFACE:sfun::sfun>")
-
-SealLake_OptionalBuildSteps(IF_ENABLED_AND_STANDALONE tests)
+        LIBRARIES sfun::sfun
+)
+SealLake_OptionalBuildSteps(tests)
