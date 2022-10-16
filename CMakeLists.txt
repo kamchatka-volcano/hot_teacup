@@ -5,10 +5,13 @@ project(hot_teacup
 )
 include(GNUInstallDirs)
 include(external/seal_lake)
-SealLake_Import(
-        sfun 2.4.0
+
+SealLake_Bundle(
+        NAME hot_teacup_sfun
         GIT_REPOSITORY https://github.com/kamchatka-volcano/sfun.git
         GIT_TAG cmake_maintenance
+        TEXT_REPLACEMENTS
+            "namespace sfun" "namespace http::sfun"
 )
 
 set(SRC
@@ -44,6 +47,7 @@ SealLake_StaticLibrary(
             CXX_EXTENSIONS OFF
             VERSION ${PROJECT_VERSION}
             POSITION_INDEPENDENT_CODE ON
-        LIBRARIES sfun::sfun
+        LIBRARIES hot_teacup_sfun::hot_teacup_sfun
 )
+
 SealLake_OptionalBuildSteps(tests)
