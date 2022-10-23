@@ -9,7 +9,7 @@ include(external/seal_lake)
 SealLake_Bundle(
         NAME hot_teacup_sfun
         GIT_REPOSITORY https://github.com/kamchatka-volcano/sfun.git
-        GIT_TAG cmake_maintenance
+        GIT_TAG v2.4.0
         TEXT_REPLACEMENTS
             "namespace sfun" "namespace http::sfun"
 )
