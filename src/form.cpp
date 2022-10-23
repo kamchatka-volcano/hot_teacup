@@ -2,6 +2,7 @@
 #include <hot_teacup/form_view.h>
 #include <hot_teacup/header.h>
 #include <sfun/string_utils.h>
+#include <iterator>
 #include <optional>
 
 namespace http {

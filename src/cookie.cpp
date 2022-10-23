@@ -1,6 +1,7 @@
 #include <hot_teacup/cookie.h>
 #include <hot_teacup/cookie_view.h>
 #include <sfun/string_utils.h>
+#include <iterator>
 
 namespace http {
 namespace str = sfun::string_utils;

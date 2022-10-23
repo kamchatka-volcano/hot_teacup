@@ -1,6 +1,7 @@
 #include <hot_teacup/header.h>
 #include <hot_teacup/header_view.h>
 #include <sfun/string_utils.h>
+#include <iterator>
 #include <stdexcept>
 #include <utility>
 

@@ -1,8 +1,8 @@
 #include <hot_teacup/response.h>
 #include <hot_teacup/response_view.h>
 #include <algorithm>
+#include <iterator>
 #include <utility>
-#include <sstream>
 
 namespace http{
 
