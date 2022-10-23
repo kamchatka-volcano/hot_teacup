@@ -28,14 +28,14 @@ void testResponseWithHeaders(const http::Response& testResponse, const std::stri
 {
     {
         auto response = testResponse;
-        response.addHeader(http::Header{"Host", std::string{"HotTeacup"}});
-        response.addHeader(http::Header{"User-Agent", std::string{"gtest"}});
+        response.addHeader(http::Header{"Host", "HotTeacup"});
+        response.addHeader(http::Header{"User-Agent", "gtest"});
         EXPECT_EQ(response.data(), expectedResponse);
     }
     {
         auto response = testResponse;
-        response.addHeaders({http::Header{"Host", std::string{"HotTeacup"}},
-                             http::Header{"User-Agent", std::string{"gtest"}}});
+        response.addHeaders({http::Header{"Host", "HotTeacup"},
+                             http::Header{"User-Agent", "gtest"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }

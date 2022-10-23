@@ -59,8 +59,8 @@ TEST(RequestView, RequestFromRequestViewWithPath)
 TEST(RequestView, Queries)
 {
     const auto request = http::RequestView{"GET", {}, {}, {}, "param1=foo&param2=bar", {}, {}, {}};
-    const auto expectedQueries = std::vector<http::QueryView>{{"param1", std::string{"foo"}},
-                                               {"param2", std::string{"bar"}}};
+    const auto expectedQueries = std::vector<http::QueryView>{{"param1", "foo"},
+                                               {"param2", "bar"}};
     EXPECT_EQ(request.queries(), expectedQueries);
     EXPECT_TRUE(request.hasQuery("param1"));
     EXPECT_EQ(request.query("param1"), "foo");
@@ -75,8 +75,8 @@ TEST(RequestView, RequestFromRequestViewWithQueries)
 {
     const auto requestView = http::RequestView{"GET", {}, {}, {}, "param1=foo&param2=bar", {}, {}, {}};
     const auto request = http::Request{requestView};
-    const auto expectedQueries = std::vector<http::Query>{{"param1", std::string{"foo"}},
-                                               {"param2", std::string{"bar"}}};
+    const auto expectedQueries = std::vector<http::Query>{{"param1", "foo"},
+                                               {"param2", "bar"}};
     EXPECT_EQ(request.queries(), expectedQueries);
     EXPECT_TRUE(request.hasQuery("param1"));
     EXPECT_EQ(request.query("param1"), "foo");
@@ -89,8 +89,8 @@ TEST(RequestView, RequestFromRequestViewWithQueries)
 
 TEST(Request, Queries)
 {
-    const auto expectedQueries = std::vector<http::Query>{{"param1", std::string{"foo"}},
-                                               {"param2", std::string{"bar"}}};
+    const auto expectedQueries = std::vector<http::Query>{{"param1", "foo"},
+                                               {"param2", "bar"}};
     const auto request = http::Request{http::RequestMethod::GET, "/", expectedQueries, {}, {}};
     EXPECT_EQ(request.queries(), expectedQueries);
     EXPECT_TRUE(request.hasQuery("param1"));
