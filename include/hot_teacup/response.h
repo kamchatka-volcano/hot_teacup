@@ -1,61 +1,72 @@
-#pragma once
-#include <string>
+#ifndef HOT_TEACUP_RESPONSE_H
+#define HOT_TEACUP_RESPONSE_H
+
 #include "cookie.h"
 #include "header.h"
 #include "query.h"
 #include "types.h"
+#include <string>
 
 namespace http{
+class ResponseView;
 
 class Response{
 public:
-    Response(std::string data);
+    explicit Response(const ResponseView&);
     Response(ResponseStatus status,
              std::string body = {},
-             Cookies cookies = {},
-             Headers headers = {});
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(ResponseStatus status,
+         std::string body,
+         ContentType contentType,
+         std::vector<Cookie> cookies = {},
+         std::vector<Header> headers = {});
+    Response(ResponseStatus status,
+         std::string body,
+         std::string contentType,
+         std::vector<Cookie> cookies = {},
+         std::vector<Header> headers = {});
+    Response(std::string body,
+             ContentType contentType,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string body,
+             std::string contentType,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string path,
+             RedirectType type,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
+    Response(std::string body,
+             std::vector<Cookie> cookies = {},
+             std::vector<Header> headers = {});
 
     ResponseStatus status() const;
     const std::string& body() const;
-    const Cookies& cookies() const;
-    const Headers& headers() const;
-    std::string data() const;
+    const std::vector<Cookie>& cookies() const;
+    const std::vector<Header>& headers() const;
+    std::string data(ResponseMode mode = ResponseMode::Standard) const;
 
+    void setBody(const std::string& body);
     void addCookie(Cookie cookie);
     void addHeader(Header header);
-    void addCookies(const Cookies& cookies);
-    void addHeaders(const Headers& headers);
-
-public:
-    static Response Content(std::string text,
-                            ContentType contentType = ContentType::HTML,
-                            const Cookies& cookies = {},
-                            const Headers& headers = {});
-
-    static Response Redirect(const std::string& path,
-                             RedirectType type = RedirectType::Found,
-                             const Queries& queries = {},
-                             const Cookies& cookies = {},
-                             const Headers& headers = {});
-
-    static Response Raw(std::string value);
+    void addCookies(const std::vector<Cookie>& cookies);
+    void addHeaders(const std::vector<Header>& headers);
 
 private:
-    std::string statusData() const;
+    std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
 
 private:
     ResponseStatus status_ = ResponseStatus::Code_404_Not_Found;
     std::string body_;
-    Cookies cookies_;
-    Headers headers_;
-
-private:
-    struct RawResponse{
-        std::string data;
-    } rawResponse_;
-    Response(RawResponse);
+    std::vector<Cookie> cookies_;
+    std::vector<Header> headers_;
 };
 
 }
+
+#endif //HOT_TEACUP_RESPONSE_H

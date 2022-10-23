@@ -1,27 +1,70 @@
 #include <hot_teacup/request.h>
+#include <hot_teacup/request_view.h>
+#include <sfun/string_utils.h>
 #include <algorithm>
 
-namespace http{
 
-Request::Request(std::string_view requestMethod,
-                 std::string_view queryString,
-                 std::string_view cookieHeaderValue,
-                 std::string_view formContentTypeHeader,
-                 std::string_view formContent)
-    : method_(methodFromString(requestMethod))
-    , queries_(queriesFromString(queryString))
-    , cookies_(cookiesFromString(cookieHeaderValue))
-    , form_(formFromString(formContentTypeHeader, formContent))
-{}
+using namespace std::string_literals;
+
+namespace http {
+namespace str = sfun::string_utils;
+
+Request::Request(const RequestView& requestView)
+    : method_{requestView.method()}
+    , path_{requestView.path()}
+    , queries_{makeQueries(requestView.queries())}
+    , cookies_{makeCookies(requestView.cookies())}
+    , form_{makeForm(requestView.form())}
+{
+}
+
+Request::Request(
+        RequestMethod method,
+        std::string path,
+        std::vector<Query> queries,
+        std::vector<Cookie> cookies,
+        Form form)
+    : method_{method},
+      path_{std::move(path)},
+      queries_{std::move(queries)},
+      cookies_{std::move(cookies)},
+      form_{std::move(form)}
+{
+}
+
+void Request::setQueries(const std::vector<Query>& queries)
+{
+    queries_ = queries;
+}
+
+void Request::setCookies(const std::vector<Cookie>& cookies)
+{
+    cookies_ = cookies;
+}
+
+void Request::setForm(const Form& form)
+{
+    form_ = form;
+}
+
+void Request::setFcgiParams(const std::map<std::string, std::string>& params)
+{
+    fcgiParams_ = params;
+}
 
 RequestMethod Request::method() const
 {
     return method_;
 }
 
-const std::string& Request::query(const std::string& name) const
+const std::string& Request::path() const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query){
+    return path_;
+}
+
+const std::string& Request::query(std::string_view name) const
+{
+    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
         return query.name() == name;
     });
     if (it != queries_.end())
@@ -30,17 +73,17 @@ const std::string& Request::query(const std::string& name) const
     return valueNotFound;
 }
 
-bool Request::hasQuery(const std::string& name) const
+bool Request::hasQuery(std::string_view name) const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query){
+    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
         return query.name() == name;
     });
     return (it != queries_.end());
 }
 
-const std::string& Request::cookie(const std::string& name) const
+const std::string& Request::cookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie){
+    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
         return cookie.name() == name;
     });
     if (it != cookies_.end())
@@ -49,19 +92,24 @@ const std::string& Request::cookie(const std::string& name) const
     return valueNotFound;
 }
 
-bool Request::hasCookie(const std::string& name) const
+bool Request::hasCookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie){
+    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
         return cookie.name() == name;
     });
     return (it != cookies_.end());
 }
 
-const std::string& Request::formField(const std::string &name, int index) const
+const Form& Request::form() const
+{
+    return form_;
+}
+
+const std::string& Request::formField(std::string_view name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_){
-        if (formField.name() == name && formField.type() == FormField::Type::Param){
+    for (const auto& [formFieldName, formField] : form_){
+        if (formFieldName == name && formField.type() == FormFieldType::Param){
             if (i++ == index)
                 return formField.value();
         }
@@ -69,118 +117,133 @@ const std::string& Request::formField(const std::string &name, int index) const
     return valueNotFound;
 }
 
-int Request::formFieldCount(const std::string& name) const
+int Request::formFieldCount(std::string_view name) const
 {
-    auto result = 0;
-    for (const auto& formField : form_)
-        if (formField.name() == name && formField.type() == FormField::Type::Param)
-            result++;
-    return result;
+    return static_cast<int>(std::count_if(form_.begin(), form_.end(), [&name](const auto& namedFormField){
+        const auto& [formFieldName, formField] = namedFormField;
+        return formFieldName == name && formField.type() == FormFieldType::Param;
+    }));
 }
 
-bool Request::hasFormField(const std::string &name) const
+bool Request::hasFormField(std::string_view name) const
 {
     return formFieldCount(name) != 0;
 }
 
-const std::string& Request::fileData(const std::string &name, int index) const
+const std::string& Request::fileData(std::string_view name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_)
-        if (formField.hasFile() && formField.name() == name)
+    for (const auto& [formFieldName, formField] : form_)
+        if (formField.hasFile() && formFieldName == name)
             if (i++ == index)
                 return formField.value();
 
     return valueNotFound;
 }
 
-int Request::fileCount(const std::string &name) const
+int Request::fileCount(std::string_view name) const
 {
     auto result = 0;
-    for (const auto& formField : form_)
-        if (formField.hasFile() && formField.name() == name)
+    for (const auto& [formFieldName, formField] : form_)
+        if (formField.hasFile() && formFieldName == name)
             result++;
     return result;
 }
 
-bool Request::hasFile(const std::string &name) const
+bool Request::hasFile(std::string_view name) const
 {
     return fileCount(name) != 0;
 }
 
-const std::string& Request::fileName(const std::string &name, int index) const
+const std::string& Request::fileName(std::string_view name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_)
-        if (formField.hasFile() && formField.name() == name)
+    for (const auto& [formFieldName, formField] : form_)
+        if (formField.hasFile() && formFieldName == name)
             if (i++ == index)
                 return formField.fileName();
 
     return valueNotFound;
 }
 
-const std::string& Request::fileType(const std::string &name, int index) const
+const std::string& Request::fileType(std::string_view name, int index) const
 {
     auto i = 0;
-    for (const auto& formField : form_)
-        if (formField.hasFile() && formField.name() == name)
+    for (const auto& [formFieldName, formField] : form_)
+        if (formField.hasFile() && formFieldName == name)
             if (i++ == index)
                 return formField.fileType();
 
     return valueNotFound;
 }
 
-const Queries& Request::queries() const
+const std::vector<Query>& Request::queries() const
 {
     return queries_;
 }
 
-std::vector<std::string> Request::queryList() const
-{
-    auto result = std::vector<std::string>{};
-    std::transform(queries_.begin(), queries_.end(), std::back_inserter(result),
-                   [](const auto& query){return query.name();});
-    return result;
-}
-
-const Cookies& Request::cookies() const
+const std::vector<Cookie>& Request::cookies() const
 {
     return cookies_;
-}
-
-std::vector<std::string> Request::cookieList() const
-{
-    auto result = std::vector<std::string>{};
-    std::transform(cookies_.begin(), cookies_.end(), std::back_inserter(result),
-                   [](const auto& cookie){return cookie.name();});
-    return result;
 }
 
 std::vector<std::string> Request::formFieldList() const
 {
     auto result = std::vector<std::string>{};
-    for (const auto& formField : form_)
-        if (formField.type() == FormField::Type::Param)
-            result.push_back(formField.name());
+    for (const auto& [formFieldName, formField] : form_)
+        if (formField.type() == FormFieldType::Param)
+            result.push_back(formFieldName);
     return result;
 }
 
 std::vector<std::string> Request::fileList() const
 {
     auto result = std::vector<std::string>{};
-    for (const auto& formField : form_)
+    for (const auto& [formFieldName, formField] : form_)
         if (formField.hasFile())
-            result.push_back(formField.name());
+            result.push_back(formFieldName);
     return result;
 }
 
 bool Request::hasFiles() const
 {
-    for (const auto& formField : form_)
+    for (const auto& [formFieldName, formField] : form_)
         if (formField.hasFile())
             return true;
 
     return false;
 }
+
+RequestFcgiData Request::toFcgiData(FormType formType) const
+{
+    const auto formBoundary = "----asyncgiFormBoundary"s;
+
+    auto makeFcgiParams = [&] {
+        auto res = fcgiParams_;
+        res["REQUEST_METHOD"] = methodToString(method_);
+        if (!path_.empty())
+            res["REQUEST_URI"] = path_;
+        if (!queries_.empty())
+            res["QUERY_STRING"] = queriesToString(queries_);
+        if (!cookies_.empty())
+            res["HTTP_COOKIE"] = cookiesToString(cookies_);
+        if (!form_.empty()) {
+            if (formType == FormType::Multipart)
+                res["CONTENT_TYPE"] = "multipart/form-data; boundary=" + formBoundary;
+            else
+                res["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
+        }
+        return res;
+    };
+    auto makeFcgiStdIn = [&] {
+        if (formType == FormType::Multipart)
+            return multipartFormToString(form_, formBoundary);
+        else
+            return urlEncodedFormToString(form_);
+    };
+
+    return {makeFcgiParams(), makeFcgiStdIn()};
+}
+
 
 }

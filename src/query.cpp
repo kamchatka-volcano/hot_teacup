@@ -1,14 +1,22 @@
 #include <hot_teacup/query.h>
+#include <hot_teacup/query_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
+#include <iterator>
 #include <utility>
+
 
 namespace http{
 namespace str = sfun::string_utils;
 
+Query::Query(const QueryView& queryView)
+    : name_{queryView.name()}
+    , value_{queryView.value()}
+{}
+
 Query::Query(std::string name, std::string value)
-    : name_(std::move(name))
-    , value_(std::move(value))
+    : name_{std::move(name)}
+    , value_{std::move(value)}
 {
 }
 
@@ -27,32 +35,18 @@ std::string Query::toString() const
     return name_ + "=" + value_;
 }
 
-bool Query::operator==(const Query& other) const
+
+bool operator==(const Query& lhs, const Query& rhs)
 {
-    return name_ == other.name_ &&
-           value_ == other.value_;
+    return lhs.name_ == rhs.name_ &&
+           lhs.value_ == rhs.value_;
 }
 
-Queries queriesFromString(std::string_view input)
-{
-    auto result = Queries{};
-    std::vector<std::string> queries = str::split(input, "&");
-    for(const std::string& query : queries){
-        auto name = str::before(query, "=");
-        auto value = str::after(query, "=");
-        if (name.empty())
-            continue;
-        result.emplace_back(str::trim(name), str::trim(value));
-    }
-    return result;
-}
-
-std::string queriesToString(const Queries& queries, const std::vector<std::string>& queryBlackList)
+std::string queriesToString(const std::vector<Query>& queries)
 {
     auto result = std::string{};
     for (const auto& query : queries){
-        if (std::find(queryBlackList.begin(), queryBlackList.end(), query.name()) == queryBlackList.end())
-            result += query.toString() + "&";
+        result += query.toString() + "&";
     }
     if (!result.empty())
         result.resize(result.size() - 1); //remove last '&'
@@ -60,17 +54,21 @@ std::string queriesToString(const Queries& queries, const std::vector<std::strin
 }
 
 std::string pathWithQueries(const std::string& path,
-                            const Queries& queries,
-                            const std::vector<std::string>& queryBlackList)
+                            const std::vector<Query>& queries)
 {
     if (queries.empty())
         return path;
-    return path + "?" + queriesToString(queries, queryBlackList);
+    return path + "?" + queriesToString(queries);
 }
 
-std::string pathWithQuery(const std::string& path, const Query& query)
+std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
 {
-    return pathWithQueries(path, {query});
+    auto result = std::vector<Query>{};
+    std::transform(queryViewList.begin(), queryViewList.end(), std::back_inserter(result),
+               [](const auto& queryView) {
+                   return Query{queryView};
+               });
+    return result;
 }
 
 }
