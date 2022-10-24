@@ -1,5 +1,5 @@
 # ☕hot_teacup
-
+[![build & test (clang, gcc, MSVC)](https://github.com/kamchatka-volcano/hot_teacup/actions/workflows/build_and_test.yml/badge.svg?branch=master)](https://github.com/kamchatka-volcano/hot_teacup/actions/workflows/build_and_test.yml)
 
 **hot_teacup** - is a C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses.  
 It supports reading of HTTP headers, cookies, query strings, URL encoded and multipart forms.   
