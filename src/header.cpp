@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace http{
+namespace http {
 
 HeaderParam::HeaderParam(const HeaderParamView& paramView)
     : name_{paramView.name()}
@@ -16,12 +16,14 @@ HeaderParam::HeaderParam(const HeaderParamView& paramView)
 
 HeaderParam::HeaderParam(std::string name)
     : name_{std::move(name)}
-{}
+{
+}
 
 HeaderParam::HeaderParam(std::string name, std::string value)
     : name_{std::move(name)}
     , value_{std::move(value)}
-{}
+{
+}
 
 const std::string& HeaderParam::name() const
 {
@@ -42,12 +44,12 @@ std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
         return res;
     res += "=";
     switch (quotingMode) {
-        case HeaderQuotingMode::ParamValue:
-        case HeaderQuotingMode::AllValues:
-            res += "\"" + *value_ + "\"";
+    case HeaderQuotingMode::ParamValue:
+    case HeaderQuotingMode::AllValues:
+        res += "\"" + *value_ + "\"";
         break;
-        default:
-            res += *value_;
+    default:
+        res += *value_;
     }
     return res;
 }
@@ -71,7 +73,7 @@ void Header::setParam(std::string name)
         return;
 
     for (auto& param : params_)
-        if (param.name() == name){
+        if (param.name() == name) {
             param = HeaderParam{std::move(name)};
             return;
         }
@@ -84,7 +86,7 @@ void Header::setParam(std::string name, std::string value)
         return;
 
     for (auto& param : params_)
-        if (param.name() == name){
+        if (param.name() == name) {
             param = HeaderParam{std::move(name), std::move(value)};
             return;
         }
@@ -99,7 +101,7 @@ void Header::setQuotingMode(HeaderQuotingMode mode)
 namespace {
 std::string valueStr(const std::string& value, bool hasParams, HeaderQuotingMode quotingMode)
 {
-    if (value.empty()){
+    if (value.empty()) {
         if (!hasParams)
             return "\"\"";
         else
@@ -107,15 +109,15 @@ std::string valueStr(const std::string& value, bool hasParams, HeaderQuotingMode
     }
 
     switch (quotingMode) {
-        case HeaderQuotingMode::HeaderValue:
-        case HeaderQuotingMode::AllValues:
-            return "\"" + value + "\"";
-        default:
-            return value;
+    case HeaderQuotingMode::HeaderValue:
+    case HeaderQuotingMode::AllValues:
+        return "\"" + value + "\"";
+    default:
+        return value;
     }
 }
 
-}
+} //namespace
 
 const std::vector<HeaderParam>& Header::params() const
 {
@@ -124,7 +126,7 @@ const std::vector<HeaderParam>& Header::params() const
 
 const std::string& Header::param(std::string_view name) const
 {
-    for (const auto& param: params_)
+    for (const auto& param : params_)
         if (param.name() == name)
             return param.value();
     throw std::out_of_range{"Header doesn't contain param '" + std::string{name} + "'"};
@@ -132,7 +134,7 @@ const std::string& Header::param(std::string_view name) const
 
 bool Header::hasParam(std::string_view name) const
 {
-    for (const auto& param: params_)
+    for (const auto& param : params_)
         if (param.name() == name)
             return true;
     return false;
@@ -143,9 +145,9 @@ std::string Header::toString() const
     auto result = name_ + ": " + valueStr(value_, !params_.empty(), quotingMode_);
     if (!value_.empty() && !params_.empty())
         result += "; ";
-    for (const auto& param : params_){
+    for (const auto& param : params_) {
         result += param.toString(quotingMode_);
-        result += + "; ";
+        result += +"; ";
     }
     if (!params_.empty())
         result.resize(result.size() - 2); // remove last ;
@@ -165,8 +167,12 @@ const std::string& Header::value() const
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)
 {
     auto result = std::vector<HeaderParam>{};
-    std::transform(headerParamViewList.begin(), headerParamViewList.end(), std::back_inserter(result),
-            [](const auto& headerParamView) {
+    std::transform(
+            headerParamViewList.begin(),
+            headerParamViewList.end(),
+            std::back_inserter(result),
+            [](const auto& headerParamView)
+            {
                 return HeaderParam{headerParamView};
             });
     return result;
@@ -175,11 +181,15 @@ std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& he
 std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
 {
     auto result = std::vector<Header>{};
-    std::transform(headerViewList.begin(), headerViewList.end(), std::back_inserter(result),
-            [](const auto& headerView) {
+    std::transform(
+            headerViewList.begin(),
+            headerViewList.end(),
+            std::back_inserter(result),
+            [](const auto& headerView)
+            {
                 return Header{headerView};
             });
     return result;
 }
 
-}
+} //namespace http

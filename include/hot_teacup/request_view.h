@@ -1,17 +1,16 @@
 #ifndef HOT_TEACUP_REQUEST_VIEW_H
 #define HOT_TEACUP_REQUEST_VIEW_H
 
-#include "query_view.h"
 #include "cookie_view.h"
-#include "types.h"
 #include "form_view.h"
+#include "query_view.h"
+#include "types.h"
 #include <map>
 #include <string>
 
-namespace http{
+namespace http {
 
-class RequestView
-{
+class RequestView {
 public:
     RequestView(
             std::string_view fcgiParamRequestMethod,
@@ -60,6 +59,6 @@ private:
     FormView form_;
 };
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_REQUEST_VIEW_H

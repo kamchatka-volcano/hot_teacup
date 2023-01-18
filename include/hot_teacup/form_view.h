@@ -9,10 +9,10 @@
 #include <variant>
 #include <vector>
 
-namespace http{
+namespace http {
 
-class FormFieldView{
-    struct FormFile{
+class FormFieldView {
+    struct FormFile {
         std::string_view fileData;
         std::string_view fileName;
         std::optional<std::string_view> mimeType;
@@ -37,6 +37,6 @@ using FormView = std::map<std::string, FormFieldView>;
 
 FormView formFromString(std::string_view contentTypeHeader, std::string_view contentFields);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_FORM_VIEW_H

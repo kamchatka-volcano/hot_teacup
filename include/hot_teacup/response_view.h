@@ -6,14 +6,15 @@
 #include "types.h"
 #include <string>
 
-namespace http{
+namespace http {
 
-class ResponseView{
+class ResponseView {
 public:
-    ResponseView(ResponseStatus status,
-             std::string_view body = {},
-             std::vector<CookieView> cookies = {},
-             std::vector<HeaderView> headers = {});
+    ResponseView(
+            ResponseStatus status,
+            std::string_view body = {},
+            std::vector<CookieView> cookies = {},
+            std::vector<HeaderView> headers = {});
 
     ResponseStatus status() const;
     std::string_view body() const;
@@ -29,6 +30,6 @@ private:
 
 std::optional<ResponseView> responseFromString(std::string_view);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_RESPONSE_VIEW_H

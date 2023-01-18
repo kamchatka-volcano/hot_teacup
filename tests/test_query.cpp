@@ -72,5 +72,3 @@ TEST(QueryView, QueryFromQueryView)
     auto expectedQueries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
     EXPECT_EQ(http::makeQueries(queries), expectedQueries);
 }
-
-

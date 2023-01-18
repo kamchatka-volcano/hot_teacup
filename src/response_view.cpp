@@ -1,10 +1,10 @@
 #include <hot_teacup/response_view.h>
 #include <algorithm>
-#include <utility>
-#include <sstream>
 #include <regex>
+#include <sstream>
+#include <utility>
 
-namespace http{
+namespace http {
 
 ResponseView::ResponseView(
         ResponseStatus status,
@@ -38,8 +38,8 @@ const std::vector<HeaderView>& ResponseView::headers() const
     return headers_;
 }
 
-namespace{
-std::optional<ResponseStatus> statusCodeFromString(const std::string &statusStr)
+namespace {
+std::optional<ResponseStatus> statusCodeFromString(const std::string& statusStr)
 {
     static const auto statusRegex = std::regex{"HTTP/1.1 (\\d+) ?(.*)"};
     auto statusMatch = std::smatch{};
@@ -63,7 +63,7 @@ std::string_view getStringLine(std::string_view input, std::size_t& pos, std::st
     return input.substr(linePos, lineSize);
 }
 
-}
+} //namespace
 
 std::optional<ResponseView> responseFromString(std::string_view data)
 {
@@ -75,7 +75,7 @@ std::optional<ResponseView> responseFromString(std::string_view data)
 
     auto cookies = std::vector<CookieView>{};
     auto headers = std::vector<HeaderView>{};
-    while (true){
+    while (true) {
         auto headerLine = getStringLine(data, pos);
         if (headerLine.empty())
             break;
@@ -83,7 +83,7 @@ std::optional<ResponseView> responseFromString(std::string_view data)
         auto header = headerFromString(headerLine);
         if (header == std::nullopt)
             return std::nullopt;
-        if (header->name() == "Set-Cookie"){
+        if (header->name() == "Set-Cookie") {
             auto cookie = cookieFromHeader(*header);
             if (cookie)
                 cookies.emplace_back(std::move(*cookie));
@@ -95,5 +95,4 @@ std::optional<ResponseView> responseFromString(std::string_view data)
     return ResponseView{*status, body, std::move(cookies), std::move(headers)};
 }
 
-}
-
+} //namespace http

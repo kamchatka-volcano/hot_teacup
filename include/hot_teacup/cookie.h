@@ -2,16 +2,16 @@
 #define HOT_TEACUP_COOKIE_H
 
 #include "header.h"
-#include <string_view>
-#include <string>
-#include <vector>
-#include <optional>
 #include <chrono>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
-namespace http{
+namespace http {
 class CookieView;
 
-class Cookie{
+class Cookie {
 
 public:
     explicit Cookie(const CookieView& cookieView);
@@ -20,7 +20,7 @@ public:
            std::optional<std::string> domain = {},
            std::optional<std::string> path = {},
            std::optional<std::chrono::seconds> maxAge = {},
-           bool secure  = false,
+           bool secure = false,
            bool removed = false);
 
     const std::string& name() const;
@@ -52,6 +52,6 @@ std::string cookiesToString(const std::vector<Cookie>& cookies);
 
 std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_COOKIE_H

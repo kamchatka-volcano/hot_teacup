@@ -7,41 +7,41 @@
 #include "types.h"
 #include <string>
 
-namespace http{
+namespace http {
 class ResponseView;
 
-class Response{
+class Response {
 public:
     explicit Response(const ResponseView&);
-    Response(ResponseStatus status,
-             std::string body = {},
-             std::vector<Cookie> cookies = {},
-             std::vector<Header> headers = {});
-    Response(ResponseStatus status,
-         std::string body,
-         ContentType contentType,
-         std::vector<Cookie> cookies = {},
-         std::vector<Header> headers = {});
-    Response(ResponseStatus status,
-         std::string body,
-         std::string contentType,
-         std::vector<Cookie> cookies = {},
-         std::vector<Header> headers = {});
-    Response(std::string body,
-             ContentType contentType,
-             std::vector<Cookie> cookies = {},
-             std::vector<Header> headers = {});
-    Response(std::string body,
-             std::string contentType,
-             std::vector<Cookie> cookies = {},
-             std::vector<Header> headers = {});
-    Response(std::string path,
-             RedirectType type,
-             std::vector<Cookie> cookies = {},
-             std::vector<Header> headers = {});
-    Response(std::string body,
-             std::vector<Cookie> cookies = {},
-             std::vector<Header> headers = {});
+    Response(
+            ResponseStatus status,
+            std::string body = {},
+            std::vector<Cookie> cookies = {},
+            std::vector<Header> headers = {});
+    Response(
+            ResponseStatus status,
+            std::string body,
+            ContentType contentType,
+            std::vector<Cookie> cookies = {},
+            std::vector<Header> headers = {});
+    Response(
+            ResponseStatus status,
+            std::string body,
+            std::string contentType,
+            std::vector<Cookie> cookies = {},
+            std::vector<Header> headers = {});
+    Response(
+            std::string body,
+            ContentType contentType,
+            std::vector<Cookie> cookies = {},
+            std::vector<Header> headers = {});
+    Response(
+            std::string body,
+            std::string contentType,
+            std::vector<Cookie> cookies = {},
+            std::vector<Header> headers = {});
+    Response(std::string path, RedirectType type, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
+    Response(std::string body, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
 
     ResponseStatus status() const;
     const std::string& body() const;
@@ -67,6 +67,6 @@ private:
     std::vector<Header> headers_;
 };
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_RESPONSE_H

@@ -2,17 +2,17 @@
 #define HOT_TEACUP_HEADER_H
 
 #include "types.h"
+#include <map>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <map>
 #include <vector>
-#include <optional>
 
-namespace http{
+namespace http {
 class HeaderParamView;
 class HeaderView;
 
-class HeaderParam{
+class HeaderParam {
 public:
     explicit HeaderParam(const HeaderParamView&);
     explicit HeaderParam(std::string name);
@@ -27,7 +27,7 @@ private:
     static inline const std::string valueNotFound;
 };
 
-class Header{
+class Header {
 public:
     explicit Header(const HeaderView&);
     Header(std::string name, std::string value);
@@ -52,6 +52,6 @@ private:
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList);
 std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_HEADER_H

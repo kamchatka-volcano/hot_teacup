@@ -24,9 +24,7 @@ FormField::FormField(std::string value)
 }
 
 FormField::FormField(std::string fileData, std::string fileName, std::optional<std::string> fileType)
-    : value_{FormFile{std::move(fileData),
-                      std::move(fileName),
-                      std::move(fileType)}}
+    : value_{FormFile{std::move(fileData), std::move(fileName), std::move(fileType)}}
 {
 }
 
@@ -56,7 +54,8 @@ const std::string& FormField::fileType() const
     if (type() == FormFieldType::File) {
         const auto& res = std::get<FormFile>(value_).mimeType;
         return res ? *res : valueNotFound;
-    } else
+    }
+    else
         return valueNotFound;
 }
 
@@ -82,7 +81,7 @@ std::string urlEncodedFormToString(const Form& form)
 std::string multipartFormToString(const Form& form, const std::string& formBoundary)
 {
     auto result = std::string{};
-    for (const auto& [name, field]: form) {
+    for (const auto& [name, field] : form) {
         result += "--" + formBoundary + "\r\n";
         auto header = http::Header{"Content-Disposition", "form-data"};
         header.setQuotingMode(http::HeaderQuotingMode::ParamValue);
@@ -110,11 +109,15 @@ std::string multipartFormToString(const Form& form, const std::string& formBound
 Form makeForm(const std::map<std::string, FormFieldView>& formView)
 {
     auto result = Form{};
-    std::transform(formView.begin(), formView.end(), std::inserter(result, result.end()),
-               [](const auto& fieldViewPair) {
-                   return std::pair{fieldViewPair.first, FormField{fieldViewPair.second}};
-               });
+    std::transform(
+            formView.begin(),
+            formView.end(),
+            std::inserter(result, result.end()),
+            [](const auto& fieldViewPair)
+            {
+                return std::pair{fieldViewPair.first, FormField{fieldViewPair.second}};
+            });
     return result;
 }
 
-}
+} //namespace http

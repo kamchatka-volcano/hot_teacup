@@ -25,12 +25,11 @@ TEST(FormView, WithoutFileFromString)
 TEST(Form, WithoutFileToString)
 {
     const auto expectedUrlEncodedFormData = "param1=foo&param2=bar ";
-    const auto expectedMultipartFormData =
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+    const auto expectedMultipartFormData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
 
     auto form = http::Form{};
     form["param1"] = http::FormField{"foo"};
@@ -70,15 +69,14 @@ TEST(FormView, WithEmptyFileFromString)
 TEST(Form, WithEmptyFileToString)
 {
     const auto expectedUrlEncodedFormData = "param1=foo&param2=bar &param3=";
-    const auto expectedMultipartFormData =
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param3\"; filename=\"\"\r\n"
-            "Content-Type: application/octet-stream\r\n\r\n\r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+    const auto expectedMultipartFormData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param3\"; filename=\"\"\r\n"
+                                           "Content-Type: application/octet-stream\r\n\r\n\r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
 
     auto form = http::Form{};
     form["param1"] = http::FormField{"foo"};
@@ -88,8 +86,6 @@ TEST(Form, WithEmptyFileToString)
     EXPECT_EQ(http::urlEncodedFormToString(form), expectedUrlEncodedFormData);
     EXPECT_EQ(http::multipartFormToString(form, "----WebKitFormBoundaryHQl9TEASIs9QyFWx"), expectedMultipartFormData);
 }
-
-
 
 TEST(FormView, WithFileFromString)
 {
@@ -147,21 +143,19 @@ TEST(FormView, FormFromFormView)
     EXPECT_EQ(form.at("param3").fileName(), "test.gif");
     EXPECT_EQ(form.at("param3").fileType(), "image/gif");
     EXPECT_EQ(form.at("param3").value(), "test-gif-data");
-
 }
 
 TEST(Form, WithFileToString)
 {
     const auto expectedUrlEncodedFormData = "param1=foo&param2=bar &param3=test.gif";
-    const auto expectedMultipartFormData =
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-            "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
-            "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
-            "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+    const auto expectedMultipartFormData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+                                           "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
+                                           "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
+                                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
 
     auto form = http::Form{};
     form["param1"] = http::FormField{"foo"};
@@ -192,7 +186,6 @@ TEST(Form, WithFileWithoutFileTypeToString)
     EXPECT_EQ(http::urlEncodedFormToString(form), expectedUrlEncodedFormData);
     EXPECT_EQ(http::multipartFormToString(form, "----WebKitFormBoundaryHQl9TEASIs9QyFWx"), expectedMultipartFormData);
 }
-
 
 TEST(FormView, WithoutNameFromString)
 {
@@ -310,5 +303,3 @@ TEST(FormView, UrlEncodedWithoutNameFromString)
         EXPECT_EQ(form.at("param2").value(), "bar");
     }
 }
-
-

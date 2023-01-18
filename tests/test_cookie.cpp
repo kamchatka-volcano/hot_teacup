@@ -138,14 +138,11 @@ TEST(CookieView, FromString)
 
 TEST(CookieView, FromHeader)
 {
-   {
-        auto header = http::HeaderView{"Set-Cookie", "", {
-                {"foo", "bar"},
-                {"Max-Age", "10"},
-                {"Domain", "localhost"},
-                {"Path", "/test"},
-                {"Secure", ""}}
-        };
+    {
+        auto header = http::HeaderView{
+                "Set-Cookie",
+                "",
+                {{"foo", "bar"}, {"Max-Age", "10"}, {"Domain", "localhost"}, {"Path", "/test"}, {"Secure", ""}}};
         auto cookie = http::cookieFromHeader(header);
         ASSERT_TRUE(cookie);
         EXPECT_EQ(cookie->name(), "foo");
@@ -155,10 +152,7 @@ TEST(CookieView, FromHeader)
         EXPECT_EQ(cookie->isSecure(), true);
     }
     {
-        auto header = http::HeaderView{"Set-Cookie", "", {
-                {"foo", "bar"},
-                {"Max-Age", "0"}}
-        };
+        auto header = http::HeaderView{"Set-Cookie", "", {{"foo", "bar"}, {"Max-Age", "0"}}};
         auto cookie = http::cookieFromHeader(header);
         ASSERT_TRUE(cookie);
         EXPECT_EQ(cookie->name(), "foo");
@@ -169,13 +163,10 @@ TEST(CookieView, FromHeader)
 
 TEST(CookieView, CookieFormCookieView)
 {
-    auto header = http::HeaderView{"Set-Cookie", "", {
-            {"foo", "bar"},
-            {"Max-Age", "10"},
-            {"Domain", "localhost"},
-            {"Path", "/test"},
-            {"Secure", ""}}
-    };
+    auto header = http::HeaderView{
+            "Set-Cookie",
+            "",
+            {{"foo", "bar"}, {"Max-Age", "10"}, {"Domain", "localhost"}, {"Path", "/test"}, {"Secure", ""}}};
     auto cookieView = http::cookieFromHeader(header);
     ASSERT_TRUE(cookieView);
     auto cookie = http::Cookie{*cookieView};

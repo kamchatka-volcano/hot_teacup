@@ -2,15 +2,15 @@
 #define HOT_TEACUP_COOKIE_VIEW_H
 
 #include "header_view.h"
-#include <string_view>
-#include <string>
-#include <vector>
-#include <optional>
 #include <chrono>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
-namespace http{
+namespace http {
 
-class CookieView{
+class CookieView {
 
 public:
     CookieView(std::string_view name, std::string_view value);
@@ -38,8 +38,6 @@ bool operator==(const CookieView& lhs, const CookieView& rhs);
 std::vector<CookieView> cookiesFromString(std::string_view input);
 std::optional<CookieView> cookieFromHeader(const HeaderView& header);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_COOKIE_VIEW_H
-
-

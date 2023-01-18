@@ -1,12 +1,12 @@
 #ifndef HOT_TEACUP_QUERY_VIEW_H
 #define HOT_TEACUP_QUERY_VIEW_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace http{
+namespace http {
 
-class QueryView{
+class QueryView {
 public:
     QueryView(std::string_view name, std::string_view value);
     std::string_view name() const;
@@ -20,6 +20,6 @@ private:
 
 bool operator==(const QueryView& lhs, const QueryView& rhs);
 std::vector<QueryView> queriesFromString(std::string_view input);
-}
+} //namespace http
 
 #endif //HOT_TEACUP_QUERY_VIEW_H

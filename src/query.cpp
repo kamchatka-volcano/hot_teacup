@@ -4,13 +4,13 @@
 #include <iterator>
 #include <utility>
 
-
-namespace http{
+namespace http {
 
 Query::Query(const QueryView& queryView)
     : name_{queryView.name()}
     , value_{queryView.value()}
-{}
+{
+}
 
 Query::Query(std::string name, std::string value)
     : name_{std::move(name)}
@@ -33,17 +33,15 @@ std::string Query::toString() const
     return name_ + "=" + value_;
 }
 
-
 bool operator==(const Query& lhs, const Query& rhs)
 {
-    return lhs.name_ == rhs.name_ &&
-           lhs.value_ == rhs.value_;
+    return lhs.name_ == rhs.name_ && lhs.value_ == rhs.value_;
 }
 
 std::string queriesToString(const std::vector<Query>& queries)
 {
     auto result = std::string{};
-    for (const auto& query : queries){
+    for (const auto& query : queries) {
         result += query.toString() + "&";
     }
     if (!result.empty())
@@ -51,8 +49,7 @@ std::string queriesToString(const std::vector<Query>& queries)
     return result;
 }
 
-std::string pathWithQueries(const std::string& path,
-                            const std::vector<Query>& queries)
+std::string pathWithQueries(const std::string& path, const std::vector<Query>& queries)
 {
     if (queries.empty())
         return path;
@@ -62,11 +59,15 @@ std::string pathWithQueries(const std::string& path,
 std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
 {
     auto result = std::vector<Query>{};
-    std::transform(queryViewList.begin(), queryViewList.end(), std::back_inserter(result),
-               [](const auto& queryView) {
-                   return Query{queryView};
-               });
+    std::transform(
+            queryViewList.begin(),
+            queryViewList.end(),
+            std::back_inserter(result),
+            [](const auto& queryView)
+            {
+                return Query{queryView};
+            });
     return result;
 }
 
-}
+} //namespace http

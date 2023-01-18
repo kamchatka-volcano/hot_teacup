@@ -1,13 +1,13 @@
 #ifndef HOT_TEACUP_HEADER_VIEW_H
 #define HOT_TEACUP_HEADER_VIEW_H
 
+#include <map>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <map>
 #include <vector>
-#include <optional>
 
-namespace http{
+namespace http {
 
 class HeaderParamView {
 public:
@@ -22,7 +22,7 @@ private:
     std::optional<std::string_view> value_;
 };
 
-class HeaderView{
+class HeaderView {
 public:
     HeaderView(std::string_view name, std::string_view value, std::vector<HeaderParamView> params);
     std::string_view name() const;
@@ -39,6 +39,6 @@ private:
 
 std::optional<HeaderView> headerFromString(std::string_view);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_HEADER_VIEW_H

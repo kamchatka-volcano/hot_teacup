@@ -4,16 +4,16 @@
 #include "types.h"
 #include <map>
 #include <optional>
-#include <string_view>
 #include <string>
-#include <vector>
+#include <string_view>
 #include <variant>
+#include <vector>
 
-namespace http{
+namespace http {
 class FormFieldView;
 
-class FormField{
-    struct FormFile{
+class FormField {
+    struct FormFile {
         std::string fileData;
         std::string fileName;
         std::optional<std::string> mimeType;
@@ -42,7 +42,6 @@ std::string urlEncodedFormToString(const Form& form);
 
 Form makeForm(const std::map<std::string, FormFieldView>& formView);
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_FORM_H
-

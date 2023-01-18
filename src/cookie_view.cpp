@@ -44,7 +44,8 @@ std::optional<std::chrono::seconds> CookieView::maxAge() const
     if (header_.hasParam("Max-Age")) {
         try {
             return std::chrono::seconds{std::stoi(std::string{header_.param("Max-Age")})};
-        } catch (...) {
+        }
+        catch (...) {
             return {};
         }
     }
@@ -69,8 +70,7 @@ const HeaderView& CookieView::asHeader() const
 
 bool operator==(const CookieView& lhs, const CookieView& rhs)
 {
-    return lhs.name()== rhs.name() &&
-           lhs.value() == rhs.value();
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
 }
 
 std::vector<CookieView> cookiesFromString(std::string_view input)
@@ -94,4 +94,4 @@ std::optional<CookieView> cookieFromHeader(const HeaderView& header)
     return CookieView{header};
 }
 
-}
+} //namespace http

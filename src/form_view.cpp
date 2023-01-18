@@ -78,8 +78,9 @@ std::string_view getStringLine(std::string_view input, std::size_t& pos, std::st
 ///                 }
 /// if input is not at the end and has a valid state
 ///
-std::optional<std::tuple<std::optional<HeaderView>, std::optional<HeaderView>>>
-readContentHeaders(std::string_view input, std::size_t& pos)
+std::optional<std::tuple<std::optional<HeaderView>, std::optional<HeaderView>>> readContentHeaders(
+        std::string_view input,
+        std::size_t& pos)
 {
     auto headerLine = getStringLine(input, pos);
     if (!headerLine.empty() || pos == input.size())
@@ -102,7 +103,6 @@ readContentHeaders(std::string_view input, std::size_t& pos)
     return std::make_tuple(std::move(contentDisposition), std::move(contentType));
 }
 
-
 FormView parseFormFieldViews(std::string_view input, std::string_view boundary)
 {
     const auto separator = "--" + std::string{boundary};
@@ -121,8 +121,7 @@ FormView parseFormFieldViews(std::string_view input, std::string_view boundary)
 
         auto& [contentDisposition, contentType] = *contentHeaders;
         auto content = getStringLine(input, pos, separator);
-        if (!contentDisposition.has_value() ||
-            !contentDisposition->hasParam("name") ||
+        if (!contentDisposition.has_value() || !contentDisposition->hasParam("name") ||
             contentDisposition->param("name").empty())
             continue;
 
@@ -153,7 +152,6 @@ std::tuple<std::string_view, std::string_view> parseUrlEncodedParamString(std::s
     return {name, val};
 }
 
-
 FormView parseUrlEncodedFields(std::string_view input)
 {
     auto pos = std::size_t{0u};
@@ -164,10 +162,11 @@ FormView parseUrlEncodedFields(std::string_view input)
         if (paramName.empty())
             continue;
         result.emplace(paramName, FormFieldView{paramValue});
-    } while (pos < input.size());
+    }
+    while (pos < input.size());
     return result;
 }
-}
+} //namespace
 
 FormView formFromString(std::string_view contentParam, std::string_view contentFields)
 {
@@ -184,4 +183,4 @@ FormView formFromString(std::string_view contentParam, std::string_view contentF
     return {};
 }
 
-}
+} //namespace http

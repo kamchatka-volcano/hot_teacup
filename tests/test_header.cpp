@@ -54,7 +54,8 @@ TEST(Header, ToStringQuotingMode)
         EXPECT_EQ(header.toString(), "Test-Header: \"test\"; name=\"foo\"; name2=\"bar\"");
     }
 }
-TEST(Header, ToStringWithoutHeaderValueQuotingMode){
+TEST(Header, ToStringWithoutHeaderValueQuotingMode)
+{
     {
         auto header = http::Header{"Test-Header", ""};
         header.setParam("name", "foo");
@@ -174,8 +175,8 @@ TEST(HeaderView, FromStringWithoutHeaderValueWithQuoting)
 TEST(HeaderView, FromStringWithoutHeaderName)
 {
     {
-    auto header = http::headerFromString(": name=\"foo\"; name2=bar");
-    ASSERT_FALSE(header.has_value());
+        auto header = http::headerFromString(": name=\"foo\"; name2=bar");
+        ASSERT_FALSE(header.has_value());
     }
     {
         auto header = http::headerFromString(":");

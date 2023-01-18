@@ -1,30 +1,25 @@
 #ifndef HOT_TEACUP_REQUEST_H
 #define HOT_TEACUP_REQUEST_H
 
-#include "query.h"
 #include "cookie.h"
-#include "types.h"
 #include "form.h"
+#include "query.h"
+#include "types.h"
 #include <map>
 #include <string>
 
-namespace http{
+namespace http {
 class RequestView;
 
-struct RequestFcgiData{
+struct RequestFcgiData {
     std::map<std::string, std::string> params;
     std::string stdIn;
 };
 
-class Request
-{
+class Request {
 public:
     explicit Request(const RequestView&);
-    Request(RequestMethod,
-            std::string path,
-            std::vector<Query> = {},
-            std::vector<Cookie> = {},
-            Form = {});
+    Request(RequestMethod, std::string path, std::vector<Query> = {}, std::vector<Cookie> = {}, Form = {});
 
     RequestMethod method() const;
     const std::string& path() const;
@@ -70,6 +65,6 @@ private:
     static inline const std::string valueNotFound = {};
 };
 
-}
+} //namespace http
 
 #endif //HOT_TEACUP_REQUEST_H

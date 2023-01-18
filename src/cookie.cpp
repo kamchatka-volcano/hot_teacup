@@ -8,15 +8,17 @@ namespace http {
 
 Cookie::Cookie(const CookieView& cookieView)
     : Cookie{Header{cookieView.asHeader()}}
-{}
+{
+}
 
-Cookie::Cookie(std::string name,
-               std::string value,
-               std::optional<std::string> domain,
-               std::optional<std::string> path,
-               std::optional<std::chrono::seconds> maxAge,
-               bool secure,
-               bool removed)
+Cookie::Cookie(
+        std::string name,
+        std::string value,
+        std::optional<std::string> domain,
+        std::optional<std::string> path,
+        std::optional<std::chrono::seconds> maxAge,
+        bool secure,
+        bool removed)
     : header_{"Set-Cookie", ""}
 {
     header_.setParam(std::move(name), std::move(value));
@@ -68,10 +70,12 @@ std::optional<std::chrono::seconds> Cookie::maxAge() const
     if (header_.hasParam("Max-Age")) {
         try {
             return std::chrono::seconds{std::stoi(header_.param("Max-Age"))};
-        } catch (...) {
+        }
+        catch (...) {
             return {};
         }
-    } else
+    }
+    else
         return {};
 }
 
@@ -117,14 +121,13 @@ std::string Cookie::toString() const
 
 bool operator==(const Cookie& lhs, const Cookie& rhs)
 {
-    return lhs.name() == rhs.name() &&
-           lhs.value() == rhs.value();
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
 }
 
 std::string cookiesToString(const std::vector<Cookie>& cookies)
 {
     auto result = std::string{};
-    for (const auto& cookie: cookies)
+    for (const auto& cookie : cookies)
         result += cookie.name() + "=" + cookie.value() + "; ";
     if (!result.empty())
         result.resize(result.size() - 2); //remove last '; '
@@ -134,11 +137,15 @@ std::string cookiesToString(const std::vector<Cookie>& cookies)
 std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
 {
     std::vector<Cookie> result;
-    std::transform(cookieViewList.begin(), cookieViewList.end(), std::back_inserter(result),
-                   [](const auto& cookieView) {
-                       return Cookie{cookieView};
-                   });
+    std::transform(
+            cookieViewList.begin(),
+            cookieViewList.end(),
+            std::back_inserter(result),
+            [](const auto& cookieView)
+            {
+                return Cookie{cookieView};
+            });
     return result;
 }
 
-}
+} //namespace http

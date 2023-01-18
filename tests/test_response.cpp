@@ -15,8 +15,7 @@ void testResponseWithCookies(const http::Response& testResponse, const std::stri
     }
     {
         auto response = testResponse;
-        response.addCookies({http::Cookie{"name", "foo"},
-                             http::Cookie{"age", "77"}});
+        response.addCookies({http::Cookie{"name", "foo"}, http::Cookie{"age", "77"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -34,8 +33,7 @@ void testResponseWithHeaders(const http::Response& testResponse, const std::stri
     }
     {
         auto response = testResponse;
-        response.addHeaders({http::Header{"Host", "HotTeacup"},
-                             http::Header{"User-Agent", "gtest"}});
+        response.addHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -56,7 +54,7 @@ const auto cookiesAndHeadersResponsePart = std::string{"Host: HotTeacup\r\n"
                                                        "Set-Cookie: name=foo\r\n"
                                                        "Set-Cookie: age=77\r\n"};
 
-}
+} //namespace
 
 TEST(Response, Status)
 {
@@ -200,37 +198,36 @@ TEST(Response, StatusCGI)
     response = http::Response{Status::Code_404_Not_Found};
     EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\n\r\n");
     response = http::Response{Status::Code_404_Not_Found, "Not Found"};
-    EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
+    EXPECT_EQ(
+            response.data(http::ResponseMode::CGI),
+            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
     response = http::Response{Status::Code_404_Not_Found, "Not Found", http::ContentType::PlainText};
-    EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
+    EXPECT_EQ(
+            response.data(http::ResponseMode::CGI),
+            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
     response = http::Response{Status::Code_404_Not_Found, "Not Found", "text/csv"};
-    EXPECT_EQ(response.data(http::ResponseMode::CGI), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
+    EXPECT_EQ(
+            response.data(http::ResponseMode::CGI),
+            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
 }
-
 
 TEST(Response, StatusWithCookies)
 {
-    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n"
-                            + cookiesResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n" + cookiesResponsePart + "\r\n";
     auto response = http::Response{http::ResponseStatus::Code_404_Not_Found};
     testResponseWithCookies(response, expectedResponse);
 }
 
 TEST(Response, StatusWithHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n"
-                            + headersResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n" + headersResponsePart + "\r\n";
     auto response = http::Response{http::ResponseStatus::Code_404_Not_Found};
     testResponseWithHeaders(response, expectedResponse);
 }
 
 TEST(Response, StatusWithCookiesAndHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n"
-                            + cookiesAndHeadersResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 404 Not Found\r\n" + cookiesAndHeadersResponsePart + "\r\n";
     auto response = http::Response{http::ResponseStatus::Code_404_Not_Found};
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
@@ -250,18 +247,17 @@ TEST(Response, Text)
 TEST(Response, TextWithCookies)
 {
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n"
-                            + cookiesResponsePart +
-                            "\r\nHello world";
+                            "ContentType: text/html\r\n" +
+            cookiesResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::HTML};
     testResponseWithCookies(response, expectedResponse);
 }
 
-TEST(Response, TextWithHeaders){
+TEST(Response, TextWithHeaders)
+{
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n"
-                            + headersResponsePart +
-                            "\r\nHello world";
+                            "ContentType: text/html\r\n" +
+            headersResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::HTML};
     testResponseWithHeaders(response, expectedResponse);
 }
@@ -269,9 +265,8 @@ TEST(Response, TextWithHeaders){
 TEST(Response, TextWithCookiesAndHeaders)
 {
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n"
-                            + cookiesAndHeadersResponsePart +
-                            "\r\nHello world";
+                            "ContentType: text/html\r\n" +
+            cookiesAndHeadersResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::HTML};
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
@@ -296,37 +291,29 @@ TEST(Response, Redirect)
 
 TEST(Response, RedirectWithCookies)
 {
-    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                            + cookiesResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + cookiesResponsePart + "\r\n";
     auto response = http::Response{"/", http::RedirectType::Found};
     testResponseWithCookies(response, expectedResponse);
 }
 
-
 TEST(Response, RedirectWithHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                            + headersResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + headersResponsePart + "\r\n";
     auto response = http::Response{"/", http::RedirectType::Found};
     testResponseWithHeaders(response, expectedResponse);
 }
 
 TEST(Response, RedirectWithCookiesAndHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                            + cookiesAndHeadersResponsePart +
-                            "\r\n";
+    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + cookiesAndHeadersResponsePart + "\r\n";
     auto response = http::Response{"/", http::RedirectType::Found};
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
 
-
 TEST(ResponseView, ResponseFromString)
 {
     auto responseString = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
-                                        "\r\n"};
+                                      "\r\n"};
     auto response = http::responseFromString(responseString);
     ASSERT_TRUE(response);
     EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);
@@ -338,7 +325,7 @@ TEST(ResponseView, ResponseFromString)
 TEST(ResponseView, ResponseFromString2)
 {
     auto responseString = std::string{"HTTP/1.1 200 OK\r\nSet-Cookie: id=hello; Max-Age=60\r\nLocation: /\r\n"
-                                        "\r\nHello world"};
+                                      "\r\nHello world"};
     auto response = http::responseFromString(responseString);
     ASSERT_TRUE(response);
     EXPECT_EQ(response->status(), http::ResponseStatus::Code_200_Ok);
@@ -353,7 +340,7 @@ TEST(ResponseView, ResponseFromString2)
 TEST(ResponseView, ResponseFromResponseView)
 {
     auto responseString = std::string{"HTTP/1.1 200 OK\r\nSet-Cookie: id=hello; Max-Age=60\r\nLocation: /\r\n"
-                                        "\r\nHello world"};
+                                      "\r\nHello world"};
     auto responseView = http::responseFromString(responseString);
     ASSERT_TRUE(responseView);
     auto response = http::Response(*responseView);
@@ -366,11 +353,10 @@ TEST(ResponseView, ResponseFromResponseView)
     EXPECT_EQ(response.body(), "Hello world");
 }
 
-
 TEST(ResponseView, ResponseFromStringPartialStatus)
 {
     auto responseString = std::string{"HTTP/1.1 302 \r\nLocation: /\r\n"
-                                        "\r\n"};
+                                      "\r\n"};
     auto response = http::responseFromString(responseString);
     ASSERT_TRUE(response);
     EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);
@@ -382,7 +368,7 @@ TEST(ResponseView, ResponseFromStringPartialStatus)
 TEST(ResponseView, ResponseFromStringPartialStatus2)
 {
     auto responseString = std::string{"HTTP/1.1 302\r\nLocation: /\r\n"
-                                        "\r\n"};
+                                      "\r\n"};
     auto response = http::responseFromString(responseString);
     ASSERT_TRUE(response);
     EXPECT_EQ(response->status(), http::ResponseStatus::Code_302_Found);

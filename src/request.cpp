@@ -2,7 +2,6 @@
 #include <hot_teacup/request_view.h>
 #include <algorithm>
 
-
 using namespace std::string_literals;
 
 namespace http {
@@ -22,11 +21,11 @@ Request::Request(
         std::vector<Query> queries,
         std::vector<Cookie> cookies,
         Form form)
-    : method_{method},
-      path_{std::move(path)},
-      queries_{std::move(queries)},
-      cookies_{std::move(cookies)},
-      form_{std::move(form)}
+    : method_{method}
+    , path_{std::move(path)}
+    , queries_{std::move(queries)}
+    , cookies_{std::move(cookies)}
+    , form_{std::move(form)}
 {
 }
 
@@ -62,9 +61,13 @@ const std::string& Request::path() const
 
 const std::string& Request::query(std::string_view name) const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
-        return query.name() == name;
-    });
+    auto it = std::find_if(
+            queries_.begin(),
+            queries_.end(),
+            [&name](const auto& query)
+            {
+                return query.name() == name;
+            });
     if (it != queries_.end())
         return it->value();
 
@@ -73,17 +76,25 @@ const std::string& Request::query(std::string_view name) const
 
 bool Request::hasQuery(std::string_view name) const
 {
-    auto it = std::find_if(queries_.begin(), queries_.end(), [&name](const auto& query) {
-        return query.name() == name;
-    });
+    auto it = std::find_if(
+            queries_.begin(),
+            queries_.end(),
+            [&name](const auto& query)
+            {
+                return query.name() == name;
+            });
     return (it != queries_.end());
 }
 
 const std::string& Request::cookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
-        return cookie.name() == name;
-    });
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
     if (it != cookies_.end())
         return it->value();
 
@@ -92,9 +103,13 @@ const std::string& Request::cookie(std::string_view name) const
 
 bool Request::hasCookie(std::string_view name) const
 {
-    auto it = std::find_if(cookies_.begin(), cookies_.end(), [&name](const auto& cookie) {
-        return cookie.name() == name;
-    });
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
     return (it != cookies_.end());
 }
 
@@ -106,8 +121,8 @@ const Form& Request::form() const
 const std::string& Request::formField(std::string_view name, int index) const
 {
     auto i = 0;
-    for (const auto& [formFieldName, formField] : form_){
-        if (formFieldName == name && formField.type() == FormFieldType::Param){
+    for (const auto& [formFieldName, formField] : form_) {
+        if (formFieldName == name && formField.type() == FormFieldType::Param) {
             if (i++ == index)
                 return formField.value();
         }
@@ -117,10 +132,14 @@ const std::string& Request::formField(std::string_view name, int index) const
 
 int Request::formFieldCount(std::string_view name) const
 {
-    return static_cast<int>(std::count_if(form_.begin(), form_.end(), [&name](const auto& namedFormField){
-        const auto& [formFieldName, formField] = namedFormField;
-        return formFieldName == name && formField.type() == FormFieldType::Param;
-    }));
+    return static_cast<int>(std::count_if(
+            form_.begin(),
+            form_.end(),
+            [&name](const auto& namedFormField)
+            {
+                const auto& [formFieldName, formField] = namedFormField;
+                return formFieldName == name && formField.type() == FormFieldType::Param;
+            }));
 }
 
 bool Request::hasFormField(std::string_view name) const
@@ -216,7 +235,8 @@ RequestFcgiData Request::toFcgiData(FormType formType) const
 {
     const auto formBoundary = "----asyncgiFormBoundary"s;
 
-    auto makeFcgiParams = [&] {
+    auto makeFcgiParams = [&]
+    {
         auto res = fcgiParams_;
         res["REQUEST_METHOD"] = methodToString(method_);
         if (!path_.empty())
@@ -233,7 +253,8 @@ RequestFcgiData Request::toFcgiData(FormType formType) const
         }
         return res;
     };
-    auto makeFcgiStdIn = [&] {
+    auto makeFcgiStdIn = [&]
+    {
         if (formType == FormType::Multipart)
             return multipartFormToString(form_, formBoundary);
         else
@@ -243,5 +264,4 @@ RequestFcgiData Request::toFcgiData(FormType formType) const
     return {makeFcgiParams(), makeFcgiStdIn()};
 }
 
-
-}
+} //namespace http

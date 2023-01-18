@@ -2,7 +2,7 @@
 #include <sfun/string_utils.h>
 #include <algorithm>
 
-namespace http{
+namespace http {
 
 QueryView::QueryView(std::string_view name, std::string_view value)
     : name_{name}
@@ -22,15 +22,14 @@ std::string_view QueryView::value() const
 
 bool operator==(const QueryView& lhs, const QueryView& rhs)
 {
-    return lhs.name_ == rhs.name_ &&
-           lhs.value_ == rhs.value_;
+    return lhs.name_ == rhs.name_ && lhs.value_ == rhs.value_;
 }
 
 std::vector<QueryView> queriesFromString(std::string_view input)
 {
     auto result = std::vector<QueryView>{};
     auto queries = sfun::split(input, "&");
-    for(const auto& query : queries){
+    for (const auto& query : queries) {
         auto name = sfun::before(query, "=");
         auto value = sfun::after(query, "=");
         if (name.empty())
@@ -40,4 +39,4 @@ std::vector<QueryView> queriesFromString(std::string_view input)
     return result;
 }
 
-}
+} //namespace http
