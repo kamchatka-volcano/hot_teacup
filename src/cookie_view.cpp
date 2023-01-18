@@ -2,7 +2,6 @@
 #include <sfun/string_utils.h>
 
 namespace http {
-namespace str = sfun::string_utils;
 
 CookieView::CookieView(std::string_view name, std::string_view value)
     : header_{"Set-Cookie", "", {HeaderParamView{name, value}}}
@@ -77,12 +76,12 @@ bool operator==(const CookieView& lhs, const CookieView& rhs)
 std::vector<CookieView> cookiesFromString(std::string_view input)
 {
     auto result = std::vector<CookieView>{};
-    auto cookies = str::split(input, ";");
+    auto cookies = sfun::split(input, ";");
     for (const auto& cookie : cookies) {
-        auto name = str::before(cookie, "=");
-        auto value = str::after(cookie, "=");
+        auto name = sfun::before(cookie, "=");
+        auto value = sfun::after(cookie, "=");
         if (!name.empty() && !value.empty())
-            result.emplace_back(str::trim(name), str::trim(value));
+            result.emplace_back(sfun::trim(name), sfun::trim(value));
     }
     return result;
 }

@@ -1,13 +1,11 @@
 #include <hot_teacup/query.h>
 #include <hot_teacup/query_view.h>
-#include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
 #include <utility>
 
 
 namespace http{
-namespace str = sfun::string_utils;
 
 Query::Query(const QueryView& queryView)
     : name_{queryView.name()}

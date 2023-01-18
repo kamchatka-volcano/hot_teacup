@@ -1,13 +1,11 @@
 #include <hot_teacup/form.h>
 #include <hot_teacup/form_view.h>
 #include <hot_teacup/header.h>
-#include <sfun/string_utils.h>
+#include <algorithm>
 #include <iterator>
 #include <optional>
 
 namespace http {
-namespace str = sfun::string_utils;
-
 
 FormField::FormField(const FormFieldView& fieldView)
 {

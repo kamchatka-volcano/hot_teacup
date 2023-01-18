@@ -4,7 +4,6 @@
 #include <optional>
 
 namespace http {
-namespace str = sfun::string_utils;
 
 FormFieldView::FormFieldView(std::string_view value)
     : value_{value}
@@ -149,8 +148,8 @@ std::tuple<std::string_view, std::string_view> parseUrlEncodedParamString(std::s
     auto delimiterPos = paramStr.find('=');
     if (delimiterPos == std::string::npos)
         return {};
-    auto name = str::trim(str::before(paramStr, "="));
-    auto val = str::trimFront(str::after(paramStr, "="));
+    auto name = sfun::trim(sfun::before(paramStr, "="));
+    auto val = sfun::trimFront(sfun::after(paramStr, "="));
     return {name, val};
 }
 

@@ -3,7 +3,6 @@
 #include <algorithm>
 
 namespace http{
-namespace str = sfun::string_utils;
 
 QueryView::QueryView(std::string_view name, std::string_view value)
     : name_{name}
@@ -30,13 +29,13 @@ bool operator==(const QueryView& lhs, const QueryView& rhs)
 std::vector<QueryView> queriesFromString(std::string_view input)
 {
     auto result = std::vector<QueryView>{};
-    auto queries = str::split(input, "&");
+    auto queries = sfun::split(input, "&");
     for(const auto& query : queries){
-        auto name = str::before(query, "=");
-        auto value = str::after(query, "=");
+        auto name = sfun::before(query, "=");
+        auto value = sfun::after(query, "=");
         if (name.empty())
             continue;
-        result.emplace_back(str::trim(name), str::trim(value));
+        result.emplace_back(sfun::trim(name), sfun::trim(value));
     }
     return result;
 }

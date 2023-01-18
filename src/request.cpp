@@ -1,13 +1,11 @@
 #include <hot_teacup/request.h>
 #include <hot_teacup/request_view.h>
-#include <sfun/string_utils.h>
 #include <algorithm>
 
 
 using namespace std::string_literals;
 
 namespace http {
-namespace str = sfun::string_utils;
 
 Request::Request(const RequestView& requestView)
     : method_{requestView.method()}

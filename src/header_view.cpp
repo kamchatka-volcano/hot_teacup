@@ -4,7 +4,6 @@
 #include <utility>
 
 namespace http{
-namespace str = sfun::string_utils;
 
 HeaderParamView::HeaderParamView(std::string_view name)
     : name_{name}
@@ -61,9 +60,9 @@ bool HeaderView::hasParam(std::string_view name) const
 namespace {
 std::string_view unquoted(std::string_view str)
 {
-    if (str::startsWith(str, "\""))
+    if (sfun::startsWith(str, "\""))
         str.remove_prefix(1);
-    if (str::endsWith(str, "\""))
+    if (sfun::endsWith(str, "\""))
         str.remove_suffix(1);
     return str;
 }
@@ -72,8 +71,8 @@ std::optional<HeaderParamView> makeParam(std::string_view paramPart)
 {
     if (paramPart.find('=') == std::string::npos)
         return {};
-    auto name = str::trimFront(str::before(paramPart,"="));
-    auto value = unquoted(str::after(paramPart,"="));
+    auto name = sfun::trimFront(sfun::before(paramPart,"="));
+    auto value = unquoted(sfun::after(paramPart,"="));
     return HeaderParamView{name, value};
 }
 
@@ -81,15 +80,15 @@ std::optional<HeaderParamView> makeParam(std::string_view paramPart)
 
 std::optional<HeaderView> headerFromString(std::string_view input)
 {
-    const auto parts = str::split(input, ";", false);
+    const auto parts = sfun::split(input, ";", false);
     if (parts.empty())
         return {};
 
     if (parts[0].find(':') == std::string::npos)
         return {};
 
-    auto name = str::trim(str::before(parts[0], ":"));
-    auto value = unquoted(str::trimFront(str::after(parts[0], ":")));
+    auto name = sfun::trim(sfun::before(parts[0], ":"));
+    auto value = unquoted(sfun::trimFront(sfun::after(parts[0], ":")));
     if (name.empty())
         return {};
 

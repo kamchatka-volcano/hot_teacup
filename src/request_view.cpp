@@ -6,7 +6,6 @@
 using namespace std::string_literals;
 
 namespace http{
-namespace str = sfun::string_utils;
 
 RequestView::RequestView(std::string_view fcgiParamRequestMethod,
                  std::string_view fcgiParamRemoteAddr,
@@ -18,8 +17,8 @@ RequestView::RequestView(std::string_view fcgiParamRequestMethod,
                  std::string_view fcgiStdIn)
     : method_{methodFromString(fcgiParamRequestMethod)}
     , ipAddress_{fcgiParamRemoteAddr}
-    , domainName_{str::before(fcgiParamHttpHost, ":")}
-    , path_{str::before(fcgiParamRequestUri, "?")}
+    , domainName_{sfun::before(fcgiParamHttpHost, ":")}
+    , path_{sfun::before(fcgiParamRequestUri, "?")}
     , queries_{queriesFromString(fcgiParamQueryString)}
     , cookies_{cookiesFromString(fcgiParamHttpCookie)}
     , form_{formFromString(fcgiParamContentType, fcgiStdIn)}

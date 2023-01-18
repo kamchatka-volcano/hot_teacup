@@ -1,12 +1,11 @@
 #include <hot_teacup/header.h>
 #include <hot_teacup/header_view.h>
-#include <sfun/string_utils.h>
+#include <algorithm>
 #include <iterator>
 #include <stdexcept>
 #include <utility>
 
 namespace http{
-namespace str = sfun::string_utils;
 
 HeaderParam::HeaderParam(const HeaderParamView& paramView)
     : name_{paramView.name()}

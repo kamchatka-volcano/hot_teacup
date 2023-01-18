@@ -1,10 +1,10 @@
 #include <hot_teacup/cookie.h>
 #include <hot_teacup/cookie_view.h>
-#include <sfun/string_utils.h>
+#include <algorithm>
 #include <iterator>
+#include <vector>
 
 namespace http {
-namespace str = sfun::string_utils;
 
 Cookie::Cookie(const CookieView& cookieView)
     : Cookie{Header{cookieView.asHeader()}}
