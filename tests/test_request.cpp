@@ -12,22 +12,22 @@ TEST(RequestView, RequestMethodParam)
         EXPECT_EQ(request.method(), expectedMethod);
     };
 
-    testRequestType("GET", http::RequestMethod::GET);
-    testRequestType("POST", http::RequestMethod::POST);
-    testRequestType("PUT", http::RequestMethod::PUT);
-    testRequestType("HEAD", http::RequestMethod::HEAD);
-    testRequestType("PATCH", http::RequestMethod::PATCH);
-    testRequestType("TRACE", http::RequestMethod::TRACE);
-    testRequestType("DELETE", http::RequestMethod::DELETE);
-    testRequestType("CONNECT", http::RequestMethod::CONNECT);
-    testRequestType("OPTIONS", http::RequestMethod::OPTIONS);
+    testRequestType("GET", http::RequestMethod::Get);
+    testRequestType("POST", http::RequestMethod::Post);
+    testRequestType("PUT", http::RequestMethod::Put);
+    testRequestType("HEAD", http::RequestMethod::Head);
+    testRequestType("PATCH", http::RequestMethod::Patch);
+    testRequestType("TRACE", http::RequestMethod::Trace);
+    testRequestType("DELETE", http::RequestMethod::Delete);
+    testRequestType("CONNECT", http::RequestMethod::Connect);
+    testRequestType("OPTIONS", http::RequestMethod::Options);
 }
 
 TEST(RequestView, RequestFromRequestViewWithMethodParam)
 {
     auto requestView = http::RequestView{"GET", {}, {}, {}, {}, {}, {}, {}};
     auto request = http::Request{requestView};
-    EXPECT_EQ(request.method(), http::RequestMethod::GET);
+    EXPECT_EQ(request.method(), http::RequestMethod::Get);
 }
 
 TEST(RequestView, RequestIpAddress)
@@ -87,7 +87,7 @@ TEST(RequestView, RequestFromRequestViewWithQueries)
 TEST(Request, Queries)
 {
     const auto expectedQueries = std::vector<http::Query>{{"param1", "foo"}, {"param2", "bar"}};
-    const auto request = http::Request{http::RequestMethod::GET, "/", expectedQueries, {}, {}};
+    const auto request = http::Request{http::RequestMethod::Get, "/", expectedQueries, {}, {}};
     EXPECT_EQ(request.queries(), expectedQueries);
     EXPECT_TRUE(request.hasQuery("param1"));
     EXPECT_EQ(request.query("param1"), "foo");
@@ -128,7 +128,7 @@ TEST(RequestView, RequestFromRequestViewWithCookies)
 TEST(Request, Cookies)
 {
     const auto expectedCookies = std::vector<http::Cookie>{{"param1", "foo"}, {"param2", "bar"}};
-    const auto request = http::Request{http::RequestMethod::GET, "/", {}, expectedCookies};
+    const auto request = http::Request{http::RequestMethod::Get, "/", {}, expectedCookies};
     EXPECT_TRUE(request.hasCookie("param1"));
     EXPECT_EQ(request.cookie("param1"), "foo");
     EXPECT_TRUE(request.hasCookie("param2"));
@@ -217,7 +217,7 @@ TEST(Request, MultipartFormWithFile)
             {"param1", http::FormField{"foo"}},
             {"param2", http::FormField{"bar "}},
             {"param3", http::FormField{"test-gif-data", "test.gif", "image/gif"}}};
-    const auto request = http::Request{http::RequestMethod::POST, "/", {}, {}, form};
+    const auto request = http::Request{http::RequestMethod::Post, "/", {}, {}, form};
 
     const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
@@ -265,7 +265,7 @@ TEST(Request, UrlEncodedForm)
             {"param2", http::FormField{"bar"}},
             {"param4", http::FormField{}}};
 
-    const auto request = http::Request{http::RequestMethod::POST, "/", {}, {}, form};
+    const auto request = http::Request{http::RequestMethod::Post, "/", {}, {}, form};
 
     auto expectedFormFieldList = std::vector<std::string>{"param1", "param2", "param4"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
@@ -287,7 +287,7 @@ TEST(Request, UrlEncodedForm)
 
 TEST(Request, ToFcgiDataWithPathOnly)
 {
-    const auto request = http::Request{http::RequestMethod::GET, "/"};
+    const auto request = http::Request{http::RequestMethod::Get, "/"};
     const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
 
     EXPECT_EQ(fcgiData.params.size(), 2);
@@ -300,7 +300,7 @@ TEST(Request, ToFcgiDataWithPathOnly)
 
 TEST(Request, ToFcgiDataWithPathOnlyMultipart)
 {
-    const auto request = http::Request{http::RequestMethod::GET, "/"};
+    const auto request = http::Request{http::RequestMethod::Get, "/"};
     const auto fcgiData = request.toFcgiData(http::FormType::Multipart);
 
     EXPECT_EQ(fcgiData.params.size(), 2);
@@ -313,7 +313,7 @@ TEST(Request, ToFcgiDataWithPathOnlyMultipart)
 
 TEST(Request, ToFcgiDataWithQueries)
 {
-    const auto request = http::Request{http::RequestMethod::GET, "/", {{"id", "100"}}};
+    const auto request = http::Request{http::RequestMethod::Get, "/", {{"id", "100"}}};
     const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
 
     EXPECT_EQ(fcgiData.params.size(), 3);
@@ -328,7 +328,7 @@ TEST(Request, ToFcgiDataWithQueries)
 
 TEST(Request, ToFcgiDataWithCookies)
 {
-    const auto request = http::Request{http::RequestMethod::GET, "/", {}, {{"id", "100"}}};
+    const auto request = http::Request{http::RequestMethod::Get, "/", {}, {{"id", "100"}}};
     const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
 
     EXPECT_EQ(fcgiData.params.size(), 3);
@@ -344,7 +344,7 @@ TEST(Request, ToFcgiDataWithCookies)
 TEST(Request, ToFcgiDataWithUrlEncodedForm)
 {
     const auto form = http::Form{{"id", http::FormField{"100"}}, {"name", http::FormField{"foo"}}};
-    const auto request = http::Request{http::RequestMethod::GET, "/", {}, {}, form};
+    const auto request = http::Request{http::RequestMethod::Get, "/", {}, {}, form};
     const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
 
     EXPECT_FALSE(fcgiData.stdIn.empty());
@@ -361,7 +361,7 @@ TEST(Request, ToFcgiDataWithUrlEncodedForm)
 TEST(Request, ToFcgiDataWithMultipartForm)
 {
     const auto form = http::Form{{"id", http::FormField{"100"}}, {"name", http::FormField{"foo"}}};
-    const auto request = http::Request{http::RequestMethod::GET, "/", {}, {}, form};
+    const auto request = http::Request{http::RequestMethod::Get, "/", {}, {}, form};
     const auto fcgiData = request.toFcgiData(http::FormType::Multipart);
     const auto expectedFormData =
             std::string{"------asyncgiFormBoundary\r\nContent-Disposition: form-data; name=\"id\"\r\n\r\n100\r\n"

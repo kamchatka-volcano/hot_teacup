@@ -29,7 +29,7 @@ Response::Response(ResponseStatus status, std::string body, std::vector<Cookie> 
                     {
                         return header.name() == "ContentType";
                     }) == headers_.end())
-            headers_.emplace_back("ContentType", detail::contentTypeToString(ContentType::HTML));
+            headers_.emplace_back("ContentType", detail::contentTypeToString(ContentType::Html));
     }
 }
 
@@ -71,22 +71,17 @@ Response::Response(
 }
 
 Response::Response(std::string body, std::string contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{
-              ResponseStatus::Code_200_Ok,
-              std::move(body),
-              std::move(contentType),
-              std::move(cookies),
-              std::move(headers)}
+    : Response{ResponseStatus::_200_Ok, std::move(body), std::move(contentType), std::move(cookies), std::move(headers)}
 {
 }
 
 Response::Response(std::string body, ContentType contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{ResponseStatus::Code_200_Ok, std::move(body), contentType, std::move(cookies), std::move(headers)}
+    : Response{ResponseStatus::_200_Ok, std::move(body), contentType, std::move(cookies), std::move(headers)}
 {
 }
 
 Response::Response(std::string body, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{ResponseStatus::Code_200_Ok, std::move(body), std::move(cookies), std::move(headers)}
+    : Response{ResponseStatus::_200_Ok, std::move(body), std::move(cookies), std::move(headers)}
 {
 }
 
@@ -144,7 +139,7 @@ void Response::addHeaders(const std::vector<Header>& headers)
 std::string Response::statusData(ResponseMode mode) const
 {
     auto res = "HTTP/1.1 " + std::string{detail::statusToString(status_)} + "\r\n";
-    if (mode == ResponseMode::CGI)
+    if (mode == ResponseMode::Cgi)
         res += "Status: " + std::string{detail::statusToString(status_)} + "\r\n";
     return res;
 }

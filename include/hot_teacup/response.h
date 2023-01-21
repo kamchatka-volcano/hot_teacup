@@ -61,7 +61,7 @@ private:
     std::string headersData() const;
 
 private:
-    ResponseStatus status_ = ResponseStatus::Code_404_Not_Found;
+    ResponseStatus status_ = ResponseStatus::_404_Not_Found;
     std::string body_;
     std::vector<Cookie> cookies_;
     std::vector<Header> headers_;

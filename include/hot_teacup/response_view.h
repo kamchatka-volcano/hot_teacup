@@ -22,7 +22,7 @@ public:
     const std::vector<HeaderView>& headers() const;
 
 private:
-    ResponseStatus status_ = ResponseStatus::Code_404_Not_Found;
+    ResponseStatus status_ = ResponseStatus::_404_Not_Found;
     std::string body_;
     std::vector<CookieView> cookies_;
     std::vector<HeaderView> headers_;
