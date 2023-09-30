@@ -28,7 +28,7 @@ private:
     std::vector<HeaderView> headers_;
 };
 
-std::optional<ResponseView> responseFromString(std::string_view);
+std::optional<ResponseView> responseFromString(std::string_view, ResponseMode mode = ResponseMode::Http);
 
 } //namespace http
 

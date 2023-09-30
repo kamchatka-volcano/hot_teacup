@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(hot_teacup
-        VERSION 3.0.0
+        VERSION 3.1.0
         DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses."
 )
 include(GNUInstallDirs)

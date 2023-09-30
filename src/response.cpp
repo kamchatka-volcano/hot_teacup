@@ -138,10 +138,8 @@ void Response::addHeaders(const std::vector<Header>& headers)
 
 std::string Response::statusData(ResponseMode mode) const
 {
-    auto res = "HTTP/1.1 " + std::string{detail::statusToString(status_)} + "\r\n";
-    if (mode == ResponseMode::Cgi)
-        res += "Status: " + std::string{detail::statusToString(status_)} + "\r\n";
-    return res;
+    return (mode == ResponseMode::Cgi ? "Status: " : "HTTP/1.1 ") + std::string{detail::statusToString(status_)} +
+            "\r\n";
 }
 
 std::string Response::cookiesData() const

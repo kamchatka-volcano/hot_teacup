@@ -39,9 +39,19 @@ const std::vector<HeaderView>& ResponseView::headers() const
 }
 
 namespace {
+template<ResponseMode mode>
+auto makeStatusRegex()
+{
+    if constexpr (mode == ResponseMode::Http)
+        return std::regex{"HTTP/1.1 (\\d+) ?(.*)"};
+    else
+        return std::regex{"Status: (\\d+) ?(.*)"};
+}
+
+template<ResponseMode mode>
 std::optional<ResponseStatus> statusCodeFromString(const std::string& statusStr)
 {
-    static const auto statusRegex = std::regex{"HTTP/1.1 (\\d+) ?(.*)"};
+    static const auto statusRegex = makeStatusRegex<mode>();
     auto statusMatch = std::smatch{};
     if (!std::regex_match(statusStr, statusMatch, statusRegex))
         return std::nullopt;
@@ -65,11 +75,12 @@ std::string_view getStringLine(std::string_view input, std::size_t& pos, std::st
 
 } //namespace
 
-std::optional<ResponseView> responseFromString(std::string_view data)
+std::optional<ResponseView> responseFromString(std::string_view data, ResponseMode mode)
 {
     auto pos = std::size_t{};
     auto statusLine = getStringLine(data, pos);
-    auto status = statusCodeFromString(std::string{statusLine});
+    auto status = (mode == ResponseMode::Http) ? statusCodeFromString<ResponseMode::Http>(std::string{statusLine})
+                                               : statusCodeFromString<ResponseMode::Cgi>(std::string{statusLine});
     if (status == std::nullopt)
         return std::nullopt;
 

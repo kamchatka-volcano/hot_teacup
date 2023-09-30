@@ -194,21 +194,21 @@ TEST(Response, StatusCGI)
 {
     using Status = http::ResponseStatus;
     auto response = http::Response{Status::_200_Ok};
-    EXPECT_EQ(response.data(http::ResponseMode::Cgi), "HTTP/1.1 200 OK\r\nStatus: 200 OK\r\n\r\n");
+    EXPECT_EQ(response.data(http::ResponseMode::Cgi), "Status: 200 OK\r\n\r\n");
     response = http::Response{Status::_404_Not_Found};
-    EXPECT_EQ(response.data(http::ResponseMode::Cgi), "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\n\r\n");
+    EXPECT_EQ(response.data(http::ResponseMode::Cgi), "Status: 404 Not Found\r\n\r\n");
     response = http::Response{Status::_404_Not_Found, "Not Found"};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentType::PlainText};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", "text/csv"};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "HTTP/1.1 404 Not Found\r\nStatus: 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
 }
 
 TEST(Response, StatusWithCookies)
@@ -310,11 +310,23 @@ TEST(Response, RedirectWithCookiesAndHeaders)
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
 
-TEST(ResponseView, ResponseFromString)
+TEST(ResponseView, HttpResponseFromString)
 {
     auto responseString = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
                                       "\r\n"};
     auto response = http::responseFromString(responseString);
+    ASSERT_TRUE(response);
+    EXPECT_EQ(response->status(), http::ResponseStatus::_302_Found);
+    EXPECT_EQ(response->headers().at(0).name(), "Location");
+    EXPECT_EQ(response->headers().at(0).value(), "/");
+    EXPECT_EQ(response->body(), "");
+}
+
+TEST(ResponseView, CgiResponseFromString)
+{
+    auto responseString = std::string{"Status: 302 Found\r\nLocation: /\r\n"
+                                      "\r\n"};
+    auto response = http::responseFromString(responseString, http::ResponseMode::Cgi);
     ASSERT_TRUE(response);
     EXPECT_EQ(response->status(), http::ResponseStatus::_302_Found);
     EXPECT_EQ(response->headers().at(0).name(), "Location");

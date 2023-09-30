@@ -47,7 +47,7 @@ public:
     const std::string& body() const;
     const std::vector<Cookie>& cookies() const;
     const std::vector<Header>& headers() const;
-    std::string data(ResponseMode mode = ResponseMode::Standard) const;
+    std::string data(ResponseMode mode = ResponseMode::Http) const;
 
     void setBody(const std::string& body);
     void addCookie(Cookie cookie);

@@ -7,7 +7,7 @@
 namespace http {
 
 enum class ResponseMode {
-    Standard,
+    Http,
     Cgi
 };
 
