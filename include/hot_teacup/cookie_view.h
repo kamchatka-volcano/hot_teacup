@@ -34,7 +34,6 @@ private:
     HeaderView header_;
 };
 
-bool operator==(const CookieView& lhs, const CookieView& rhs);
 std::vector<CookieView> cookiesFromString(std::string_view input);
 std::optional<CookieView> cookieFromHeader(const HeaderView& header);
 

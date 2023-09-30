@@ -47,7 +47,6 @@ private:
     Header header_;
 };
 
-bool operator==(const Cookie& lhs, const Cookie& rhs);
 std::string cookiesToString(const std::vector<Cookie>& cookies);
 
 std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);

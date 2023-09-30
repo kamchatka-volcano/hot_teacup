@@ -18,7 +18,6 @@ private:
     std::string_view value_;
 };
 
-bool operator==(const QueryView& lhs, const QueryView& rhs);
 std::vector<QueryView> queriesFromString(std::string_view input);
 } //namespace http
 

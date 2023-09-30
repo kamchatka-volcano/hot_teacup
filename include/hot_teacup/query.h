@@ -20,7 +20,6 @@ private:
     std::string name_;
     std::string value_;
 };
-bool operator==(const Query& lhs, const Query& rhs);
 
 std::string pathWithQueries(const std::string& path, const std::vector<Query>& queries);
 std::string queriesToString(const std::vector<Query>& queries);
