@@ -27,9 +27,9 @@ Response::Response(ResponseStatus status, std::string body, std::vector<Cookie> 
                     headers_.end(),
                     [](const Header& header)
                     {
-                        return header.name() == "ContentType";
+                        return header.name() == "Content-Type";
                     }) == headers_.end())
-            headers_.emplace_back("ContentType", detail::contentTypeToString(ContentType::Html));
+            headers_.emplace_back("Content-Type", detail::contentTypeToString(ContentType::Html));
     }
 }
 
@@ -51,7 +51,7 @@ Response::Response(
               status,
               std::move(body),
               std::move(cookies),
-              concatHeaders(std::move(headers), {"ContentType", std::move(contentType)})}
+              concatHeaders(std::move(headers), {"Content-Type", std::move(contentType)})}
 {
 }
 

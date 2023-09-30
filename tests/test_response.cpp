@@ -183,11 +183,11 @@ TEST(Response, Status)
     EXPECT_EQ(response.data(), "HTTP/1.1 511 Network Authentication Required\r\n\r\n");
 
     response = http::Response{Status::_404_Not_Found, "Not Found"};
-    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
+    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentType::PlainText};
-    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
+    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", "text/csv"};
-    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
+    EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/csv\r\n\r\nNot Found");
 }
 
 TEST(Response, StatusCGI)
@@ -200,15 +200,15 @@ TEST(Response, StatusCGI)
     response = http::Response{Status::_404_Not_Found, "Not Found"};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "Status: 404 Not Found\r\nContentType: text/html\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContent-Type: text/html\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentType::PlainText};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "Status: 404 Not Found\r\nContentType: text/plain\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", "text/csv"};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
-            "Status: 404 Not Found\r\nContentType: text/csv\r\n\r\nNot Found");
+            "Status: 404 Not Found\r\nContent-Type: text/csv\r\n\r\nNot Found");
 }
 
 TEST(Response, StatusWithCookies)
@@ -235,19 +235,19 @@ TEST(Response, StatusWithCookiesAndHeaders)
 TEST(Response, Text)
 {
     auto response = http::Response{"Hello world"};
-    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/html\r\n\r\nHello world");
+    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello world");
     response = http::Response{"Hello world", http::ContentType::Html};
-    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/html\r\n\r\nHello world");
+    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello world");
     response = http::Response{"Hello world", http::ContentType::Xhtml};
-    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: application/xhtml+xml\r\n\r\nHello world");
+    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContent-Type: application/xhtml+xml\r\n\r\nHello world");
     response = http::Response{"Hello world", http::ContentType::PlainText};
-    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContentType: text/plain\r\n\r\nHello world");
+    EXPECT_EQ(response.data(), "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello world");
 }
 
 TEST(Response, TextWithCookies)
 {
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n" +
+                            "Content-Type: text/html\r\n" +
             cookiesResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::Html};
     testResponseWithCookies(response, expectedResponse);
@@ -256,7 +256,7 @@ TEST(Response, TextWithCookies)
 TEST(Response, TextWithHeaders)
 {
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n" +
+                            "Content-Type: text/html\r\n" +
             headersResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::Html};
     testResponseWithHeaders(response, expectedResponse);
@@ -265,7 +265,7 @@ TEST(Response, TextWithHeaders)
 TEST(Response, TextWithCookiesAndHeaders)
 {
     auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "ContentType: text/html\r\n" +
+                            "Content-Type: text/html\r\n" +
             cookiesAndHeadersResponsePart + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::Html};
     testResponseWithCookiesAndHeaders(response, expectedResponse);
