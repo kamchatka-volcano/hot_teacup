@@ -91,6 +91,11 @@ Response::Response(std::string path, RedirectType type, std::vector<Cookie> cook
     addHeader({"Location", std::move(path)});
 }
 
+Response::Response(Redirect redirect, std::vector<Cookie> cookies, std::vector<Header> headers)
+    : Response{std::move(redirect.path), redirect.type, std::move(cookies), std::move(headers)}
+{
+}
+
 ResponseStatus Response::status() const
 {
     return status_;

@@ -287,6 +287,11 @@ TEST(Response, Redirect)
     EXPECT_EQ(response.data(), "HTTP/1.1 308 Permanent Redirect\r\nLocation: /\r\n\r\n");
     response = http::Response{"/", http::RedirectType::TemporaryRedirect};
     EXPECT_EQ(response.data(), "HTTP/1.1 307 Temporary Redirect\r\nLocation: /\r\n\r\n");
+
+    auto response2 = http::Response{http::Redirect{"/"}};
+    EXPECT_EQ(response2.data(), "HTTP/1.1 302 Found\r\nLocation: /\r\n\r\n");
+    response2 = http::Redirect{"/", http::RedirectType::SeeOther};
+    EXPECT_EQ(response2.data(), "HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n");
 }
 
 TEST(Response, RedirectWithCookies)

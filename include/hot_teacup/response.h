@@ -10,6 +10,11 @@
 namespace http {
 class ResponseView;
 
+struct Redirect {
+    std::string path;
+    RedirectType type = RedirectType::Found;
+};
+
 class Response {
 public:
     explicit Response(const ResponseView&);
@@ -41,6 +46,7 @@ public:
             std::vector<Cookie> cookies = {},
             std::vector<Header> headers = {});
     Response(std::string path, RedirectType type, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
+    Response(Redirect redirect, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
     Response(std::string body, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
 
     ResponseStatus status() const;
