@@ -62,9 +62,9 @@ bool HeaderView::hasParam(std::string_view name) const
 namespace {
 std::string_view unquoted(std::string_view str)
 {
-    if (sfun::startsWith(str, "\""))
+    if (sfun::starts_with(str, "\""))
         str.remove_prefix(1);
-    if (sfun::endsWith(str, "\""))
+    if (sfun::ends_with(str, "\""))
         str.remove_suffix(1);
     return str;
 }
@@ -73,8 +73,8 @@ std::optional<HeaderParamView> makeParam(std::string_view paramPart)
 {
     if (paramPart.find('=') == std::string::npos)
         return {};
-    auto name = sfun::trimFront(sfun::before(paramPart, "="));
-    auto value = unquoted(sfun::after(paramPart, "="));
+    const auto name = sfun::trim_front(sfun::before(paramPart, "=").value());
+    const auto value = unquoted(sfun::after(paramPart, "=").value());
     return HeaderParamView{name, value};
 }
 
@@ -89,8 +89,8 @@ std::optional<HeaderView> headerFromString(std::string_view input)
     if (parts[0].find(':') == std::string::npos)
         return {};
 
-    auto name = sfun::trim(sfun::before(parts[0], ":"));
-    auto value = unquoted(sfun::trimFront(sfun::after(parts[0], ":")));
+    const auto name = sfun::trim(sfun::before(parts[0], ":").value());
+    const auto value = unquoted(sfun::trim_front(sfun::after(parts[0], ":").value()));
     if (name.empty())
         return {};
 
@@ -107,15 +107,13 @@ std::optional<HeaderView> headerFromString(std::string_view input)
         }
         return HeaderView{name, {}, std::move(params)};
     }
-    else {
-        auto params = std::vector<HeaderParamView>{};
-        for (auto i = 1u; i < parts.size(); ++i) {
-            auto param = makeParam(parts[i]);
-            if (param)
-                params.emplace_back(*param);
-        }
-        return HeaderView{name, value, std::move(params)};
-    }
+
+    auto params = std::vector<HeaderParamView>{};
+    for (auto i = 1u; i < parts.size(); ++i)
+        if (const auto param = makeParam(parts[i]))
+            params.emplace_back(*param);
+    return HeaderView{name, value, std::move(params)};
+
 }
 
 std::string_view HeaderView::name() const

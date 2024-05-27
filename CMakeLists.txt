@@ -1,15 +1,14 @@
 cmake_minimum_required(VERSION 3.18)
 project(hot_teacup
-        VERSION 3.2.0
+        VERSION 3.3.0
         DESCRIPTION "C++17 library for parsing HTTP requests data received over the FastCGI connection and forming HTTP responses."
         )
-include(GNUInstallDirs)
 include(external/seal_lake)
 
 SealLake_Bundle(
         NAME hot_teacup_sfun
         GIT_REPOSITORY https://github.com/kamchatka-volcano/sfun.git
-        GIT_TAG v3.1.1
+        GIT_TAG v5.1.0
         TEXT_REPLACEMENTS
             "namespace sfun" "namespace http::sfun"
 )
@@ -50,4 +49,4 @@ SealLake_StaticLibrary(
         LIBRARIES hot_teacup_sfun::hot_teacup_sfun
 )
 
-SealLake_OptionalBuildSteps(tests)
+SealLake_OptionalSubProjects(tests)

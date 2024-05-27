@@ -17,8 +17,8 @@ RequestView::RequestView(
         std::string_view fcgiStdIn)
     : method_{methodFromString(fcgiParamRequestMethod)}
     , ipAddress_{fcgiParamRemoteAddr}
-    , domainName_{sfun::before(fcgiParamHttpHost, ":")}
-    , path_{sfun::before(fcgiParamRequestUri, "?")}
+    , domainName_{sfun::before(fcgiParamHttpHost, ":").value_or(fcgiParamHttpHost)}
+    , path_{sfun::before(fcgiParamRequestUri, "?").value_or(fcgiParamRequestUri)}
     , queries_{queriesFromString(fcgiParamQueryString)}
     , cookies_{cookiesFromString(fcgiParamHttpCookie)}
     , form_{formFromString(fcgiParamContentType, fcgiStdIn)}

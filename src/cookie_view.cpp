@@ -78,10 +78,13 @@ std::vector<CookieView> cookiesFromString(std::string_view input)
     auto result = std::vector<CookieView>{};
     auto cookies = sfun::split(input, ";");
     for (const auto& cookie : cookies) {
-        auto name = sfun::before(cookie, "=");
-        auto value = sfun::after(cookie, "=");
-        if (!name.empty() && !value.empty())
-            result.emplace_back(sfun::trim(name), sfun::trim(value));
+        const auto namePart = sfun::before(cookie, "=");
+        const auto valuePart = sfun::after(cookie, "=");
+        if (!namePart.has_value())
+            continue;
+        const auto name = sfun::trim(namePart.value());
+        if (!name.empty())
+            result.emplace_back(name, valuePart.value_or(""));
     }
     return result;
 }

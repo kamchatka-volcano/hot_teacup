@@ -28,13 +28,20 @@ bool operator==(const QueryView& lhs, const QueryView& rhs)
 std::vector<QueryView> queriesFromString(std::string_view input)
 {
     auto result = std::vector<QueryView>{};
-    auto queries = sfun::split(input, "&");
+    const auto queries = sfun::split(input, "&");
     for (const auto& query : queries) {
-        auto name = sfun::before(query, "=");
-        auto value = sfun::after(query, "=");
-        if (name.empty())
-            continue;
-        result.emplace_back(sfun::trim(name), sfun::trim(value));
+        const auto namePart = sfun::before(query, "=");
+        const auto valuePart = sfun::after(query, "=");
+        if (!namePart.has_value()) {
+            const auto name = sfun::trim(query);
+            if (!name.empty())
+                result.emplace_back(name, "");
+        }
+        else {
+            const auto name = sfun::trim(namePart.value());
+            if (!name.empty())
+                result.emplace_back(name, sfun::trim(valuePart.value_or("")));
+        }
     }
     return result;
 }

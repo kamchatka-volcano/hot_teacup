@@ -144,11 +144,15 @@ FormView parseFormFieldViews(std::string_view input, std::string_view boundary)
 
 std::tuple<std::string_view, std::string_view> parseUrlEncodedParamString(std::string_view paramStr)
 {
-    auto delimiterPos = paramStr.find('=');
-    if (delimiterPos == std::string::npos)
+    const auto namePart = sfun::before(paramStr, "=");
+    if (!namePart.has_value())
         return {};
-    auto name = sfun::trim(sfun::before(paramStr, "="));
-    auto val = sfun::trimFront(sfun::after(paramStr, "="));
+
+    const auto name = sfun::trim(namePart.value());
+    if (name.empty())
+        return {};
+
+    const auto val = sfun::after(paramStr, "=").value();
     return {name, val};
 }
 
