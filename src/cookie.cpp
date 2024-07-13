@@ -1,5 +1,6 @@
 #include <hot_teacup/cookie.h>
 #include <hot_teacup/cookie_view.h>
+#include <sfun/functional.h>
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -39,17 +40,17 @@ Cookie::Cookie(Header header)
 {
 }
 
-const std::string& Cookie::name() const
+std::string_view Cookie::name() const
 {
     return header_.params().at(0).name();
 }
 
-const std::string& Cookie::value() const
+std::string_view Cookie::value() const
 {
     return header_.params().at(0).value();
 }
 
-std::optional<std::string> Cookie::domain() const
+std::optional<std::string_view> Cookie::domain() const
 {
     if (header_.hasParam("Domain"))
         return header_.param("Domain");
@@ -57,7 +58,7 @@ std::optional<std::string> Cookie::domain() const
         return {};
 }
 
-std::optional<std::string> Cookie::path() const
+std::optional<std::string_view> Cookie::path() const
 {
     if (header_.hasParam("Path"))
         return header_.param("Path");
@@ -68,15 +69,10 @@ std::optional<std::string> Cookie::path() const
 std::optional<std::chrono::seconds> Cookie::maxAge() const
 {
     if (header_.hasParam("Max-Age")) {
-        try {
-            return std::chrono::seconds{std::stoi(header_.param("Max-Age"))};
-        }
-        catch (...) {
-            return {};
-        }
+        return sfun::try_invoke([&]{ return std::chrono::seconds{std::stoi(std::string{header_.param("Max-Age")})}; });
     }
     else
-        return {};
+        return std::nullopt;
 }
 
 bool Cookie::isSecure() const
@@ -128,7 +124,7 @@ std::string cookiesToString(const std::vector<Cookie>& cookies)
 {
     auto result = std::string{};
     for (const auto& cookie : cookies)
-        result += cookie.name() + "=" + cookie.value() + "; ";
+        result += std::string{cookie.name()} + "=" + std::string{cookie.value()} + "; ";
     if (!result.empty())
         result.resize(result.size() - 2); //remove last '; '
     return result;

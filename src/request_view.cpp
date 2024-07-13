@@ -190,18 +190,18 @@ const std::vector<CookieView>& RequestView::cookies() const
     return cookies_;
 }
 
-std::vector<std::string> RequestView::formFieldList() const
+std::vector<std::string_view> RequestView::formFieldList() const
 {
-    auto result = std::vector<std::string>{};
+    auto result = std::vector<std::string_view>{};
     for (const auto& [formFieldName, formField] : form_)
         if (formField.type() == FormFieldType::Param)
             result.push_back(formFieldName);
     return result;
 }
 
-std::vector<std::string> RequestView::fileList() const
+std::vector<std::string_view> RequestView::fileList() const
 {
-    auto result = std::vector<std::string>{};
+    auto result = std::vector<std::string_view>{};
     for (const auto& [formFieldName, formField] : form_)
         if (formField.hasFile())
             result.push_back(formFieldName);

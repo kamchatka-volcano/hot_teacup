@@ -1,33 +1,52 @@
 #ifndef HOT_TEACUP_HEADER_H
 #define HOT_TEACUP_HEADER_H
 
+#include "header_view.h"
 #include "types.h"
 #include <map>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <variant>
 
 namespace http {
 class HeaderParamView;
 class HeaderView;
 
 class HeaderParam {
+    struct Data{
+        std::string_view name() const;
+        std::string_view value() const;
+        bool hasValue() const;
+        std::string name_;
+        std::optional<std::string> value_;
+    };
+
 public:
     explicit HeaderParam(const HeaderParamView&);
     explicit HeaderParam(std::string name);
     HeaderParam(std::string name, std::string value);
-    const std::string& name() const;
-    const std::string& value() const;
+    std::string_view name() const;
+    std::string_view value() const;
+    bool hasValue() const;
     std::string toString(HeaderQuotingMode quotingMode) const;
 
 private:
-    std::string name_;
-    std::optional<std::string> value_;
     static inline const std::string valueNotFound;
+
+private:
+    std::variant<Data, HeaderParamView> data_;
+
 };
 
 class Header {
+    struct Data{
+        std::string_view name() const;
+        std::string_view value() const;
+        std::string name_;
+        std::string value_;
+    };
 public:
     explicit Header(const HeaderView&);
     Header(std::string name, std::string value);
@@ -36,17 +55,22 @@ public:
     void setQuotingMode(HeaderQuotingMode mode);
     std::string toString() const;
 
-    const std::string& name() const;
-    const std::string& value() const;
-    const std::string& param(std::string_view name) const;
-    const std::vector<HeaderParam>& params() const;
+    std::string_view name() const;
+    std::string_view value() const;
+    std::string_view param(std::string_view name) const;
     bool hasParam(std::string_view name) const;
 
+    const std::vector<HeaderParam>& params() const;
+
 private:
-    std::string name_;
-    std::string value_;
+    bool isView() const;
+    
+private:
+    std::variant<Data, HeaderView> data_;
     std::vector<HeaderParam> params_;
     HeaderQuotingMode quotingMode_ = HeaderQuotingMode::None;
+
+
 };
 
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList);

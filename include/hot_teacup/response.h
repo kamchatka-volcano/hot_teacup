@@ -6,6 +6,7 @@
 #include "query.h"
 #include "types.h"
 #include <string>
+#include <variant>
 
 namespace http {
 class ResponseView;
@@ -50,7 +51,7 @@ public:
     Response(std::string body, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
 
     ResponseStatus status() const;
-    const std::string& body() const;
+    std::string_view body() const;
     const std::vector<Cookie>& cookies() const;
     const std::vector<Header>& headers() const;
     std::string data(ResponseMode mode = ResponseMode::Http) const;
@@ -65,10 +66,11 @@ private:
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
+    bool isView() const;
 
 private:
     ResponseStatus status_ = ResponseStatus::_404_Not_Found;
-    std::string body_;
+    std::variant<std::string, std::string_view> body_;
     std::vector<Cookie> cookies_;
     std::vector<Header> headers_;
 };

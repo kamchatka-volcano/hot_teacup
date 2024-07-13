@@ -7,11 +7,10 @@
 namespace http {
 
 Response::Response(const ResponseView& responseView)
-    : Response{
-              responseView.status(),
-              std::string{responseView.body()},
-              makeCookies(responseView.cookies()),
-              makeHeaders(responseView.headers())}
+    : status_{responseView.status()}
+    , body_{responseView.body()}
+    , cookies_{makeCookies(responseView.cookies())}
+    , headers_{makeHeaders(responseView.headers())}
 {
 }
 
@@ -21,7 +20,7 @@ Response::Response(ResponseStatus status, std::string body, std::vector<Cookie> 
     , cookies_{std::move(cookies)}
     , headers_{std::move(headers)}
 {
-    if (!body_.empty()) {
+    if (!std::get<std::string>(body_).empty()) {
         if (std::find_if(
                     headers_.begin(),
                     headers_.end(),
@@ -101,9 +100,9 @@ ResponseStatus Response::status() const
     return status_;
 }
 
-const std::string& Response::body() const
+std::string_view Response::body() const
 {
-    return body_;
+    return std::visit([](const auto& body) -> std::string_view{ return body;}, body_);
 }
 
 const std::vector<Cookie>& Response::cookies() const
@@ -118,26 +117,41 @@ const std::vector<Header>& Response::headers() const
 
 void Response::setBody(const std::string& body)
 {
+    if (isView())
+        return;
+
     body_ = body;
 }
 
 void Response::addCookie(Cookie cookie)
 {
+    if (isView())
+        return;
+
     cookies_.emplace_back(std::move(cookie));
 }
 
 void Response::addHeader(Header header)
 {
+    if (isView())
+        return;
+
     headers_.emplace_back(std::move(header));
 }
 
 void Response::addCookies(const std::vector<Cookie>& cookies)
 {
+    if (isView())
+        return;
+
     std::copy(cookies.begin(), cookies.end(), std::back_inserter(cookies_));
 }
 
 void Response::addHeaders(const std::vector<Header>& headers)
 {
+    if (isView())
+        return;
+
     std::copy(headers.begin(), headers.end(), std::back_inserter(headers_));
 }
 
@@ -165,7 +179,13 @@ std::string Response::headersData() const
 
 std::string Response::data(ResponseMode mode) const
 {
-    return statusData(mode) + headersData() + cookiesData() + "\r\n" + body_;
+    const auto body = std::visit([](const auto& body) -> std::string_view{ return body;}, body_);
+    return statusData(mode) + headersData() + cookiesData() + "\r\n" + std::string{body};
+}
+
+bool Response::isView() const
+{
+    return std::holds_alternative<std::string_view>(body_);
 }
 
 } //namespace http

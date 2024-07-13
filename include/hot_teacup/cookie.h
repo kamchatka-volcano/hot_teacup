@@ -23,10 +23,10 @@ public:
            bool secure = false,
            bool removed = false);
 
-    const std::string& name() const;
-    const std::string& value() const;
-    std::optional<std::string> domain() const;
-    std::optional<std::string> path() const;
+    std::string_view name() const;
+    std::string_view value() const;
+    std::optional<std::string_view> domain() const;
+    std::optional<std::string_view> path() const;
     std::optional<std::chrono::seconds> maxAge() const;
     bool isSecure() const;
     bool isRemoved() const;

@@ -1,6 +1,7 @@
 #ifndef HOT_TEACUP_FORM_H
 #define HOT_TEACUP_FORM_H
 
+#include "form_view.h"
 #include "types.h"
 #include <map>
 #include <optional>
@@ -10,13 +11,21 @@
 #include <vector>
 
 namespace http {
-class FormFieldView;
 
 class FormField {
     struct FormFile {
         std::string fileData;
         std::string fileName;
         std::optional<std::string> mimeType;
+    };
+    struct Data{
+        std::string_view fileName() const;
+        std::string_view fileType() const;
+        std::string_view value() const;
+        FormFieldType type() const;
+        bool hasFile() const;
+        std::variant<std::string, FormFile> value_;
+
     };
 
 public:
@@ -27,12 +36,12 @@ public:
     FormFieldType type() const;
     bool hasFile() const;
 
-    const std::string& fileName() const;
-    const std::string& fileType() const;
-    const std::string& value() const;
+    std::string_view fileName() const;
+    std::string_view fileType() const;
+    std::string_view value() const;
 
 private:
-    std::variant<std::string, FormFile> value_;
+    std::variant<Data, FormFieldView> data_;
     static inline const std::string valueNotFound = {};
 };
 

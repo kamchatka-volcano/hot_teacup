@@ -6,36 +6,43 @@
 
 namespace http {
 
-Query::Query(const QueryView& queryView)
-    : name_{queryView.name()}
-    , value_{queryView.value()}
-{
-}
-
-Query::Query(std::string name, std::string value)
-    : name_{std::move(name)}
-    , value_{std::move(value)}
-{
-}
-
-const std::string& Query::name() const
+std::string_view Query::Data::name() const
 {
     return name_;
 }
-
-const std::string& Query::value() const
+std::string_view Query::Data::value() const
 {
     return value_;
 }
 
+Query::Query(const QueryView& queryView)
+    : data_{queryView}
+{
+}
+
+Query::Query(std::string name, std::string value)
+    : data_{Data{std::move(name), std::move(value)}}
+{
+}
+
+std::string_view Query::name() const
+{
+    return std::visit([](const auto& data){ return data.name();}, data_);
+}
+
+std::string_view Query::value() const
+{
+    return std::visit([](const auto& data){ return data.value();}, data_);
+}
+
 std::string Query::toString() const
 {
-    return name_ + "=" + value_;
+    return std::string{name()} + "=" + std::string{value()};
 }
 
 bool operator==(const Query& lhs, const Query& rhs)
 {
-    return lhs.name_ == rhs.name_ && lhs.value_ == rhs.value_;
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
 }
 
 std::string queriesToString(const std::vector<Query>& queries)
@@ -69,5 +76,6 @@ std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
             });
     return result;
 }
+
 
 } //namespace http

@@ -37,8 +37,8 @@ public:
 
     const FormView& form() const;
     std::string_view formField(std::string_view name, int index = 0) const;
-    std::vector<std::string> formFieldList() const;
-    std::vector<std::string> fileList() const;
+    std::vector<std::string_view> formFieldList() const;
+    std::vector<std::string_view> fileList() const;
     int formFieldCount(std::string_view name) const;
     bool hasFormField(std::string_view name) const;
 

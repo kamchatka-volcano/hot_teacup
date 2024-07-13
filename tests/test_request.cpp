@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <functional>
 
-TEST(RequestView, RequestMethodParam)
+TEST(RequestView, RequestViewMethodParam)
 {
     auto testRequestType = [&](std::string_view typeStr, http::RequestMethod expectedMethod)
     {
@@ -30,19 +30,31 @@ TEST(RequestView, RequestFromRequestViewWithMethodParam)
     EXPECT_EQ(request.method(), http::RequestMethod::Get);
 }
 
-TEST(RequestView, RequestIpAddress)
+TEST(RequestView, RequestViewIpAddress)
 {
     auto request = http::RequestView{{}, "127.0.0.1", {}, {}, {}, {}, {}, {}};
     EXPECT_EQ(request.ipAddress(), "127.0.0.1");
 }
 
-TEST(RequestView, RequestDomain)
+TEST(RequestView, RequestFromRequestViewIpAddress)
+{
+    auto request = http::RequestView{{}, "127.0.0.1", {}, {}, {}, {}, {}, {}};
+    EXPECT_EQ(http::Request{request}.ipAddress(), "127.0.0.1");
+}
+
+TEST(RequestView, RequestViewDomain)
 {
     auto request = http::RequestView{{}, {}, "localhost", {}, {}, {}, {}, {}};
     EXPECT_EQ(request.domainName(), "localhost");
 }
 
-TEST(RequestView, RequestPath)
+TEST(RequestView, RequestFromRequestViewDomain)
+{
+    auto request = http::RequestView{{}, {}, "localhost", {}, {}, {}, {}, {}};
+    EXPECT_EQ(http::Request{request}.domainName(), "localhost");
+}
+
+TEST(RequestView, RequestViewPath)
 {
     auto request = http::RequestView{{}, {}, {}, "/test", {}, {}, {}, {}};
     EXPECT_EQ(request.path(), "/test");
@@ -158,7 +170,7 @@ TEST(RequestView, MultipartFormWithFile)
             {},
             "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx",
             formData};
-    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
+    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
     EXPECT_EQ(request.formField("param1"), "foo");
@@ -195,7 +207,7 @@ TEST(RequestView, FormFromMultipartFormViewWithFile)
             "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx",
             formData};
     const auto request = http::Request{requestView};
-    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
+    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
     EXPECT_EQ(request.formField("param1"), "foo");
@@ -219,7 +231,7 @@ TEST(Request, MultipartFormWithFile)
             {"param3", http::FormField{"test-gif-data", "test.gif", "image/gif"}}};
     const auto request = http::Request{http::RequestMethod::Post, "/", {}, {}, form};
 
-    const auto expectedFormFieldList = std::vector<std::string>{"param1", "param2"};
+    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
     EXPECT_EQ(request.formField("param1"), "foo");
@@ -240,7 +252,7 @@ TEST(RequestView, UrlEncodedForm)
     const auto formData = "param1=foo&param2=bar&flag&param4=";
 
     const auto request = http::RequestView{"GET", {}, {}, {}, {}, {}, "application/x-www-form-urlencoded", formData};
-    auto expectedFormFieldList = std::vector<std::string>{"param1", "param2", "param4"};
+    auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2", "param4"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
     EXPECT_EQ(request.formField("param1"), "foo");
@@ -267,7 +279,7 @@ TEST(Request, UrlEncodedForm)
 
     const auto request = http::Request{http::RequestMethod::Post, "/", {}, {}, form};
 
-    auto expectedFormFieldList = std::vector<std::string>{"param1", "param2", "param4"};
+    auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2", "param4"};
     EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
     EXPECT_TRUE(request.hasFormField("param1"));
     EXPECT_EQ(request.formField("param1"), "foo");

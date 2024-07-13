@@ -9,6 +9,8 @@ namespace http {
 Request::Request(const RequestView& requestView)
     : method_{requestView.method()}
     , path_{requestView.path()}
+    , ipAddress_{requestView.ipAddress()}
+    , domainName_{requestView.domainName()}
     , queries_{makeQueries(requestView.queries())}
     , cookies_{makeCookies(requestView.cookies())}
     , form_{makeForm(requestView.form())}
@@ -29,24 +31,44 @@ Request::Request(
 {
 }
 
+void Request::setIpAddress(const std::string& ipAddress)
+{
+    if (isView())
+        return;
+
+    ipAddress_ = ipAddress;
+}
+
+void Request::setDomainName(const std::string& domainName)
+{
+    if (isView())
+        return;
+
+    domainName_ = domainName;
+}
+
 void Request::setQueries(const std::vector<Query>& queries)
 {
+    if (isView())
+        return;
+
     queries_ = queries;
 }
 
 void Request::setCookies(const std::vector<Cookie>& cookies)
 {
+    if (isView())
+        return;
+
     cookies_ = cookies;
 }
 
 void Request::setForm(const Form& form)
 {
-    form_ = form;
-}
+    if (isView())
+        return;
 
-void Request::setFcgiParams(const std::map<std::string, std::string>& params)
-{
-    fcgiParams_ = params;
+    form_ = form;
 }
 
 RequestMethod Request::method() const
@@ -54,12 +76,22 @@ RequestMethod Request::method() const
     return method_;
 }
 
-const std::string& Request::path() const
+std::string_view Request::path() const
 {
-    return path_;
+    return std::visit([](const auto& path) -> std::string_view { return path; }, path_);
 }
 
-const std::string& Request::query(std::string_view name) const
+std::string_view Request::ipAddress() const
+{
+    return std::visit([](const auto& ipAddress) -> std::string_view { return ipAddress; }, ipAddress_);
+}
+
+std::string_view Request::domainName() const
+{
+    return std::visit([](const auto& domainName) -> std::string_view { return domainName; }, domainName_);
+}
+
+std::string_view Request::query(std::string_view name) const
 {
     auto it = std::find_if(
             queries_.begin(),
@@ -86,7 +118,7 @@ bool Request::hasQuery(std::string_view name) const
     return (it != queries_.end());
 }
 
-const std::string& Request::cookie(std::string_view name) const
+std::string_view Request::cookie(std::string_view name) const
 {
     auto it = std::find_if(
             cookies_.begin(),
@@ -118,7 +150,7 @@ const Form& Request::form() const
     return form_;
 }
 
-const std::string& Request::formField(std::string_view name, int index) const
+std::string_view Request::formField(std::string_view name, int index) const
 {
     auto i = 0;
     for (const auto& [formFieldName, formField] : form_) {
@@ -147,7 +179,7 @@ bool Request::hasFormField(std::string_view name) const
     return formFieldCount(name) != 0;
 }
 
-const std::string& Request::fileData(std::string_view name, int index) const
+std::string_view Request::fileData(std::string_view name, int index) const
 {
     auto i = 0;
     for (const auto& [formFieldName, formField] : form_)
@@ -172,7 +204,7 @@ bool Request::hasFile(std::string_view name) const
     return fileCount(name) != 0;
 }
 
-const std::string& Request::fileName(std::string_view name, int index) const
+std::string_view Request::fileName(std::string_view name, int index) const
 {
     auto i = 0;
     for (const auto& [formFieldName, formField] : form_)
@@ -183,7 +215,7 @@ const std::string& Request::fileName(std::string_view name, int index) const
     return valueNotFound;
 }
 
-const std::string& Request::fileType(std::string_view name, int index) const
+std::string_view Request::fileType(std::string_view name, int index) const
 {
     auto i = 0;
     for (const auto& [formFieldName, formField] : form_)
@@ -204,18 +236,18 @@ const std::vector<Cookie>& Request::cookies() const
     return cookies_;
 }
 
-std::vector<std::string> Request::formFieldList() const
+std::vector<std::string_view> Request::formFieldList() const
 {
-    auto result = std::vector<std::string>{};
+    auto result = std::vector<std::string_view>{};
     for (const auto& [formFieldName, formField] : form_)
         if (formField.type() == FormFieldType::Param)
             result.push_back(formFieldName);
     return result;
 }
 
-std::vector<std::string> Request::fileList() const
+std::vector<std::string_view> Request::fileList() const
 {
-    auto result = std::vector<std::string>{};
+    auto result = std::vector<std::string_view>{};
     for (const auto& [formFieldName, formField] : form_)
         if (formField.hasFile())
             result.push_back(formFieldName);
@@ -231,27 +263,27 @@ bool Request::hasFiles() const
     return false;
 }
 
-RequestFcgiData Request::toFcgiData(FormType formType) const
+RequestFcgiData Request::toFcgiData(FormType formType, std::map<std::string, std::string> fcgiParams) const
 {
     const auto formBoundary = "----asyncgiFormBoundary"s;
 
     auto makeFcgiParams = [&]
     {
-        auto res = fcgiParams_;
-        res["REQUEST_METHOD"] = methodToString(method_);
-        if (!path_.empty())
-            res["REQUEST_URI"] = path_;
+        fcgiParams["REQUEST_METHOD"] = methodToString(method_);
+        const auto path = std::visit([](const auto& path) -> std::string_view{ return path;}, path_);
+        if (!path.empty())
+            fcgiParams["REQUEST_URI"] = path;
         if (!queries_.empty())
-            res["QUERY_STRING"] = queriesToString(queries_);
+            fcgiParams["QUERY_STRING"] = queriesToString(queries_);
         if (!cookies_.empty())
-            res["HTTP_COOKIE"] = cookiesToString(cookies_);
+            fcgiParams["HTTP_COOKIE"] = cookiesToString(cookies_);
         if (!form_.empty()) {
             if (formType == FormType::Multipart)
-                res["CONTENT_TYPE"] = "multipart/form-data; boundary=" + formBoundary;
+                fcgiParams["CONTENT_TYPE"] = "multipart/form-data; boundary=" + formBoundary;
             else
-                res["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
+                fcgiParams["CONTENT_TYPE"] = "application/x-www-form-urlencoded";
         }
-        return res;
+        return fcgiParams;
     };
     auto makeFcgiStdIn = [&]
     {
@@ -262,6 +294,11 @@ RequestFcgiData Request::toFcgiData(FormType formType) const
     };
 
     return {makeFcgiParams(), makeFcgiStdIn()};
+}
+
+bool Request::isView() const
+{
+    return std::holds_alternative<std::string_view>(path_);
 }
 
 } //namespace http
