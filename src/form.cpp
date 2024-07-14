@@ -1,6 +1,8 @@
+#include "utils.h"
 #include <hot_teacup/form.h>
 #include <hot_teacup/form_view.h>
 #include <hot_teacup/header.h>
+#include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
 #include <optional>
@@ -49,13 +51,6 @@ bool FormField::Data::hasFile() const
 FormField::FormField(const FormFieldView& fieldView)
     : data_{fieldView}
 {
-//    if (fieldView.hasFile())
-//        value_ = FormFile{
-//                std::string{fieldView.value()},
-//                std::string{fieldView.fileName()},
-//                std::string{fieldView.fileType()}};
-//    else
-//        value_ = std::string{fieldView.value()};
 }
 
 FormField::FormField(std::string value)
@@ -95,43 +90,44 @@ std::string_view FormField::value() const
 
 std::string urlEncodedFormToString(const Form& form)
 {
-    auto result = std::string{};
-    for (const auto& [name, field] : form) {
-        if (!result.empty())
-            result += "&";
-        result += name + "=" +
-                (field.type() == http::FormFieldType::Param ? std::string{field.value()}
-                                                            : std::string{field.fileName()});
-    }
-    return result;
+    const auto formFieldPairToString = [](const std::pair<std::string, FormField>& formFieldPair)
+    {
+        const auto& [name, formField] = formFieldPair;
+        return sfun::join_strings(
+                name,
+                "=",
+                (formField.type() == http::FormFieldType::Param ? formField.value() : formField.fileName()));
+    };
+    const auto formFieldStringList = utils::transform(form, formFieldPairToString);
+    return sfun::join(formFieldStringList, "&");
 }
 
 std::string multipartFormToString(const Form& form, const std::string& formBoundary)
 {
-    auto result = std::string{};
-    for (const auto& [name, field] : form) {
-        result += "--" + formBoundary + "\r\n";
+    const auto formFieldPairToString = [](const std::pair<std::string, FormField>& formFieldPair)
+    {
+        const auto& [name, field] = formFieldPair;
         auto header = http::Header{"Content-Disposition", "form-data"};
         header.setQuotingMode(http::HeaderQuotingMode::ParamValue);
         header.setParam("name", name);
         if (field.type() == FormFieldType::Param)
-            result += header.toString() + "\r\n\r\n" + std::string{field.value()} + "\r\n";
+            return sfun::join_strings(header.toString(), "\r\n\r\n", field.value(), "\r\n");
         else {
             header.setParam("filename", std::string{field.fileName()});
             auto fileHeader = std::optional<http::Header>{};
             if (!field.fileType().empty())
                 fileHeader = http::Header{"Content-Type", std::string{field.fileType()}};
-
-            result += header.toString() + "\r\n";
-            if (fileHeader)
-                result += fileHeader->toString() + "\r\n";
-            result += "\r\n";
-            result += std::string{field.value()} + "\r\n";
+            const auto fileHeaderString = fileHeader ? sfun::join_strings(fileHeader->toString(), "\r\n")
+                                                     : std::string{};
+            return sfun::join_strings(header.toString() , "\r\n", fileHeaderString, "\r\n", field.value(), "\r\n");
         }
-    }
-    if (!form.empty())
-        result += "--" + formBoundary + "--\r\n";
-    return result;
+    };
+    const auto formFieldStringList = utils::transform(form, formFieldPairToString);
+    const auto formSeparator = sfun::join_strings("--", formBoundary, "\r\n");
+    const auto formFieldListString = sfun::join(formFieldStringList, formSeparator);
+    const auto openingBoundary = form.empty() ? std::string{} : formSeparator;
+    const auto closingBoundary = form.empty() ? std::string{} : sfun::join_strings("--", formBoundary, "--\r\n");
+    return sfun::join_strings(openingBoundary, formFieldListString, closingBoundary);
 }
 
 Form makeForm(const std::map<std::string, FormFieldView>& formView)

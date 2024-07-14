@@ -25,7 +25,6 @@ class FormField {
         FormFieldType type() const;
         bool hasFile() const;
         std::variant<std::string, FormFile> value_;
-
     };
 
 public:

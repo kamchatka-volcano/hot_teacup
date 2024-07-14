@@ -1,5 +1,7 @@
+#include "utils.h"
 #include <hot_teacup/header.h>
 #include <hot_teacup/header_view.h>
+#include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
@@ -56,19 +58,16 @@ bool HeaderParam::hasValue() const
 
 std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
 {
-    auto res = std::string{name()};
     if (!hasValue())
-        return res;
-    res += "=";
+        return std::string{name()};
+
     switch (quotingMode) {
     case HeaderQuotingMode::ParamValue:
     case HeaderQuotingMode::AllValues:
-        res += "\"" + std::string{value()} + "\"";
-        break;
+        return sfun::join_strings(name(), "=", "\"", value(), "\"");
     default:
-        res += std::string{value()};
+        return sfun::join_strings(name(), "=", value());
     }
-    return res;
 }
 
 
@@ -142,7 +141,7 @@ std::string valueStr(std::string_view value, bool hasParams, HeaderQuotingMode q
     switch (quotingMode) {
     case HeaderQuotingMode::HeaderValue:
     case HeaderQuotingMode::AllValues:
-        return "\"" + std::string{value} + "\"";
+        return sfun::join_strings("\"", value, "\"");
     default:
         return std::string{value};
     }
@@ -173,16 +172,28 @@ bool Header::hasParam(std::string_view name) const
 
 std::string Header::toString() const
 {
-    auto result = std::string{name()} + ": " + valueStr(value(), !params_.empty(), quotingMode_);
-    if (!value().empty() && !params_.empty())
-        result += "; ";
-    for (const auto& param : params_) {
-        result += param.toString(quotingMode_);
-        result += +"; ";
-    }
-    if (!params_.empty())
-        result.resize(result.size() - 2); // remove last ;
-    return result;
+    const auto paramListSeparator = [&]() -> std::string_view{
+        if (!value().empty() && !params_.empty())
+            return "; ";
+        return {};
+    }();
+
+    const auto paramListString = [&]
+    {
+        const auto paramToString = [&](const HeaderParam& param)
+        {
+            return param.toString(quotingMode_);
+        };
+        const auto paramStringList = utils::transform(params_, paramToString);
+        return sfun::join(paramStringList, "; ");
+    }();
+
+    return sfun::join_strings(
+            name(),
+            ": ",
+            valueStr(value(), !params_.empty(), quotingMode_),
+            paramListSeparator,
+            paramListString);
 }
 
 std::string_view Header::name() const
@@ -202,30 +213,22 @@ bool Header::isView() const
 
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)
 {
-    auto result = std::vector<HeaderParam>{};
-    std::transform(
-            headerParamViewList.begin(),
-            headerParamViewList.end(),
-            std::back_inserter(result),
-            [](const auto& headerParamView)
+    return utils::transform(
+            headerParamViewList,
+            [](const HeaderParamView& headerParamView)
             {
                 return HeaderParam{headerParamView};
             });
-    return result;
 }
 
 std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
 {
-    auto result = std::vector<Header>{};
-    std::transform(
-            headerViewList.begin(),
-            headerViewList.end(),
-            std::back_inserter(result),
-            [](const auto& headerView)
+    return utils::transform(
+            headerViewList,
+            [](const HeaderView& headerView)
             {
                 return Header{headerView};
             });
-    return result;
 }
 
 } //namespace http

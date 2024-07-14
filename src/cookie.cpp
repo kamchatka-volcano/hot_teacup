@@ -1,8 +1,11 @@
+#include "utils.h"
 #include <hot_teacup/cookie.h>
 #include <hot_teacup/cookie_view.h>
 #include <sfun/functional.h>
+#include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
+#include <string>
 #include <vector>
 
 namespace http {
@@ -122,26 +125,21 @@ bool operator==(const Cookie& lhs, const Cookie& rhs)
 
 std::string cookiesToString(const std::vector<Cookie>& cookies)
 {
-    auto result = std::string{};
-    for (const auto& cookie : cookies)
-        result += std::string{cookie.name()} + "=" + std::string{cookie.value()} + "; ";
-    if (!result.empty())
-        result.resize(result.size() - 2); //remove last '; '
-    return result;
+    const auto cookieToString = [](const Cookie& cookie){
+        return sfun::join_strings(cookie.name(), "=", cookie.value());
+    };
+    const auto cookieFcgiStringList = utils::transform(cookies, cookieToString);
+    return sfun::join(cookieFcgiStringList, "; ");
 }
 
 std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
 {
-    std::vector<Cookie> result;
-    std::transform(
-            cookieViewList.begin(),
-            cookieViewList.end(),
-            std::back_inserter(result),
-            [](const auto& cookieView)
+    return utils::transform(
+            cookieViewList,
+            [](const CookieView& cookieView)
             {
                 return Cookie{cookieView};
             });
-    return result;
 }
 
 } //namespace http

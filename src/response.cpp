@@ -1,5 +1,7 @@
+#include "utils.h"
 #include <hot_teacup/response.h>
 #include <hot_teacup/response_view.h>
+#include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
 #include <utility>
@@ -157,30 +159,38 @@ void Response::addHeaders(const std::vector<Header>& headers)
 
 std::string Response::statusData(ResponseMode mode) const
 {
-    return (mode == ResponseMode::Cgi ? "Status: " : "HTTP/1.1 ") + std::string{detail::statusToString(status_)} +
-            "\r\n";
+    return sfun::join_strings(
+            mode == ResponseMode::Cgi ? "Status: " : "HTTP/1.1 ",
+            detail::statusToString(status_),
+            "\r\n");
 }
 
 std::string Response::cookiesData() const
 {
-    auto result = std::string{};
-    for (const auto& cookie : cookies_)
-        result += cookie.toString() + "\r\n";
-    return result;
+    const auto cookieToString = [](const Cookie& cookie)
+    {
+        return cookie.toString();
+    };
+    const auto cookieStringList = utils::transform(cookies_, cookieToString);
+    const auto lastSeparator = cookies_.empty() ? std::string_view{} : std::string_view{"\r\n"};
+    return sfun::join_strings(sfun::join(cookieStringList, "\r\n"), lastSeparator);
 }
 
 std::string Response::headersData() const
 {
-    auto result = std::string{};
-    for (auto& header : headers_)
-        result += header.toString() + "\r\n";
-    return result;
+    const auto headerToString = [](const Header& header)
+    {
+        return header.toString();
+    };
+    const auto headerStringList = utils::transform(headers_, headerToString);
+    const auto lastSeparator = headers_.empty() ? std::string_view{} : std::string_view{"\r\n"};
+    return sfun::join_strings(sfun::join(headerStringList, "\r\n"), lastSeparator);
 }
 
 std::string Response::data(ResponseMode mode) const
 {
     const auto body = std::visit([](const auto& body) -> std::string_view{ return body;}, body_);
-    return statusData(mode) + headersData() + cookiesData() + "\r\n" + std::string{body};
+    return sfun::join_strings(statusData(mode), headersData(), cookiesData(), "\r\n", body);
 }
 
 bool Response::isView() const
