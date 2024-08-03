@@ -21,6 +21,8 @@ public:
     const std::vector<CookieView>& cookies() const;
     const std::vector<HeaderView>& headers() const;
 
+    friend bool operator==(const ResponseView& lhs, const ResponseView& rhs);
+
 private:
     ResponseStatus status_ = ResponseStatus::_404_Not_Found;
     std::string body_;

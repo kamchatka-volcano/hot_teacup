@@ -219,4 +219,11 @@ bool RequestView::hasFiles() const
             });
 }
 
+bool operator==(const RequestView& lhs, const RequestView& rhs)
+{
+    return lhs.method() == rhs.method() && lhs.ipAddress() == rhs.ipAddress() && lhs.domainName() == rhs.domainName() &&
+            lhs.path() == rhs.path() && lhs.queries() == rhs.queries() && lhs.cookies() == rhs.cookies() &&
+            lhs.form() == rhs.form();
+}
+
 } //namespace http

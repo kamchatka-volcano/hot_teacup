@@ -57,6 +57,12 @@ std::string_view FormFieldView::value() const
         return std::get<FormFile>(value_).fileData;
 }
 
+bool operator==(const FormFieldView& lhs, const FormFieldView& rhs)
+{
+    return lhs.type() == rhs.type() && lhs.value() == rhs.value() && lhs.hasFile() == rhs.hasFile() &&
+            lhs.fileName() == rhs.fileName() && lhs.fileType() == rhs.fileType();
+}
+
 namespace {
 std::string_view getStringLine(std::string_view input, std::size_t& pos, std::string_view lineSeparator = "\r\n")
 {

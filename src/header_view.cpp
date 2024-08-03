@@ -31,6 +31,11 @@ bool HeaderParamView::hasValue() const
     return value_.has_value();
 }
 
+bool operator==(const HeaderParamView& lhs, const HeaderParamView& rhs)
+{
+    return lhs.name() == rhs.name() && lhs.hasValue() == rhs.hasValue() && lhs.value() == rhs.value();
+}
+
 HeaderView::HeaderView(std::string_view name, std::string_view value, std::vector<HeaderParamView> params)
     : name_{name}
     , value_{value}
@@ -124,6 +129,11 @@ std::string_view HeaderView::name() const
 std::string_view HeaderView::value() const
 {
     return value_;
+}
+
+bool operator==(const HeaderView& lhs, const HeaderView& rhs)
+{
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.params() == rhs.params();
 }
 
 } //namespace http

@@ -29,6 +29,8 @@ public:
     std::string_view fileType() const;
     std::string_view value() const;
 
+    friend bool operator==(const FormFieldView& lhs, const FormFieldView& rhs);
+
 private:
     std::variant<std::string_view, FormFile> value_;
 };

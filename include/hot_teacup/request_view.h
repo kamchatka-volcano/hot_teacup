@@ -49,6 +49,7 @@ public:
     std::string_view fileType(std::string_view name, int index = 0) const;
     bool hasFiles() const;
 
+    friend bool operator==(const RequestView& lhs, const RequestView& rhs);
 private:
     RequestMethod method_;
     std::string_view ipAddress_;

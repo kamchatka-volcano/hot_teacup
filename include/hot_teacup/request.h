@@ -56,6 +56,8 @@ public:
     void setCookies(const std::vector<Cookie>&);
     void setForm(const Form&);
 
+    friend bool operator==(const Request& lhs, const Request& rhs);
+
 private:
     bool isView() const;
 

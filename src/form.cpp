@@ -88,6 +88,12 @@ std::string_view FormField::value() const
     return std::visit([](const auto& data){ return data.value();}, data_);
 }
 
+bool operator==(const FormField& lhs, const FormField& rhs)
+{
+    return lhs.type() == rhs.type() && lhs.value() == rhs.value() && lhs.hasFile() == rhs.hasFile() &&
+            lhs.fileName() == rhs.fileName() && lhs.fileType() == rhs.fileType();
+}
+
 std::string urlEncodedFormToString(const Form& form)
 {
     const auto formFieldPairToString = [](const std::pair<std::string, FormField>& formFieldPair)

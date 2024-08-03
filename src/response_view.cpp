@@ -37,6 +37,11 @@ const std::vector<HeaderView>& ResponseView::headers() const
 {
     return headers_;
 }
+bool operator==(const ResponseView& lhs, const ResponseView& rhs)
+{
+    return lhs.status() == rhs.status() && lhs.body() == rhs.body() && lhs.cookies() == rhs.cookies() &&
+            lhs.headers() == rhs.headers();
+}
 
 namespace {
 template<ResponseMode mode>

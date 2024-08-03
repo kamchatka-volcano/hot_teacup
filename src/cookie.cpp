@@ -120,7 +120,9 @@ std::string Cookie::toString() const
 
 bool operator==(const Cookie& lhs, const Cookie& rhs)
 {
-    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.domain() == rhs.domain() &&
+            lhs.path() == rhs.path() && lhs.maxAge() == rhs.maxAge() && lhs.isSecure() == rhs.isSecure() &&
+            lhs.isRemoved() == rhs.isRemoved();
 }
 
 std::string cookiesToString(const std::vector<Cookie>& cookies)

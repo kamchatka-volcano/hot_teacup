@@ -39,6 +39,7 @@ public:
     std::string_view fileType() const;
     std::string_view value() const;
 
+    friend bool operator==(const FormField& lhs, const FormField& rhs);
 private:
     std::variant<Data, FormFieldView> data_;
     static inline const std::string valueNotFound = {};

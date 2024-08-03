@@ -198,4 +198,10 @@ bool Response::isView() const
     return std::holds_alternative<std::string_view>(body_);
 }
 
+bool operator==(const Response& lhs, const Response& rhs)
+{
+    return lhs.status() == rhs.status() && lhs.body() == rhs.body() && lhs.cookies() == rhs.cookies() &&
+            lhs.headers() == rhs.headers();
+}
+
 } //namespace http

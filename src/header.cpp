@@ -70,6 +70,10 @@ std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
     }
 }
 
+bool operator==(const HeaderParam& lhs, const HeaderParam& rhs)
+{
+    return lhs.name() == rhs.name() && lhs.hasValue() == rhs.hasValue() && lhs.value() == rhs.value();
+}
 
 std::string_view Header::Data::name() const
 {
@@ -209,6 +213,11 @@ std::string_view Header::value() const
 bool Header::isView() const
 {
     return std::holds_alternative<HeaderView>(data_);
+}
+
+bool operator==(const Header& lhs, const Header& rhs)
+{
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.params() == rhs.params();
 }
 
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)

@@ -62,6 +62,8 @@ public:
     void addCookies(const std::vector<Cookie>& cookies);
     void addHeaders(const std::vector<Header>& headers);
 
+    friend bool operator==(const Response& lhs, const Response& rhs);
+
 private:
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;

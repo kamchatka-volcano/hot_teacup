@@ -32,6 +32,8 @@ public:
     bool hasValue() const;
     std::string toString(HeaderQuotingMode quotingMode) const;
 
+    friend bool operator==(const HeaderParam& lhs, const HeaderParam& rhs);
+
 private:
     static inline const std::string valueNotFound;
 
@@ -61,6 +63,8 @@ public:
     bool hasParam(std::string_view name) const;
 
     const std::vector<HeaderParam>& params() const;
+
+    friend bool operator==(const Header& lhs, const Header& rhs);
 
 private:
     bool isView() const;

@@ -17,6 +17,7 @@ public:
     std::string_view value() const;
     bool hasValue() const;
 
+    friend bool operator==(const HeaderParamView& lhs, const HeaderParamView& rhs);
 private:
     std::string_view name_;
     std::optional<std::string_view> value_;
@@ -31,6 +32,7 @@ public:
     const std::vector<HeaderParamView>& params() const;
     bool hasParam(std::string_view name) const;
 
+    friend bool operator==(const HeaderView& lhs, const HeaderView& rhs);
 private:
     std::string_view name_;
     std::string_view value_;

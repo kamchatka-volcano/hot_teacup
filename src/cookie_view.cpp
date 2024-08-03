@@ -70,7 +70,9 @@ const HeaderView& CookieView::asHeader() const
 
 bool operator==(const CookieView& lhs, const CookieView& rhs)
 {
-    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.domain() == rhs.domain() &&
+            lhs.path() == rhs.path() && lhs.maxAge() == rhs.maxAge() && lhs.isSecure() == rhs.isSecure() &&
+            lhs.isRemoved() == rhs.isRemoved();
 }
 
 std::vector<CookieView> cookiesFromString(std::string_view input)
