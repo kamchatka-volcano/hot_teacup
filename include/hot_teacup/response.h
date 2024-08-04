@@ -4,6 +4,7 @@
 #include "cookie.h"
 #include "header.h"
 #include "query.h"
+#include "trait_utils.h"
 #include "types.h"
 #include <string>
 #include <variant>
@@ -16,39 +17,41 @@ struct Redirect {
     RedirectType type = RedirectType::Found;
 };
 
+namespace detail {
+using ResponseArg = std::variant<
+        ResponseStatus,
+        std::string,
+        ContentType,
+        ContentTypeString,
+        http::Redirect,
+        std::vector<Cookie>,
+        std::vector<Header>>;
+}
+
 class Response {
 public:
     explicit Response(const ResponseView&);
-    Response(
-            ResponseStatus status,
-            std::string body = {},
-            std::vector<Cookie> cookies = {},
-            std::vector<Header> headers = {});
-    Response(
-            ResponseStatus status,
-            std::string body,
-            ContentType contentType,
-            std::vector<Cookie> cookies = {},
-            std::vector<Header> headers = {});
-    Response(
-            ResponseStatus status,
-            std::string body,
-            std::string contentType,
-            std::vector<Cookie> cookies = {},
-            std::vector<Header> headers = {});
-    Response(
-            std::string body,
-            ContentType contentType,
-            std::vector<Cookie> cookies = {},
-            std::vector<Header> headers = {});
-    Response(
-            std::string body,
-            std::string contentType,
-            std::vector<Cookie> cookies = {},
-            std::vector<Header> headers = {});
-    Response(std::string path, RedirectType type, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
-    Response(Redirect redirect, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
-    Response(std::string body, std::vector<Cookie> cookies = {}, std::vector<Header> headers = {});
+
+    template<
+            typename... TArgs,
+            typename = std::enable_if_t<
+                    ((!std::is_same_v<std::decay_t<TArgs>, ResponseView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, Response>) &&
+                     ...)>>
+    Response(TArgs&&... args)
+    {
+        static_assert(
+                !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
+                "Response constructor arguments can't contain duplicate types");
+        static_assert(
+                !(detail::is_element_of_v<Redirect, TArgs...> && detail::is_element_of_v<ResponseStatus, TArgs...>),
+                "Response status and redirect can't be specified together in response constructor arguments");
+        static_assert(
+                !(detail::is_element_of_v<ContentType, TArgs...> && detail::is_element_of_v<ContentTypeString, TArgs...>),
+                "ContentType enum and ContentTypeString can't be specified together in response constructor arguments");
+
+        init({std::forward<TArgs>(args)...});
+    }
 
     ResponseStatus status() const;
     std::string_view body() const;
@@ -59,21 +62,24 @@ public:
     void setBody(const std::string& body);
     void addCookie(Cookie cookie);
     void addHeader(Header header);
-    void addCookies(const std::vector<Cookie>& cookies);
-    void addHeaders(const std::vector<Header>& headers);
+    void setCookies(const std::vector<Cookie>& cookies);
+    void setHeaders(const std::vector<Header>& headers);
 
     friend bool operator==(const Response& lhs, const Response& rhs);
 
 private:
+    void init(std::vector<detail::ResponseArg>&& args);
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
     bool isView() const;
+    void addDefaultContentTypeHeader();
 
 private:
-    ResponseStatus status_ = ResponseStatus::_404_Not_Found;
+    ResponseStatus status_ = ResponseStatus::_200_Ok;
     std::variant<std::string, std::string_view> body_;
     std::vector<Cookie> cookies_;
+    std::vector<Header> defaultHeaders_;
     std::vector<Header> headers_;
 };
 

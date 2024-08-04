@@ -22,10 +22,18 @@ TEST(Cookie, ToString)
         cookie.setMaxAge(std::chrono::minutes{1});
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Max-Age=60");
     }
+    {
+        auto cookie = http::Cookie{"foo", "bar", http::CookieMaxAge{std::chrono::minutes{1}}};
+        EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Max-Age=60");
+    }
 
     {
         auto cookie = http::Cookie{"foo", "bar"};
         cookie.setDomain("localhost");
+        EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost");
+    }
+    {
+        auto cookie = http::Cookie{"foo", "bar", http::CookieDomain{"localhost"}};
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost");
     }
 
@@ -35,10 +43,22 @@ TEST(Cookie, ToString)
         cookie.setDomain("localhost");
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Max-Age=10; Domain=localhost");
     }
+    {
+        auto cookie = http::Cookie{
+                "foo",
+                "bar",
+                http::CookieMaxAge{std::chrono::seconds{10}},
+                http::CookieDomain{"localhost"}};
+        EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Max-Age=10; Domain=localhost");
+    }
 
     {
         auto cookie = http::Cookie{"foo", "bar"};
         cookie.setPath("/test");
+        EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Path=/test");
+    }
+    {
+        auto cookie = http::Cookie{"foo", "bar", http::CookiePath{"/test"}};
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Path=/test");
     }
 
@@ -86,6 +106,16 @@ TEST(Cookie, ToString)
         cookie.setPath("/test");
         cookie.setRemoved();
         cookie.setSecure();
+        EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost; Path=/test; Max-Age=0; Secure");
+    }
+    {
+        auto cookie = http::Cookie{
+                "foo",
+                "bar",
+                http::CookieDomain{"localhost"},
+                http::CookiePath{"/test"},
+                http::CookieIsRemoved{},
+                http::CookieIsSecure{}};
         EXPECT_EQ(cookie.toString(), "Set-Cookie: foo=bar; Domain=localhost; Path=/test; Max-Age=0; Secure");
     }
 

@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <string_view>
+#include <string>
 
 namespace http {
 
@@ -80,6 +81,10 @@ enum class ContentType {
     Xhtml,
     PlainText,
     Json
+};
+
+struct ContentTypeString{
+    std::string value;
 };
 
 enum class RedirectType {

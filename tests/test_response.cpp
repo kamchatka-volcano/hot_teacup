@@ -15,7 +15,7 @@ void testResponseWithCookies(const http::Response& testResponse, const std::stri
     }
     {
         auto response = testResponse;
-        response.addCookies({http::Cookie{"name", "foo"}, http::Cookie{"age", "77"}});
+        response.setCookies({http::Cookie{"name", "foo"}, http::Cookie{"age", "77"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -33,7 +33,7 @@ void testResponseWithHeaders(const http::Response& testResponse, const std::stri
     }
     {
         auto response = testResponse;
-        response.addHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
+        response.setHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -186,7 +186,7 @@ TEST(Response, Status)
     EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\nNot Found");
     response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentType::PlainText};
     EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot Found");
-    response = http::Response{Status::_404_Not_Found, "Not Found", "text/csv"};
+    response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentTypeString{"text/csv"}};
     EXPECT_EQ(response.data(), "HTTP/1.1 404 Not Found\r\nContent-Type: text/csv\r\n\r\nNot Found");
 }
 
@@ -205,7 +205,7 @@ TEST(Response, StatusCGI)
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
             "Status: 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNot Found");
-    response = http::Response{Status::_404_Not_Found, "Not Found", "text/csv"};
+    response = http::Response{Status::_404_Not_Found, "Not Found", http::ContentTypeString{"text/csv"}};
     EXPECT_EQ(
             response.data(http::ResponseMode::Cgi),
             "Status: 404 Not Found\r\nContent-Type: text/csv\r\n\r\nNot Found");
@@ -273,19 +273,19 @@ TEST(Response, TextWithCookiesAndHeaders)
 
 TEST(Response, Redirect)
 {
-    auto response = http::Response{"/", http::RedirectType::Found};
+    auto response = http::Response{http::Redirect{"/", http::RedirectType::Found}};
     EXPECT_EQ(response.data(), "HTTP/1.1 302 Found\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::SeeOther};
+    response = http::Response{http::Redirect{"/", http::RedirectType::SeeOther}};
     EXPECT_EQ(response.data(), "HTTP/1.1 303 See Other\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::NotModified};
+    response = http::Response{http::Redirect{"/", http::RedirectType::NotModified}};
     EXPECT_EQ(response.data(), "HTTP/1.1 304 Not Modified\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::MultipleChoice};
+    response = http::Response{http::Redirect{"/", http::RedirectType::MultipleChoice}};
     EXPECT_EQ(response.data(), "HTTP/1.1 300 Multiple Choice\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::MovedPermanently};
+    response = http::Response{http::Redirect{"/", http::RedirectType::MovedPermanently}};
     EXPECT_EQ(response.data(), "HTTP/1.1 301 Moved Permanently\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::PermanentRedirect};
+    response = http::Response{http::Redirect{"/", http::RedirectType::PermanentRedirect}};
     EXPECT_EQ(response.data(), "HTTP/1.1 308 Permanent Redirect\r\nLocation: /\r\n\r\n");
-    response = http::Response{"/", http::RedirectType::TemporaryRedirect};
+    response = http::Response{http::Redirect{"/", http::RedirectType::TemporaryRedirect}};
     EXPECT_EQ(response.data(), "HTTP/1.1 307 Temporary Redirect\r\nLocation: /\r\n\r\n");
 
     auto response2 = http::Response{http::Redirect{"/"}};
@@ -297,21 +297,21 @@ TEST(Response, Redirect)
 TEST(Response, RedirectWithCookies)
 {
     auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + cookiesResponsePart + "\r\n";
-    auto response = http::Response{"/", http::RedirectType::Found};
+    auto response = http::Response{http::Redirect{"/", http::RedirectType::Found}};
     testResponseWithCookies(response, expectedResponse);
 }
 
 TEST(Response, RedirectWithHeaders)
 {
     auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + headersResponsePart + "\r\n";
-    auto response = http::Response{"/", http::RedirectType::Found};
+    auto response = http::Response{http::Redirect{"/", http::RedirectType::Found}};
     testResponseWithHeaders(response, expectedResponse);
 }
 
 TEST(Response, RedirectWithCookiesAndHeaders)
 {
     auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + cookiesAndHeadersResponsePart + "\r\n";
-    auto response = http::Response{"/", http::RedirectType::Found};
+    auto response = http::Response{http::Redirect{"/", http::RedirectType::Found}};
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
 

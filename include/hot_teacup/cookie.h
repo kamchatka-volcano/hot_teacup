@@ -2,6 +2,7 @@
 #define HOT_TEACUP_COOKIE_H
 
 #include "header.h"
+#include "trait_utils.h"
 #include <chrono>
 #include <optional>
 #include <string>
@@ -11,17 +12,42 @@
 namespace http {
 class CookieView;
 
+struct CookieIsSecure {};
+struct CookieIsRemoved {};
+struct CookieDomain {
+    std::string value;
+};
+struct CookiePath {
+    std::string value;
+};
+struct CookieMaxAge {
+    std::chrono::seconds value;
+};
+
+namespace detail{
+using CookieArg = std::variant<CookieDomain, CookiePath, CookieMaxAge, CookieIsSecure, CookieIsRemoved>;
+}
+
 class Cookie {
 
 public:
     explicit Cookie(const CookieView& cookieView);
-    Cookie(std::string name,
-           std::string value,
-           std::optional<std::string> domain = {},
-           std::optional<std::string> path = {},
-           std::optional<std::chrono::seconds> maxAge = {},
-           bool secure = false,
-           bool removed = false);
+    template<
+            typename... TArgs,
+            typename = std::enable_if_t<
+                    ((!std::is_same_v<std::decay_t<TArgs>, CookieView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, Cookie>) &&
+                     ...)>>
+    Cookie(std::string name, std::string value, TArgs&&... args)
+        : header_{"Set-Cookie", ""}
+    {
+        header_.setParam(std::move(name), std::move(value));
+
+        static_assert(
+                !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
+                "Response constructor arguments can't contain duplicate types");
+        init({std::forward<TArgs>(args)...});
+    }
 
     std::string_view name() const;
     std::string_view value() const;
@@ -42,13 +68,15 @@ public:
 
 private:
     explicit Cookie(Header header);
+    void init(std::vector<detail::CookieArg>&& args);
 
 private:
     Header header_;
 };
 
-std::string cookiesToString(const std::vector<Cookie>& cookies);
+using Cookies = std::vector<Cookie>;
 
+std::string cookiesToString(const std::vector<Cookie>& cookies);
 std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);
 
 } //namespace http

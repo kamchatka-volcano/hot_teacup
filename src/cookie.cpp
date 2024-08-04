@@ -15,27 +15,21 @@ Cookie::Cookie(const CookieView& cookieView)
 {
 }
 
-Cookie::Cookie(
-        std::string name,
-        std::string value,
-        std::optional<std::string> domain,
-        std::optional<std::string> path,
-        std::optional<std::chrono::seconds> maxAge,
-        bool secure,
-        bool removed)
-    : header_{"Set-Cookie", ""}
+void Cookie::init(std::vector<detail::CookieArg>&& args)
 {
-    header_.setParam(std::move(name), std::move(value));
-    if (domain)
-        setDomain(*domain);
-    if (path)
-        setPath(*path);
-    if (maxAge)
-        setMaxAge(*maxAge);
-    if (secure)
-        setSecure();
-    if (removed)
-        setRemoved();
+    const auto processArg = [this](detail::CookieArg& arg){
+        if (std::holds_alternative<CookieDomain>(arg))
+            setDomain(std::move(std::get<CookieDomain>(arg).value));
+        else if (std::holds_alternative<CookiePath>(arg))
+            setPath(std::move(std::get<CookiePath>(arg).value));
+        else if (std::holds_alternative<CookieMaxAge>(arg))
+            setMaxAge(std::get<CookieMaxAge>(arg).value);
+        else if (std::holds_alternative<CookieIsSecure>(arg))
+            setSecure();
+        else if (std::holds_alternative<CookieIsRemoved>(arg))
+            setRemoved();
+    };
+    std::for_each(args.begin(), args.end(), processArg);
 }
 
 Cookie::Cookie(Header header)

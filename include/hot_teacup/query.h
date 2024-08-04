@@ -29,6 +29,8 @@ private:
     std::variant<Data, QueryView> data_;
 };
 
+using Queries = std::vector<Query>;
+
 std::string pathWithQueries(const std::string& path, const std::vector<Query>& queries);
 std::string queriesToString(const std::vector<Query>& queries);
 std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList);

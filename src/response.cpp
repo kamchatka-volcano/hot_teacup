@@ -16,85 +16,54 @@ Response::Response(const ResponseView& responseView)
 {
 }
 
-Response::Response(ResponseStatus status, std::string body, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : status_{status}
-    , body_{std::move(body)}
-    , cookies_{std::move(cookies)}
-    , headers_{std::move(headers)}
+void Response::init(std::vector<detail::ResponseArg>&& args)
+{
+    const auto processArg = [this](detail::ResponseArg& arg)
+    {
+        if (std::holds_alternative<ResponseStatus>(arg))
+            status_ = std::get<ResponseStatus>(arg);
+        else if (std::holds_alternative<std::string>(arg))
+            body_ = std::move(std::get<std::string>(arg));
+        else if (std::holds_alternative<http::Cookies>(arg))
+            cookies_ = std::move(std::get<http::Cookies>(arg));
+        else if (std::holds_alternative<http::Headers>(arg))
+            headers_ = std::move(std::get<http::Headers>(arg));
+        else if (std::holds_alternative<ContentType>(arg))
+            defaultHeaders_.push_back({"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))});
+        else if (std::holds_alternative<ContentTypeString>(arg))
+            defaultHeaders_.push_back({"Content-Type", std::move(std::get<ContentTypeString>(arg).value)});
+        else if (std::holds_alternative<Redirect>(arg)) {
+            auto& redirect = std::get<Redirect>(arg);
+            status_ = detail::redirectTypeStatus(redirect.type);
+            defaultHeaders_.push_back({"Location", std::move(redirect.path)});
+        }
+    };
+
+    std::for_each(args.begin(), args.end(), processArg);
+    addDefaultContentTypeHeader();
+}
+
+void Response::addDefaultContentTypeHeader()
 {
     if (!std::get<std::string>(body_).empty()) {
-        if (std::find_if(
-                    headers_.begin(),
-                    headers_.end(),
-                    [](const Header& header)
-                    {
-                        return header.name() == "Content-Type";
-                    }) == headers_.end())
-            headers_.emplace_back("Content-Type", detail::contentTypeToString(ContentType::Html));
+        const auto defaultHeadersHasContentType = std::find_if(
+                                                          defaultHeaders_.begin(),
+                                                          defaultHeaders_.end(),
+                                                          [](const Header& header)
+                                                          {
+                                                              return header.name() == "Content-Type";
+                                                          }) != defaultHeaders_.end();
+        const auto headersHasContentType = std::find_if(
+                                                   headers_.begin(),
+                                                   headers_.end(),
+                                                   [](const Header& header)
+                                                   {
+                                                       return header.name() == "Content-Type";
+                                                   }) != headers_.end();
+
+        if (!defaultHeadersHasContentType && !headersHasContentType)
+            defaultHeaders_.emplace_back("Content-Type", detail::contentTypeToString(ContentType::Html));
     }
-}
-
-namespace {
-std::vector<Header> concatHeaders(std::vector<Header> lhs, const Header& rhs)
-{
-    lhs.push_back(rhs);
-    return lhs;
-}
-} //namespace
-
-Response::Response(
-        ResponseStatus status,
-        std::string body,
-        std::string contentType,
-        std::vector<Cookie> cookies,
-        std::vector<Header> headers)
-    : Response{
-              status,
-              std::move(body),
-              std::move(cookies),
-              concatHeaders(std::move(headers), {"Content-Type", std::move(contentType)})}
-{
-}
-
-Response::Response(
-        ResponseStatus status,
-        std::string body,
-        ContentType contentType,
-        std::vector<Cookie> cookies,
-        std::vector<Header> headers)
-    : Response{
-              status,
-              std::move(body),
-              detail::contentTypeToString(contentType),
-              std::move(cookies),
-              std::move(headers)}
-{
-}
-
-Response::Response(std::string body, std::string contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{ResponseStatus::_200_Ok, std::move(body), std::move(contentType), std::move(cookies), std::move(headers)}
-{
-}
-
-Response::Response(std::string body, ContentType contentType, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{ResponseStatus::_200_Ok, std::move(body), contentType, std::move(cookies), std::move(headers)}
-{
-}
-
-Response::Response(std::string body, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{ResponseStatus::_200_Ok, std::move(body), std::move(cookies), std::move(headers)}
-{
-}
-
-Response::Response(std::string path, RedirectType type, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{detail::redirectTypeStatus(type), {}, std::move(cookies), std::move(headers)}
-{
-    addHeader({"Location", std::move(path)});
-}
-
-Response::Response(Redirect redirect, std::vector<Cookie> cookies, std::vector<Header> headers)
-    : Response{std::move(redirect.path), redirect.type, std::move(cookies), std::move(headers)}
-{
 }
 
 ResponseStatus Response::status() const
@@ -104,7 +73,12 @@ ResponseStatus Response::status() const
 
 std::string_view Response::body() const
 {
-    return std::visit([](const auto& body) -> std::string_view{ return body;}, body_);
+    return std::visit(
+            [](const auto& body) -> std::string_view
+            {
+                return body;
+            },
+            body_);
 }
 
 const std::vector<Cookie>& Response::cookies() const
@@ -141,20 +115,20 @@ void Response::addHeader(Header header)
     headers_.emplace_back(std::move(header));
 }
 
-void Response::addCookies(const std::vector<Cookie>& cookies)
+void Response::setCookies(const std::vector<Cookie>& cookies)
 {
     if (isView())
         return;
 
-    std::copy(cookies.begin(), cookies.end(), std::back_inserter(cookies_));
+    cookies_ = cookies;
 }
 
-void Response::addHeaders(const std::vector<Header>& headers)
+void Response::setHeaders(const std::vector<Header>& headers)
 {
     if (isView())
         return;
 
-    std::copy(headers.begin(), headers.end(), std::back_inserter(headers_));
+    headers_ = headers;
 }
 
 std::string Response::statusData(ResponseMode mode) const
@@ -182,14 +156,25 @@ std::string Response::headersData() const
     {
         return header.toString();
     };
+    const auto defaultHeaderStringList = utils::transform(defaultHeaders_, headerToString);
     const auto headerStringList = utils::transform(headers_, headerToString);
+    const auto defaultHeaderSeparator = defaultHeaders_.empty() ? std::string_view{} : std::string_view{"\r\n"};
     const auto lastSeparator = headers_.empty() ? std::string_view{} : std::string_view{"\r\n"};
-    return sfun::join_strings(sfun::join(headerStringList, "\r\n"), lastSeparator);
+    return sfun::join_strings(
+            sfun::join(defaultHeaderStringList, "\r\n"),
+            defaultHeaderSeparator,
+            sfun::join(headerStringList, "\r\n"),
+            lastSeparator);
 }
 
 std::string Response::data(ResponseMode mode) const
 {
-    const auto body = std::visit([](const auto& body) -> std::string_view{ return body;}, body_);
+    const auto body = std::visit(
+            [](const auto& body) -> std::string_view
+            {
+                return body;
+            },
+            body_);
     return sfun::join_strings(statusData(mode), headersData(), cookiesData(), "\r\n", body);
 }
 

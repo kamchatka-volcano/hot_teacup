@@ -73,9 +73,9 @@ private:
     std::variant<Data, HeaderView> data_;
     std::vector<HeaderParam> params_;
     HeaderQuotingMode quotingMode_ = HeaderQuotingMode::None;
-
-
 };
+
+using Headers = std::vector<Header>;
 
 std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList);
 std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList);

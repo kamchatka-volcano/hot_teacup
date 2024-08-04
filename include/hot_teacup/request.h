@@ -5,6 +5,7 @@
 #include "form.h"
 #include "query.h"
 #include "types.h"
+#include "trait_utils.h"
 #include <map>
 #include <string>
 
@@ -16,10 +17,29 @@ struct RequestFcgiData {
     std::string stdIn;
 };
 
+namespace detail{
+using RequestArg  = std::variant<std::vector<Query>, std::vector<Cookie>, Form>;
+}
+
 class Request {
 public:
     explicit Request(const RequestView&);
-    Request(RequestMethod, std::string path, std::vector<Query> = {}, std::vector<Cookie> = {}, Form = {});
+    template<
+            typename... TArgs,
+            typename = std::enable_if_t<
+                    ((!std::is_same_v<std::decay_t<TArgs>, RequestView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, Request>) &&
+                     ...)>>
+    Request(RequestMethod method, std::string path, TArgs&&... args)
+        : method_{method}
+        , path_{std::move(path)}
+    {
+        static_assert(
+                !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
+                "Response constructor arguments can't contain duplicate types");
+
+        init({std::forward<TArgs>(args)...});
+    }
 
     RequestMethod method() const;
     std::string_view ipAddress() const;
@@ -60,6 +80,7 @@ public:
 
 private:
     bool isView() const;
+    void init(std::vector<detail::RequestArg>&& args);
 
 private:
     RequestMethod method_;

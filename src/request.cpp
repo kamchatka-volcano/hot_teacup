@@ -17,18 +17,18 @@ Request::Request(const RequestView& requestView)
 {
 }
 
-Request::Request(
-        RequestMethod method,
-        std::string path,
-        std::vector<Query> queries,
-        std::vector<Cookie> cookies,
-        Form form)
-    : method_{method}
-    , path_{std::move(path)}
-    , queries_{std::move(queries)}
-    , cookies_{std::move(cookies)}
-    , form_{std::move(form)}
+void Request::init(std::vector<detail::RequestArg>&& args)
 {
+    const auto processArg = [this](detail::RequestArg& arg)
+    {
+        if (std::holds_alternative<std::vector<http::Query>>(arg))
+            queries_ = std::move(std::get<std::vector<http::Query>>(arg));
+        else if (std::holds_alternative<std::vector<http::Cookie>>(arg))
+            cookies_ = std::move(std::get<std::vector<http::Cookie>>(arg));
+        else if (std::holds_alternative<Form>(arg))
+            form_ = std::move(std::get<Form>(arg));
+    };
+    std::for_each(args.begin(), args.end(), processArg);
 }
 
 void Request::setIpAddress(const std::string& ipAddress)
