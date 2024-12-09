@@ -5,7 +5,7 @@
 #include "form_view.h"
 #include "query_view.h"
 #include "types.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 
 namespace http {
@@ -20,7 +20,8 @@ public:
             std::string_view fcgiParamQueryString,
             std::string_view fcgiParamHttpCookie,
             std::string_view fcgiParamContentType,
-            std::string_view fcgiStdIn);
+            std::string_view fcgiStdIn,
+            std::unordered_map<std::string_view, std::string_view> fcgiParams);
 
     RequestMethod method() const;
     std::string_view ipAddress() const;
@@ -49,6 +50,9 @@ public:
     std::string_view fileType(std::string_view name, int index = 0) const;
     bool hasFiles() const;
 
+    const std::unordered_map<std::string_view, std::string_view>& fcgiParams() const;
+
+
     friend bool operator==(const RequestView& lhs, const RequestView& rhs);
 private:
     RequestMethod method_;
@@ -58,6 +62,7 @@ private:
     std::vector<QueryView> queries_;
     std::vector<CookieView> cookies_;
     FormView form_;
+    std::unordered_map<std::string_view, std::string_view> fcgiParams_;
 };
 
 } //namespace http

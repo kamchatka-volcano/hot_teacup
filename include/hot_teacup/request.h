@@ -4,10 +4,11 @@
 #include "cookie.h"
 #include "form.h"
 #include "query.h"
-#include "types.h"
 #include "trait_utils.h"
+#include "types.h"
 #include <map>
 #include <string>
+#include <unordered_map>
 
 namespace http {
 class RequestView;
@@ -68,6 +69,8 @@ public:
     std::string_view fileType(std::string_view name, int index = 0) const;
     bool hasFiles() const;
 
+    const std::unordered_map<std::string_view, std::string_view>& fcgiParams() const;
+
     RequestFcgiData toFcgiData(FormType, std::map<std::string, std::string> fcgiParams = {}) const;
 
     void setIpAddress(const std::string&);
@@ -90,6 +93,7 @@ private:
     std::vector<Query> queries_;
     std::vector<Cookie> cookies_;
     Form form_;
+    std::unordered_map<std::string_view, std::string_view> fcgiParams_;
 
 private:
     static inline const std::string valueNotFound = {};

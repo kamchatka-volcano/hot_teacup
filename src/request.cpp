@@ -14,6 +14,7 @@ Request::Request(const RequestView& requestView)
     , queries_{makeQueries(requestView.queries())}
     , cookies_{makeCookies(requestView.cookies())}
     , form_{makeForm(requestView.form())}
+    , fcgiParams_(requestView.fcgiParams())
 {
 }
 
@@ -263,6 +264,11 @@ bool Request::hasFiles() const
     return false;
 }
 
+const std::unordered_map<std::string_view, std::string_view>& Request::fcgiParams() const
+{
+    return fcgiParams_;
+}
+
 RequestFcgiData Request::toFcgiData(FormType formType, std::map<std::string, std::string> fcgiParams) const
 {
     const auto formBoundary = "----asyncgiFormBoundary"s;
@@ -305,7 +311,7 @@ bool operator==(const Request& lhs, const Request& rhs)
 {
     return lhs.method() == rhs.method() && lhs.ipAddress() == rhs.ipAddress() && lhs.domainName() == rhs.domainName() &&
             lhs.path() == rhs.path() && lhs.queries() == rhs.queries() && lhs.cookies() == rhs.cookies() &&
-            lhs.form() == rhs.form();
+            lhs.form() == rhs.form() && lhs.fcgiParams() == rhs.fcgiParams();
 }
 
 } //namespace http

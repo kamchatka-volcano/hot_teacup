@@ -14,7 +14,8 @@ RequestView::RequestView(
         std::string_view fcgiParamQueryString,
         std::string_view fcgiParamHttpCookie,
         std::string_view fcgiParamContentType,
-        std::string_view fcgiStdIn)
+        std::string_view fcgiStdIn,
+        std::unordered_map<std::string_view, std::string_view> fcgiParams)
     : method_{methodFromString(fcgiParamRequestMethod)}
     , ipAddress_{fcgiParamRemoteAddr}
     , domainName_{sfun::before(fcgiParamHttpHost, ":").value_or(fcgiParamHttpHost)}
@@ -22,6 +23,7 @@ RequestView::RequestView(
     , queries_{queriesFromString(fcgiParamQueryString)}
     , cookies_{cookiesFromString(fcgiParamHttpCookie)}
     , form_{formFromString(fcgiParamContentType, fcgiStdIn)}
+    , fcgiParams_{std::move(fcgiParams)}
 {
 }
 
@@ -217,6 +219,11 @@ bool RequestView::hasFiles() const
             {
                 return formFieldPair.second.hasFile();
             });
+}
+
+const std::unordered_map<std::string_view, std::string_view>& RequestView::fcgiParams() const
+{
+    return fcgiParams_;
 }
 
 bool operator==(const RequestView& lhs, const RequestView& rhs)
