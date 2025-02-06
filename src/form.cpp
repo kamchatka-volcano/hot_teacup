@@ -136,7 +136,7 @@ std::string multipartFormToString(const Form& form, const std::string& formBound
     return sfun::join_strings(openingBoundary, formFieldListString, closingBoundary);
 }
 
-Form makeForm(const std::map<std::string, FormFieldView>& formView)
+Form makeForm(const FormView& formView)
 {
     auto result = Form{};
     std::transform(
@@ -145,7 +145,7 @@ Form makeForm(const std::map<std::string, FormFieldView>& formView)
             std::inserter(result, result.end()),
             [](const auto& fieldViewPair)
             {
-                return std::pair{fieldViewPair.first, FormField{fieldViewPair.second}};
+                return std::pair{std::string{fieldViewPair.first.data()}, FormField{fieldViewPair.second}};
             });
     return result;
 }

@@ -49,7 +49,7 @@ using Form = std::map<std::string, FormField>;
 std::string multipartFormToString(const Form& form, const std::string& formBoundary);
 std::string urlEncodedFormToString(const Form& form);
 
-Form makeForm(const std::map<std::string, FormFieldView>& formView);
+Form makeForm(const FormView& formView);
 
 } //namespace http
 

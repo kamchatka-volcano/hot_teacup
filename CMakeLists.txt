@@ -26,6 +26,7 @@ set(SRC
     src/request_view.cpp
     src/response.cpp
     src/response_view.cpp
+    src/url_encoder.cpp
 )
 
 set(PUBLIC_HEADERS

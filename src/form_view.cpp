@@ -1,12 +1,50 @@
 #include <hot_teacup/form_view.h>
 #include <hot_teacup/header_view.h>
+#include "url_encoder.h"
 #include <sfun/string_utils.h>
 #include <optional>
 
 namespace http {
 
-FormFieldView::FormFieldView(std::string_view value)
-    : value_{value}
+FormViewString::FormViewString() = default;
+
+FormViewString::FormViewString(std::string&& value)
+    : value_{std::move(value)}
+{
+}
+
+std::string_view FormViewString::data() const
+{
+    return std::visit(
+        [](const auto& value)
+        {
+            return std::string_view{value};
+        },
+        value_);
+}
+
+FormViewString::operator std::string_view() const
+{
+    return data();
+}
+
+bool FormViewString::operator==(std::string_view value) const
+{
+    return data() == value;
+}
+
+bool operator<(const FormViewString& lhs, const FormViewString& rhs)
+{
+    return lhs.data() < rhs.data();
+}
+bool operator==(const FormViewString& lhs, const FormViewString& rhs)
+{
+    return lhs.data() == rhs.data();
+}
+
+
+FormFieldView::FormFieldView(FormViewString value)
+    : value_{std::move(value)}
 {
 }
 
@@ -20,7 +58,7 @@ FormFieldView::FormFieldView(
 
 FormFieldType FormFieldView::type() const
 {
-    return std::holds_alternative<std::string_view>(value_) ? FormFieldType::Param : FormFieldType::File;
+    return std::holds_alternative<FormViewString>(value_) ? FormFieldType::Param : FormFieldType::File;
 }
 
 bool FormFieldView::hasFile() const
@@ -52,7 +90,7 @@ std::string_view FormFieldView::fileType() const
 std::string_view FormFieldView::value() const
 {
     if (type() == FormFieldType::Param)
-        return std::get<std::string_view>(value_);
+        return std::get<FormViewString>(value_);
     else
         return std::get<FormFile>(value_).fileData;
 }
@@ -140,26 +178,26 @@ FormView parseFormFieldViews(std::string_view input, std::string_view boundary)
             auto fileType = std::optional<std::string_view>{};
             if (contentType.has_value())
                 fileType = contentType->value();
-            result.emplace(std::string{paramName}, FormFieldView{content, fileName, fileType});
+            result.emplace(paramName, FormFieldView{content, fileName, fileType});
         }
         else
-            result.emplace(std::string{paramName}, FormFieldView{content});
+            result.emplace(paramName, FormFieldView{content});
     }
     return result;
 }
 
-std::tuple<std::string_view, std::string_view> parseUrlEncodedParamString(std::string_view paramStr)
+std::tuple<std::string, std::string> parseUrlEncodedParamString(std::string_view paramStr)
 {
     const auto namePart = sfun::before(paramStr, "=");
     if (!namePart.has_value())
         return {};
 
-    const auto name = sfun::trim(namePart.value());
+    auto name = url_encoder::decode(sfun::trim(namePart.value()));
     if (name.empty())
         return {};
 
-    const auto val = sfun::after(paramStr, "=").value();
-    return {name, val};
+    auto val = url_encoder::decode(sfun::after(paramStr, "=").value());
+    return {std::move(name), std::move(val)};
 }
 
 FormView parseUrlEncodedFields(std::string_view input)
@@ -171,7 +209,7 @@ FormView parseUrlEncodedFields(std::string_view input)
         auto [paramName, paramValue] = parseUrlEncodedParamString(param);
         if (paramName.empty())
             continue;
-        result.emplace(paramName, FormFieldView{paramValue});
+        result.emplace(std::move(paramName), FormFieldView{std::move(paramValue)});
     }
     while (pos < input.size());
     return result;
@@ -187,7 +225,7 @@ FormView formFromString(std::string_view contentParam, std::string_view contentF
 
     if (contentType->value() == "multipart/form-data" && contentType->hasParam("boundary"))
         return parseFormFieldViews(contentFields, contentType->param("boundary"));
-    else if (contentType->value() == "application/x-www-form-urlencoded")
+    if (contentType->value() == "application/x-www-form-urlencoded")
         return parseUrlEncodedFields(contentFields);
 
     return {};
