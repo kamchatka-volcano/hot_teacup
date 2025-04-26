@@ -22,10 +22,12 @@ void Request::init(std::vector<detail::RequestArg>&& args)
 {
     const auto processArg = [this](detail::RequestArg& arg)
     {
-        if (std::holds_alternative<std::vector<http::Query>>(arg))
-            queries_ = std::move(std::get<std::vector<http::Query>>(arg));
-        else if (std::holds_alternative<std::vector<http::Cookie>>(arg))
-            cookies_ = std::move(std::get<std::vector<http::Cookie>>(arg));
+        if (std::holds_alternative<std::vector<Query>>(arg))
+            queries_ = std::move(std::get<std::vector<Query>>(arg));
+        else if (std::holds_alternative<std::vector<Cookie>>(arg))
+            cookies_ = std::move(std::get<std::vector<Cookie>>(arg));
+        else if (std::holds_alternative<std::vector<Header>>(arg))
+            headers_ = std::move(std::get<std::vector<Header>>(arg));
         else if (std::holds_alternative<Form>(arg))
             form_ = std::move(std::get<Form>(arg));
     };
@@ -144,6 +146,38 @@ bool Request::hasCookie(std::string_view name) const
                 return cookie.name() == name;
             });
     return (it != cookies_.end());
+}
+
+const std::vector<Header>& Request::headers() const
+{
+    return headers_;
+}
+
+std::string_view Request::header(std::string_view name) const
+{
+    auto it = std::find_if(
+           headers_.begin(),
+           headers_.end(),
+           [&name](const auto& header)
+           {
+               return header.name() == name;
+           });
+    if (it != headers_.end())
+        return it->value();
+
+    return valueNotFound;
+}
+
+bool Request::hasHeader(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    return (it != headers_.end());
 }
 
 const Form& Request::form() const

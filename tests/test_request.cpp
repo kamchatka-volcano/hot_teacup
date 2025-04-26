@@ -150,6 +150,19 @@ TEST(Request, Cookies)
     EXPECT_EQ(request.cookie("param3"), "");
 }
 
+TEST(Request, Headers)
+{
+    const auto expectedHeaders = std::vector<http::Header>{{"param1", "foo"}, {"param2", "bar"}};
+    const auto request = http::Request{http::RequestMethod::Get, "/", expectedHeaders};
+    EXPECT_TRUE(request.hasHeader("param1"));
+    EXPECT_EQ(request.header("param1"), "foo");
+    EXPECT_TRUE(request.hasHeader("param2"));
+    EXPECT_EQ(request.header("param2"), "bar");
+
+    EXPECT_FALSE(request.hasHeader("param3"));
+    EXPECT_EQ(request.header("param3"), "");
+}
+
 TEST(RequestView, MultipartFormWithFile)
 {
     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"

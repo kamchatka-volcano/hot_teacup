@@ -4,6 +4,7 @@
 #include "cookie.h"
 #include "form.h"
 #include "query.h"
+#include "header.h"
 #include "trait_utils.h"
 #include "types.h"
 #include <map>
@@ -19,7 +20,7 @@ struct RequestFcgiData {
 };
 
 namespace detail{
-using RequestArg  = std::variant<std::vector<Query>, std::vector<Cookie>, Form>;
+using RequestArg  = std::variant<std::vector<Query>, std::vector<Cookie>, std::vector<Header>, Form>;
 }
 
 class Request {
@@ -54,6 +55,10 @@ public:
     const std::vector<Cookie>& cookies() const;
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
+
+    const std::vector<Header>& headers() const;
+    std::string_view header(std::string_view name) const;
+    bool hasHeader(std::string_view name) const;
 
     const Form& form() const;
     std::string_view formField(std::string_view name, int index = 0) const;
@@ -92,6 +97,7 @@ private:
     std::variant<std::string, std::string_view> domainName_;
     std::vector<Query> queries_;
     std::vector<Cookie> cookies_;
+    std::vector<Header> headers_;
     Form form_;
     std::unordered_map<std::string_view, std::string_view> fcgiParams_;
 
