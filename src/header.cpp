@@ -18,7 +18,7 @@ std::string_view HeaderParam::Data::value() const
 {
     if (value_)
         return *value_;
-    return valueNotFound;
+    return {};
 }
 
 bool HeaderParam::Data::hasValue() const
@@ -31,12 +31,7 @@ HeaderParam::HeaderParam(const HeaderParamView& paramView)
 {
 }
 
-HeaderParam::HeaderParam(std::string name)
-    : data_{Data{std::move(name), {}}}
-{
-}
-
-HeaderParam::HeaderParam(std::string name, std::string value)
+HeaderParam::HeaderParam(std::string name, std::optional<std::string> value)
     : data_{Data{std::move(name), std::move(value)}}
 {
 }
@@ -70,6 +65,23 @@ std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
     }
 }
 
+bool HeaderParam::isView() const
+{
+    return std::holds_alternative<HeaderParamView>(data_);
+}
+
+void HeaderParam::makeOwnStateFromView()
+{
+    if (!isView())
+        return;
+
+    const auto& paramView = std::get<HeaderParamView>(data_);
+    if (paramView.hasValue())
+        data_ = Data{std::string{paramView.name()}, std::string{paramView.value()}};
+    else
+        data_ = Data{std::string{paramView.name()}, std::nullopt};
+}
+
 bool operator==(const HeaderParam& lhs, const HeaderParam& rhs)
 {
     return lhs.name() == rhs.name() && lhs.hasValue() == rhs.hasValue() && lhs.value() == rhs.value();
@@ -90,31 +102,16 @@ Header::Header(const HeaderView& headerView)
 {
 }
 
-Header::Header(std::string name, std::string value)
+Header::Header(std::string name, std::string value, std::vector<HeaderParam> params)
     : data_{Data{std::move(name), std::move(value)}}
+    , params_(std::move(params))
 {
 }
 
-void Header::setParam(std::string name)
+void Header::setParam(std::string name, std::optional<std::string> value)
 {
     if (isView())
-        return;
-
-    if (name.empty())
-        return;
-
-    for (auto& param : params_)
-        if (param.name() == name) {
-            param = HeaderParam{std::move(name)};
-            return;
-        }
-    params_.emplace_back(std::move(name));
-}
-
-void Header::setParam(std::string name, std::string value)
-{
-    if (isView())
-        return;
+        makeOwnStateFromView();
 
     if (name.empty())
         return;
@@ -125,6 +122,14 @@ void Header::setParam(std::string name, std::string value)
             return;
         }
     params_.emplace_back(std::move(name), std::move(value));
+}
+
+void Header::setParams(const std::vector<HeaderParam>& params)
+{
+    if (isView())
+        makeOwnStateFromView();
+
+    params_ = params;
 }
 
 void Header::setQuotingMode(HeaderQuotingMode mode)
@@ -176,7 +181,8 @@ bool Header::hasParam(std::string_view name) const
 
 std::string Header::toString() const
 {
-    const auto paramListSeparator = [&]() -> std::string_view{
+    const auto paramListSeparator = [&]() -> std::string_view
+    {
         if (!value().empty() && !params_.empty())
             return "; ";
         return {};
@@ -200,6 +206,17 @@ std::string Header::toString() const
             paramListString);
 }
 
+HeaderView Header::toView() const
+{
+    auto params = utils::transform(
+            params_,
+            [](const HeaderParam& param)
+            {
+                return HeaderParamView{param.name(), param.value()};
+            });
+    return HeaderView{name(), value(), std::move(params)};
+}
+
 std::string_view Header::name() const
 {
     return std::visit([](const auto& data){ return data.name();}, data_);
@@ -213,6 +230,17 @@ std::string_view Header::value() const
 bool Header::isView() const
 {
     return std::holds_alternative<HeaderView>(data_);
+}
+
+void Header::makeOwnStateFromView()
+{
+    if (!isView())
+        return;
+
+    const auto& headerView = std::get<HeaderView>(data_);
+    data_ = Data{std::string{headerView.name()}, std::string{headerView.value()}};
+    for (auto& param : params_)
+        static_cast<ICopyOnWrite&>(param).makeOwnStateFromView();
 }
 
 bool operator==(const Header& lhs, const Header& rhs)

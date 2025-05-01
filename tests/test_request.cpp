@@ -174,30 +174,25 @@ TEST(RequestView, MultipartFormWithFile)
                           "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
 
-    const auto request = http::RequestView{
-            "GET",
-            {},
-            {},
-            {},
-            {},
-            {},
-            "multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx",
-            formData,
-            {}};
-    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar ");
+    static const auto contentHeaderValue =
+            std::string_view{"multipart/form-data; boundary=----WebKitFormBoundaryHQl9TEASIs9QyFWx"};
+    const auto request = http::RequestView{"GET", {}, {}, {}, {}, {}, contentHeaderValue, formData, {}};
+    const auto expectedParamList = std::vector<std::string_view>{"param1", "param2"};
+    ASSERT_TRUE(request.multipartForm().has_value());
+    const auto requestForm = request.multipartForm().value();
+    EXPECT_EQ(requestForm.paramList(), expectedParamList);
+    EXPECT_TRUE(requestForm.hasParam("param1"));
+    EXPECT_EQ(requestForm.param("param1"), "foo");
+    EXPECT_TRUE(requestForm.hasParam("param2"));
+    EXPECT_EQ(requestForm.param("param2"), "bar ");
 
-    EXPECT_TRUE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_TRUE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "test-gif-data");
-    EXPECT_EQ(request.fileName("param3"), "test.gif");
-    EXPECT_EQ(request.fileType("param3"), "image/gif");
+    EXPECT_TRUE(requestForm.hasFiles());
+    EXPECT_FALSE(requestForm.hasParam("param3"));
+    EXPECT_EQ(requestForm.param("param3"), "");
+    EXPECT_TRUE(requestForm.hasFile("param3"));
+    EXPECT_EQ(requestForm.fileData("param3"), "test-gif-data");
+    EXPECT_EQ(requestForm.fileName("param3"), "test.gif");
+    EXPECT_EQ(requestForm.fileType("param3"), "image/gif");
 }
 
 TEST(RequestView, FormFromMultipartFormViewWithFile)
@@ -222,113 +217,91 @@ TEST(RequestView, FormFromMultipartFormViewWithFile)
             formData,
             {}};
     const auto request = http::Request{requestView};
-    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar ");
+    const auto expectedParamList = std::vector<std::string_view>{"param1", "param2"};
+    ASSERT_TRUE(request.multipartForm().has_value());
+    const auto requestForm = request.multipartForm().value();
+    EXPECT_EQ(requestForm.paramList(), expectedParamList);
+    EXPECT_TRUE(requestForm.hasParam("param1"));
+    EXPECT_EQ(requestForm.param("param1"), "foo");
+    EXPECT_TRUE(requestForm.hasParam("param2"));
+    EXPECT_EQ(requestForm.param("param2"), "bar ");
 
-    EXPECT_TRUE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_TRUE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "test-gif-data");
-    EXPECT_EQ(request.fileName("param3"), "test.gif");
-    EXPECT_EQ(request.fileType("param3"), "image/gif");
+    EXPECT_TRUE(requestForm.hasFiles());
+    EXPECT_FALSE(requestForm.hasParam("param3"));
+    EXPECT_EQ(requestForm.param("param3"), "");
+    EXPECT_TRUE(requestForm.hasFile("param3"));
+    EXPECT_EQ(requestForm.fileData("param3"), "test-gif-data");
+    EXPECT_EQ(requestForm.fileName("param3"), "test.gif");
+    EXPECT_EQ(requestForm.fileType("param3"), "image/gif");
 }
 
 TEST(Request, MultipartFormWithFile)
 {
-    auto form = http::Form{
-            {"param1", http::FormField{"foo"}},
-            {"param2", http::FormField{"bar "}},
-            {"param3", http::FormField{"test-gif-data", "test.gif", "image/gif"}}};
+    auto form = http::MultipartForm{
+            {{"param1", "foo"}, {"param2", "bar "}, {"param3", "test-gif-data", "test.gif", "image/gif"}}};
     const auto request = http::Request{http::RequestMethod::Post, "/", form};
 
-    const auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar ");
+    const auto expectedParamList = std::vector<std::string_view>{"param1", "param2"};
+    ASSERT_TRUE(request.multipartForm().has_value());
+    const auto requestForm = request.multipartForm().value();
+    EXPECT_EQ(requestForm.paramList(), expectedParamList);
+    EXPECT_TRUE(requestForm.hasParam("param1"));
+    EXPECT_EQ(requestForm.param("param1"), "foo");
+    EXPECT_TRUE(requestForm.hasParam("param2"));
+    EXPECT_EQ(requestForm.param("param2"), "bar ");
 
-    EXPECT_TRUE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_TRUE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "test-gif-data");
-    EXPECT_EQ(request.fileName("param3"), "test.gif");
-    EXPECT_EQ(request.fileType("param3"), "image/gif");
+    EXPECT_TRUE(requestForm.hasFiles());
+    EXPECT_FALSE(requestForm.hasParam("param3"));
+    EXPECT_EQ(requestForm.param("param3"), "");
+    EXPECT_TRUE(requestForm.hasFile("param3"));
+    EXPECT_EQ(requestForm.fileData("param3"), "test-gif-data");
+    EXPECT_EQ(requestForm.fileName("param3"), "test.gif");
+    EXPECT_EQ(requestForm.fileType("param3"), "image/gif");
 }
 
 TEST(RequestView, UrlEncodedForm)
 {
     const auto formData = "param1=foo&param2=bar&flag&param4=";
 
-    const auto request = http::RequestView{"GET", {}, {}, {}, {}, {}, "application/x-www-form-urlencoded", formData, {}};
-    auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2", "param4"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar");
-    EXPECT_TRUE(request.hasFormField("param4"));
-    EXPECT_EQ(request.formField("param4"), "");
+    const auto request =
+            http::RequestView{"GET", {}, {}, {}, {}, {}, "application/x-www-form-urlencoded", formData, {}};
+    auto expectedParamList = std::vector<std::string_view>{"param1", "param2", "param4"};
 
-    EXPECT_FALSE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_FALSE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "");
-    EXPECT_EQ(request.fileName("param3"), "");
-    EXPECT_EQ(request.fileType("param3"), "");
+    ASSERT_TRUE(request.urlEncodedForm().has_value());
+    const auto requestForm = request.urlEncodedForm().value();
+
+    EXPECT_EQ(requestForm.paramList(), expectedParamList);
+    EXPECT_TRUE(requestForm.hasParam("param1"));
+    EXPECT_EQ(requestForm.param("param1"), "foo");
+    EXPECT_TRUE(requestForm.hasParam("param2"));
+    EXPECT_EQ(requestForm.param("param2"), "bar");
+    EXPECT_TRUE(requestForm.hasParam("param4"));
+    EXPECT_EQ(requestForm.param("param4"), "");
 }
 
 TEST(Request, UrlEncodedForm)
 {
-    const auto form = http::Form{
-            {"param1", http::FormField{"foo"}},
-            {"param2", http::FormField{"bar"}},
-            {"param4", http::FormField{}}};
+    const auto form = http::UrlEncodedForm{{{"param1", "foo"}, {"param2", "bar"}, {"param4", ""}}};
 
     const auto request = http::Request{http::RequestMethod::Post, "/", form};
 
-    auto expectedFormFieldList = std::vector<std::string_view>{"param1", "param2", "param4"};
-    EXPECT_EQ(request.formFieldList(), expectedFormFieldList);
-    EXPECT_TRUE(request.hasFormField("param1"));
-    EXPECT_EQ(request.formField("param1"), "foo");
-    EXPECT_TRUE(request.hasFormField("param2"));
-    EXPECT_EQ(request.formField("param2"), "bar");
-    EXPECT_TRUE(request.hasFormField("param4"));
-    EXPECT_EQ(request.formField("param4"), "");
+    auto expectedParamList = std::vector<std::string_view>{"param1", "param2", "param4"};
+    ASSERT_TRUE(request.urlEncodedForm().has_value());
+    const auto requestForm = request.urlEncodedForm().value();
 
-    EXPECT_FALSE(request.hasFiles());
-    EXPECT_FALSE(request.hasFormField("param3"));
-    EXPECT_EQ(request.formField("param3"), "");
-    EXPECT_FALSE(request.hasFile("param3"));
-    EXPECT_EQ(request.fileData("param3"), "");
-    EXPECT_EQ(request.fileName("param3"), "");
-    EXPECT_EQ(request.fileType("param3"), "");
+    EXPECT_EQ(requestForm.paramList(), expectedParamList);
+    EXPECT_TRUE(requestForm.hasParam("param1"));
+    EXPECT_EQ(requestForm.param("param1"), "foo");
+    EXPECT_TRUE(requestForm.hasParam("param2"));
+    EXPECT_EQ(requestForm.param("param2"), "bar");
+    EXPECT_TRUE(requestForm.hasParam("param4"));
+    EXPECT_EQ(requestForm.param("param4"), "");
 }
 
 TEST(Request, ToFcgiDataWithPathOnly)
 {
     const auto request = http::Request{http::RequestMethod::Get, "/"};
-    const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
-
-    EXPECT_EQ(fcgiData.params.size(), 2);
-    EXPECT_TRUE(fcgiData.stdIn.empty());
-    ASSERT_TRUE(fcgiData.params.count("REQUEST_METHOD"));
-    EXPECT_EQ(fcgiData.params.at("REQUEST_METHOD"), "GET");
-    ASSERT_TRUE(fcgiData.params.count("REQUEST_URI"));
-    EXPECT_EQ(fcgiData.params.at("REQUEST_URI"), "/");
-}
-
-TEST(Request, ToFcgiDataWithPathOnlyMultipart)
-{
-    const auto request = http::Request{http::RequestMethod::Get, "/"};
-    const auto fcgiData = request.toFcgiData(http::FormType::Multipart);
+    const auto fcgiData = request.toFcgiData();
 
     EXPECT_EQ(fcgiData.params.size(), 2);
     EXPECT_TRUE(fcgiData.stdIn.empty());
@@ -341,7 +314,7 @@ TEST(Request, ToFcgiDataWithPathOnlyMultipart)
 TEST(Request, ToFcgiDataWithQueries)
 {
     const auto request = http::Request{http::RequestMethod::Get, "/", std::vector<http::Query>{{"id", "100"}}};
-    const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
+    const auto fcgiData = request.toFcgiData();
 
     EXPECT_EQ(fcgiData.params.size(), 3);
     EXPECT_TRUE(fcgiData.stdIn.empty());
@@ -356,7 +329,7 @@ TEST(Request, ToFcgiDataWithQueries)
 TEST(Request, ToFcgiDataWithCookies)
 {
     const auto request = http::Request{http::RequestMethod::Get, "/", std::vector<http::Cookie>{{"id", "100"}}};
-    const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
+    const auto fcgiData = request.toFcgiData();
 
     EXPECT_EQ(fcgiData.params.size(), 3);
     EXPECT_TRUE(fcgiData.stdIn.empty());
@@ -370,9 +343,9 @@ TEST(Request, ToFcgiDataWithCookies)
 
 TEST(Request, ToFcgiDataWithUrlEncodedForm)
 {
-    const auto form = http::Form{{"id", http::FormField{"100"}}, {"name", http::FormField{"foo"}}};
+    const auto form = http::UrlEncodedForm{{{"id", "100"}, {"name", "foo"}}};
     const auto request = http::Request{http::RequestMethod::Get, "/", form};
-    const auto fcgiData = request.toFcgiData(http::FormType::UrlEncoded);
+    const auto fcgiData = request.toFcgiData();
 
     EXPECT_FALSE(fcgiData.stdIn.empty());
     EXPECT_EQ(fcgiData.stdIn, "id=100&name=foo");
@@ -387,13 +360,13 @@ TEST(Request, ToFcgiDataWithUrlEncodedForm)
 
 TEST(Request, ToFcgiDataWithMultipartForm)
 {
-    const auto form = http::Form{{"id", http::FormField{"100"}}, {"name", http::FormField{"foo"}}};
+    const auto form = http::MultipartForm{{{"id", "100"}, {"name", "foo"}}};
     const auto request = http::Request{http::RequestMethod::Get, "/", form};
-    const auto fcgiData = request.toFcgiData(http::FormType::Multipart);
-    const auto expectedFormData =
-            std::string{"------asyncgiFormBoundary\r\nContent-Disposition: form-data; name=\"id\"\r\n\r\n100\r\n"
-                        "------asyncgiFormBoundary\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\nfoo\r\n"
-                        "------asyncgiFormBoundary--\r\n"};
+    const auto fcgiData = request.toFcgiData();
+    const auto expectedFormData = std::string{
+            "------hot_teacupFormBoundaryBEx29lOmZnk=\r\nContent-Disposition: form-data; name=\"id\"\r\n\r\n100\r\n"
+            "------hot_teacupFormBoundaryBEx29lOmZnk=\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\nfoo\r\n"
+            "------hot_teacupFormBoundaryBEx29lOmZnk=--\r\n"};
 
     EXPECT_EQ(fcgiData.stdIn, expectedFormData);
     EXPECT_EQ(fcgiData.params.size(), 3);
@@ -402,5 +375,20 @@ TEST(Request, ToFcgiDataWithMultipartForm)
     ASSERT_TRUE(fcgiData.params.count("REQUEST_URI"));
     EXPECT_EQ(fcgiData.params.at("REQUEST_URI"), "/");
     ASSERT_TRUE(fcgiData.params.count("CONTENT_TYPE"));
-    EXPECT_EQ(fcgiData.params.at("CONTENT_TYPE"), "multipart/form-data; boundary=----asyncgiFormBoundary");
+    EXPECT_EQ(
+            fcgiData.params.at("CONTENT_TYPE"),
+            "multipart/form-data; boundary=----hot_teacupFormBoundaryBEx29lOmZnk=");
+}
+
+TEST(Request, CopyInternalStateOnMutation)
+{
+    std::string path = "/test";
+    const auto requestView = http::RequestView{"GET", {}, {}, path, "param1=foo&param2=bar", {}, {}, {}, {}};
+    auto request = http::Request{requestView};
+    EXPECT_EQ(request.path(), "/test");
+    path = "/1111";
+    EXPECT_EQ(request.path(), "/1111");
+    request.setIpAddress("127.0.0.1"); // Method modifying the object should create the copy of the internal state
+    path = "/2222";
+    EXPECT_EQ(request.path(), "/1111");
 }

@@ -42,6 +42,20 @@ std::string Query::toString() const
     return sfun::join_strings(name(), "=", value());
 }
 
+bool Query::isView() const
+{
+    return std::holds_alternative<QueryView>(data_);
+}
+
+void Query::makeOwnStateFromView()
+{
+    if (!isView())
+        return;
+
+    const auto& queryView = std::get<QueryView>(data_);
+    data_ = Data{std::string{queryView.name()}, std::string{queryView.value()}};
+}
+
 bool operator==(const Query& lhs, const Query& rhs)
 {
     return lhs.name() == rhs.name() && lhs.value() == rhs.value();

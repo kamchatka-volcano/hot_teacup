@@ -6,6 +6,7 @@
 #include "query.h"
 #include "trait_utils.h"
 #include "types.h"
+#include "detail/copy_on_write_interface.h"
 #include <string>
 #include <variant>
 
@@ -28,7 +29,7 @@ using ResponseArg = std::variant<
         std::vector<Header>>;
 }
 
-class Response {
+class Response : public detail::ICopyOnWrite {
 public:
     explicit Response(const ResponseView&);
 
@@ -59,6 +60,7 @@ public:
     const std::vector<Header>& headers() const;
     std::string data(ResponseMode mode = ResponseMode::Http) const;
 
+    void setStatus(ResponseStatus status);
     void setBody(const std::string& body);
     void addCookie(Cookie cookie);
     void addHeader(Header header);
@@ -72,8 +74,10 @@ private:
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
-    bool isView() const;
     void addDefaultContentTypeHeader();
+
+    bool isView() const override;
+    void makeOwnStateFromView() override;
 
 private:
     ResponseStatus status_ = ResponseStatus::_200_Ok;

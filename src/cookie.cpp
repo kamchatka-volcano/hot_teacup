@@ -112,6 +112,19 @@ std::string Cookie::toString() const
     return header_.toString();
 }
 
+bool Cookie::isView() const
+{
+    return static_cast<const ICopyOnWrite&>(header_).isView();
+}
+
+void Cookie::makeOwnStateFromView()
+{
+    if (!isView())
+        return;
+
+    static_cast<ICopyOnWrite&>(header_).makeOwnStateFromView();
+}
+
 bool operator==(const Cookie& lhs, const Cookie& rhs)
 {
     return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.domain() == rhs.domain() &&

@@ -16,8 +16,8 @@ SealLake_Bundle(
 set(SRC
     src/cookie.cpp
     src/cookie_view.cpp
-    src/form.cpp
-    src/form_view.cpp
+        src/multipart_form.cpp
+        src/multipart_form_view.cpp
     src/header.cpp
     src/header_view.cpp
     src/query.cpp
@@ -27,16 +27,30 @@ set(SRC
     src/response.cpp
     src/response_view.cpp
     src/url_encoder.cpp
+        src/url_encoded_form.cpp
+        src/url_encoded_form_view.cpp
+        src/utils.cpp
 )
 
 set(PUBLIC_HEADERS
     include/hot_teacup/cookie.h
-    include/hot_teacup/form.h
+        include/hot_teacup/cookie_view.h
+        include/hot_teacup/multipart_form.h
+        include/hot_teacup/multipart_form_view.h
+        include/hot_teacup/url_encoded_form.h
+        include/hot_teacup/url_encoded_form_view.h
     include/hot_teacup/header.h
+        include/hot_teacup/header_view.h
     include/hot_teacup/query.h
+        include/hot_teacup/query_view.h
     include/hot_teacup/request.h
+        include/hot_teacup/request_view.h
     include/hot_teacup/response.h
+        include/hot_teacup/response_view.h
     include/hot_teacup/types.h
+        include/hot_teacup/detail/lazy_initialized.h
+        include/hot_teacup/detail/copy_on_write_interface.h
+        include/hot_teacup/multipart_form_impl.h
 )
 
 SealLake_StaticLibrary(

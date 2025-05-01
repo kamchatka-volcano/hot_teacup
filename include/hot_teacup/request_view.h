@@ -2,13 +2,40 @@
 #define HOT_TEACUP_REQUEST_VIEW_H
 
 #include "cookie_view.h"
-#include "form_view.h"
+#include "header_view.h"
+#include "multipart_form_view.h"
 #include "query_view.h"
 #include "types.h"
-#include <unordered_map>
+#include "url_encoded_form.h"
+#include "url_encoded_form_view.h"
+#include "detail/lazy_initialized.h"
 #include <string>
+#include <unordered_map>
 
 namespace http {
+
+class RequestBodyView {
+public:
+    RequestBodyView(HeaderView contentType, std::string_view content);
+    HeaderView contentType() const;
+    std::string_view content() const;
+    std::optional<MultipartFormView> multipartForm() const;
+    std::optional<UrlEncodedFormView> urlEncodedForm() const;
+
+    friend bool operator==(const RequestBodyView& lhs, const RequestBodyView& rhs);
+
+private:
+    std::optional<MultipartFormView> createMultipartForm() const;
+    std::optional<UrlEncodedForm> createUrlEncodedForm() const;
+
+private:
+    HeaderView contentType_;
+    std::string_view content_;
+    detail::LazyInitialized<RequestBodyView, &RequestBodyView::createMultipartForm, std::optional<MultipartFormView>>
+            multipartForm_;
+    detail::LazyInitialized<RequestBodyView, &RequestBodyView::createUrlEncodedForm, std::optional<UrlEncodedForm>>
+            urlEncodedForm_;
+};
 
 class RequestView {
 public:
@@ -36,24 +63,15 @@ public:
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
-    const FormView& form() const;
-    std::string_view formField(std::string_view name, int index = 0) const;
-    std::vector<std::string_view> formFieldList() const;
-    std::vector<std::string_view> fileList() const;
-    int formFieldCount(std::string_view name) const;
-    bool hasFormField(std::string_view name) const;
-
-    std::string_view fileData(std::string_view name, int index = 0) const;
-    int fileCount(std::string_view name) const;
-    bool hasFile(std::string_view name) const;
-    std::string_view fileName(std::string_view name, int index = 0) const;
-    std::string_view fileType(std::string_view name, int index = 0) const;
-    bool hasFiles() const;
+    std::optional<HeaderView> contentType() const;
+    std::string_view body() const;
+    std::optional<MultipartFormView> multipartForm() const;
+    std::optional<UrlEncodedFormView> urlEncodedForm() const;
 
     const std::unordered_map<std::string_view, std::string_view>& fcgiParams() const;
-
-
+    std::optional<RequestBodyView> getRequestBody() const;
     friend bool operator==(const RequestView& lhs, const RequestView& rhs);
+
 private:
     RequestMethod method_;
     std::string_view ipAddress_;
@@ -61,7 +79,7 @@ private:
     std::string_view path_;
     std::vector<QueryView> queries_;
     std::vector<CookieView> cookies_;
-    FormView form_;
+    std::optional<RequestBodyView> body_;
     std::unordered_map<std::string_view, std::string_view> fcgiParams_;
 };
 

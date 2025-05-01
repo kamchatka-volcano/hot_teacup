@@ -1,3 +1,4 @@
+#include "constants.h"
 #include <hot_teacup/request_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
@@ -5,6 +6,63 @@
 using namespace std::string_literals;
 
 namespace http {
+
+namespace {
+
+std::optional<RequestBodyView> readRequestBody(std::string_view contentTypeHeaderValue, std::string_view requestBody)
+{
+    if (requestBody.empty())
+        return std::nullopt;
+
+    const auto contentTypeHeader = headerFromValueString("Content-Type", contentTypeHeaderValue)
+                                           .value_or(HeaderView{"Content-Type", "text/plain"});
+    return RequestBodyView{contentTypeHeader, requestBody};
+}
+
+} //namespace
+
+RequestBodyView::RequestBodyView(HeaderView contentType, std::string_view content)
+    : contentType_{std::move(contentType)}
+    , content_{content}
+{
+}
+
+HeaderView RequestBodyView::contentType() const
+{
+    return contentType_;
+}
+
+std::string_view RequestBodyView::content() const
+{
+    return content_;
+}
+
+std::optional<MultipartFormView> RequestBodyView::multipartForm() const
+{
+    return multipartForm_.get(*this);
+}
+
+std::optional<UrlEncodedFormView> RequestBodyView::urlEncodedForm() const
+{
+    const auto& form = urlEncodedForm_.get(*this);
+    if (!form.has_value())
+        return std::nullopt;
+    return form->toView();
+}
+
+std::optional<MultipartFormView> RequestBodyView::createMultipartForm() const
+{
+    if (contentType_.value() == "multipart/form-data")
+        return multipartFormViewFromString(contentType_, content_);
+    return std::nullopt;
+}
+
+std::optional<UrlEncodedForm> RequestBodyView::createUrlEncodedForm() const
+{
+    if (contentType_.value() == "application/x-www-form-urlencoded")
+        return urlEncodedFormFromString(content_);
+    return std::nullopt;
+}
 
 RequestView::RequestView(
         std::string_view fcgiParamRequestMethod,
@@ -22,8 +80,9 @@ RequestView::RequestView(
     , path_{sfun::before(fcgiParamRequestUri, "?").value_or(fcgiParamRequestUri)}
     , queries_{queriesFromString(fcgiParamQueryString)}
     , cookies_{cookiesFromString(fcgiParamHttpCookie)}
-    , form_{formFromString(fcgiParamContentType, fcgiStdIn)}
+    , body_{readRequestBody(fcgiParamContentType, fcgiStdIn)}
     , fcgiParams_{std::move(fcgiParams)}
+
 {
 }
 
@@ -101,85 +160,41 @@ bool RequestView::hasCookie(std::string_view name) const
     return (it != cookies_.end());
 }
 
-const FormView& RequestView::form() const
+std::optional<HeaderView> RequestView::contentType() const
 {
-    return form_;
+    if (!body_.has_value())
+        return std::nullopt;
+
+    return body_.value().contentType();
 }
 
-std::string_view RequestView::formField(std::string_view name, int index) const
+std::string_view RequestView::body() const
 {
-    auto i = 0;
-    for (const auto& [formFieldName, formField] : form_) {
-        if (formFieldName == name && formField.type() == FormFieldType::Param) {
-            if (i++ == index)
-                return formField.value();
-        }
-    }
-    return {};
+    if (!body_.has_value())
+        return {};
+
+    return body_.value().content();
 }
 
-int RequestView::formFieldCount(std::string_view name) const
+std::optional<RequestBodyView> RequestView::getRequestBody() const
 {
-    return static_cast<int>(std::count_if(
-            form_.begin(),
-            form_.end(),
-            [&name](const auto& namedFormField)
-            {
-                const auto& [formFieldName, formField] = namedFormField;
-                return formFieldName == name && formField.type() == FormFieldType::Param;
-            }));
+    return body_;
 }
 
-bool RequestView::hasFormField(std::string_view name) const
+std::optional<MultipartFormView> RequestView::multipartForm() const
 {
-    return formFieldCount(name) != 0;
+    if (!body_.has_value())
+        return std::nullopt;
+
+    return body_.value().multipartForm();
 }
 
-std::string_view RequestView::fileData(std::string_view name, int index) const
+std::optional<UrlEncodedFormView> RequestView::urlEncodedForm() const
 {
-    auto i = 0;
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.hasFile() && formFieldName == name)
-            if (i++ == index)
-                return formField.value();
+    if (!body_.has_value())
+        return std::nullopt;
 
-    return {};
-}
-
-int RequestView::fileCount(std::string_view name) const
-{
-    auto result = 0;
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.hasFile() && formFieldName == name)
-            result++;
-    return result;
-}
-
-bool RequestView::hasFile(std::string_view name) const
-{
-    return fileCount(name) != 0;
-}
-
-std::string_view RequestView::fileName(std::string_view name, int index) const
-{
-    auto i = 0;
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.hasFile() && formFieldName == name)
-            if (i++ == index)
-                return formField.fileName();
-
-    return {};
-}
-
-std::string_view RequestView::fileType(std::string_view name, int index) const
-{
-    auto i = 0;
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.hasFile() && formFieldName == name)
-            if (i++ == index)
-                return formField.fileType();
-
-    return {};
+    return body_.value().urlEncodedForm();
 }
 
 const std::vector<QueryView>& RequestView::queries() const
@@ -192,45 +207,21 @@ const std::vector<CookieView>& RequestView::cookies() const
     return cookies_;
 }
 
-std::vector<std::string_view> RequestView::formFieldList() const
-{
-    auto result = std::vector<std::string_view>{};
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.type() == FormFieldType::Param)
-            result.push_back(formFieldName);
-    return result;
-}
-
-std::vector<std::string_view> RequestView::fileList() const
-{
-    auto result = std::vector<std::string_view>{};
-    for (const auto& [formFieldName, formField] : form_)
-        if (formField.hasFile())
-            result.push_back(formFieldName);
-    return result;
-}
-
-bool RequestView::hasFiles() const
-{
-    return std::any_of(
-            form_.begin(),
-            form_.end(),
-            [](const auto& formFieldPair)
-            {
-                return formFieldPair.second.hasFile();
-            });
-}
-
 const std::unordered_map<std::string_view, std::string_view>& RequestView::fcgiParams() const
 {
     return fcgiParams_;
+}
+
+bool operator==(const RequestBodyView& lhs, const RequestBodyView& rhs)
+{
+    return lhs.contentType() == rhs.contentType() && lhs.content() == rhs.content();
 }
 
 bool operator==(const RequestView& lhs, const RequestView& rhs)
 {
     return lhs.method() == rhs.method() && lhs.ipAddress() == rhs.ipAddress() && lhs.domainName() == rhs.domainName() &&
             lhs.path() == rhs.path() && lhs.queries() == rhs.queries() && lhs.cookies() == rhs.cookies() &&
-            lhs.form() == rhs.form();
+            lhs.getRequestBody() == rhs.getRequestBody();
 }
 
 } //namespace http

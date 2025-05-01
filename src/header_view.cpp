@@ -118,7 +118,37 @@ std::optional<HeaderView> headerFromString(std::string_view input)
         if (const auto param = makeParam(parts[i]))
             params.emplace_back(*param);
     return HeaderView{name, value, std::move(params)};
+}
 
+std::optional<HeaderView> headerFromValueString(std::string_view name, std::string_view headerValue)
+{
+    if (name.empty())
+        return {};
+
+    const auto parts = sfun::split(headerValue, ";", false);
+    if (parts.empty())
+        return {};
+
+    const auto value = unquoted(sfun::trim_front(parts[0]));
+    const auto valueIsParam = value.find('=') != std::string::npos;
+    if (valueIsParam) {
+        auto params = std::vector<HeaderParamView>{};
+        auto param = makeParam(value);
+        if (param)
+            params.emplace_back(*param);
+        for (auto i = 1u; i < parts.size(); ++i) {
+            param = makeParam(parts[i]);
+            if (param)
+                params.emplace_back(*param);
+        }
+        return HeaderView{name, {}, std::move(params)};
+    }
+
+    auto params = std::vector<HeaderParamView>{};
+    for (auto i = 1u; i < parts.size(); ++i)
+        if (const auto param = makeParam(parts[i]))
+            params.emplace_back(*param);
+    return HeaderView{name, value, std::move(params)};
 }
 
 std::string_view HeaderView::name() const

@@ -25,7 +25,7 @@ private:
 
 class HeaderView {
 public:
-    HeaderView(std::string_view name, std::string_view value, std::vector<HeaderParamView> params);
+    HeaderView(std::string_view name, std::string_view value, std::vector<HeaderParamView> params = {});
     std::string_view name() const;
     std::string_view value() const;
     std::string_view param(std::string_view name) const;
@@ -40,6 +40,7 @@ private:
 };
 
 std::optional<HeaderView> headerFromString(std::string_view);
+std::optional<HeaderView> headerFromValueString(std::string_view name, std::string_view value);
 
 } //namespace http
 

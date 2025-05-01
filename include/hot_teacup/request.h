@@ -2,11 +2,15 @@
 #define HOT_TEACUP_REQUEST_H
 
 #include "cookie.h"
-#include "form.h"
-#include "query.h"
 #include "header.h"
+#include "multipart_form.h"
+#include "query.h"
+#include "request_view.h"
 #include "trait_utils.h"
 #include "types.h"
+#include "url_encoded_form.h"
+#include "url_encoded_form_view.h"
+#include "detail/copy_on_write_interface.h"
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -19,11 +23,50 @@ struct RequestFcgiData {
     std::string stdIn;
 };
 
+class RequestBody : public detail::ICopyOnWrite {
+    class Data {
+    public:
+        Data(std::string contentTypeHeaderValue, std::string data);
+        Data(Header contentType, std::string data);
+        Data(MultipartForm form);
+        Data(UrlEncodedForm form);
+        HeaderView contentType() const;
+        std::string_view content() const;
+        std::optional<MultipartFormView> multipartForm() const;
+        std::optional<UrlEncodedFormView> urlEncodedForm() const;
+
+    private:
+        Header contentType_;
+        std::string content_;
+        std::optional<MultipartForm> multipartForm_;
+        std::optional<UrlEncodedForm> urlEncodedForm_;
+    };
+
+public:
+    RequestBody(const RequestBodyView&);
+    RequestBody(std::string contentTypeHeaderValue, std::string data);
+    RequestBody(Header contentType, std::string data);
+    RequestBody(MultipartForm form);
+    RequestBody(UrlEncodedForm form);
+
+    HeaderView contentType() const;
+    std::string_view content() const;
+    std::optional<MultipartFormView> multipartForm() const;
+    std::optional<UrlEncodedFormView> urlEncodedForm() const;
+
+private:
+    bool isView() const override;
+    void makeOwnStateFromView() override;
+
+private:
+    std::variant<Data, RequestBodyView> data_;
+};
+
 namespace detail{
-using RequestArg  = std::variant<std::vector<Query>, std::vector<Cookie>, std::vector<Header>, Form>;
+using RequestArg = std::variant<std::vector<Query>, std::vector<Cookie>, std::vector<Header>, RequestBody>;
 }
 
-class Request {
+class Request : public detail::ICopyOnWrite {
 public:
     explicit Request(const RequestView&);
     template<
@@ -60,34 +103,30 @@ public:
     std::string_view header(std::string_view name) const;
     bool hasHeader(std::string_view name) const;
 
-    const Form& form() const;
-    std::string_view formField(std::string_view name, int index = 0) const;
-    std::vector<std::string_view> formFieldList() const;
-    std::vector<std::string_view> fileList() const;
-    int formFieldCount(std::string_view name) const;
-    bool hasFormField(std::string_view name) const;
+    std::optional<HeaderView> contentType() const;
+    std::string_view body() const;
+    std::optional<MultipartFormView> multipartForm() const;
+    std::optional<UrlEncodedFormView> urlEncodedForm() const;
 
-    std::string_view fileData(std::string_view name, int index = 0) const;
-    int fileCount(std::string_view name) const;
-    bool hasFile(std::string_view name) const;
-    std::string_view fileName(std::string_view name, int index = 0) const;
-    std::string_view fileType(std::string_view name, int index = 0) const;
-    bool hasFiles() const;
+    std::unordered_map<std::string_view, std::string_view> fcgiParams() const;
 
-    const std::unordered_map<std::string_view, std::string_view>& fcgiParams() const;
-
-    RequestFcgiData toFcgiData(FormType, std::map<std::string, std::string> fcgiParams = {}) const;
+    RequestFcgiData toFcgiData(std::map<std::string, std::string> fcgiParams = {}) const;
 
     void setIpAddress(const std::string&);
     void setDomainName(const std::string&);
-    void setQueries(const std::vector<Query>&);
+    void addCookie(Cookie cookie);
+    void addQuery(Query query);
+    void addHeader(Header header);
     void setCookies(const std::vector<Cookie>&);
-    void setForm(const Form&);
+    void setQueries(const std::vector<Query>&);
+    void setHeaders(const std::vector<Header>&);
 
     friend bool operator==(const Request& lhs, const Request& rhs);
 
 private:
-    bool isView() const;
+    bool isView() const override;
+    void makeOwnStateFromView() override;
+
     void init(std::vector<detail::RequestArg>&& args);
 
 private:
@@ -98,11 +137,9 @@ private:
     std::vector<Query> queries_;
     std::vector<Cookie> cookies_;
     std::vector<Header> headers_;
-    Form form_;
-    std::unordered_map<std::string_view, std::string_view> fcgiParams_;
-
-private:
-    static inline const std::string valueNotFound = {};
+    std::optional<RequestBody> body_;
+    std::variant<std::unordered_map<std::string_view, std::string_view>, std::unordered_map<std::string, std::string>>
+            fcgiParams_;
 };
 
 } //namespace http

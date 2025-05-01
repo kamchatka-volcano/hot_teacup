@@ -3,6 +3,7 @@
 
 #include "header.h"
 #include "trait_utils.h"
+#include "detail/copy_on_write_interface.h"
 #include <chrono>
 #include <optional>
 #include <string>
@@ -28,7 +29,7 @@ namespace detail{
 using CookieArg = std::variant<CookieDomain, CookiePath, CookieMaxAge, CookieIsSecure, CookieIsRemoved>;
 }
 
-class Cookie {
+class Cookie : public detail::ICopyOnWrite {
 
 public:
     explicit Cookie(const CookieView& cookieView);
@@ -65,6 +66,10 @@ public:
 
     std::string toString() const;
     friend bool operator==(const Cookie& lhs, const Cookie& rhs);
+
+private:
+    bool isView() const override;
+    void makeOwnStateFromView() override;
 
 private:
     explicit Cookie(Header header);

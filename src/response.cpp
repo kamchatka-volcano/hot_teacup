@@ -24,10 +24,10 @@ void Response::init(std::vector<detail::ResponseArg>&& args)
             status_ = std::get<ResponseStatus>(arg);
         else if (std::holds_alternative<std::string>(arg))
             body_ = std::move(std::get<std::string>(arg));
-        else if (std::holds_alternative<http::Cookies>(arg))
-            cookies_ = std::move(std::get<http::Cookies>(arg));
-        else if (std::holds_alternative<http::Headers>(arg))
-            headers_ = std::move(std::get<http::Headers>(arg));
+        else if (std::holds_alternative<Cookies>(arg))
+            cookies_ = std::move(std::get<Cookies>(arg));
+        else if (std::holds_alternative<Headers>(arg))
+            headers_ = std::move(std::get<Headers>(arg));
         else if (std::holds_alternative<ContentType>(arg))
             defaultHeaders_.push_back({"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))});
         else if (std::holds_alternative<ContentTypeString>(arg))
@@ -91,10 +91,15 @@ const std::vector<Header>& Response::headers() const
     return headers_;
 }
 
+void Response::setStatus(ResponseStatus status)
+{
+    status_ = status;
+}
+
 void Response::setBody(const std::string& body)
 {
     if (isView())
-        return;
+        makeOwnStateFromView();
 
     body_ = body;
 }
@@ -102,7 +107,7 @@ void Response::setBody(const std::string& body)
 void Response::addCookie(Cookie cookie)
 {
     if (isView())
-        return;
+        makeOwnStateFromView();
 
     cookies_.emplace_back(std::move(cookie));
 }
@@ -110,7 +115,7 @@ void Response::addCookie(Cookie cookie)
 void Response::addHeader(Header header)
 {
     if (isView())
-        return;
+        makeOwnStateFromView();
 
     headers_.emplace_back(std::move(header));
 }
@@ -118,7 +123,7 @@ void Response::addHeader(Header header)
 void Response::setCookies(const std::vector<Cookie>& cookies)
 {
     if (isView())
-        return;
+        makeOwnStateFromView();
 
     cookies_ = cookies;
 }
@@ -126,7 +131,7 @@ void Response::setCookies(const std::vector<Cookie>& cookies)
 void Response::setHeaders(const std::vector<Header>& headers)
 {
     if (isView())
-        return;
+        makeOwnStateFromView();
 
     headers_ = headers;
 }
@@ -181,6 +186,20 @@ std::string Response::data(ResponseMode mode) const
 bool Response::isView() const
 {
     return std::holds_alternative<std::string_view>(body_);
+}
+
+void Response::makeOwnStateFromView()
+{
+    if (!isView())
+        return;
+
+    body_ = std::string{std::get<std::string_view>(body_)};
+    for (auto& cookie : cookies_)
+        static_cast<ICopyOnWrite&>(cookie).makeOwnStateFromView();
+    for (auto& header : defaultHeaders_)
+        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
+    for (auto& header : headers_)
+        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
 }
 
 bool operator==(const Response& lhs, const Response& rhs)

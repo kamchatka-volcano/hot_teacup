@@ -393,3 +393,22 @@ TEST(ResponseView, ResponseFromStringPartialStatus2)
     EXPECT_EQ(response->headers().at(0).value(), "/");
     EXPECT_EQ(response->body(), "");
 }
+
+TEST(Response, CopyInternalStateOnMutation)
+{
+    auto responseString = std::string{"HTTP/1.1 302 Found\r\nLocation: /\r\n"
+                                      "\r\n"};
+    auto responseView = http::responseFromString(responseString);
+    ASSERT_TRUE(responseView.has_value());
+    auto response = http::Response{responseView.value()};
+
+    ASSERT_EQ(response.headers().size(), 1);
+    EXPECT_EQ(response.headers().at(0).name(), "Location");
+    responseString.at(26) = '0';
+    responseString.at(27) = '1';
+    EXPECT_EQ(response.headers().at(0).name(), "Locati01");
+    response.setBody("Hello world"); // Method modifying the object should create the copy of the internal state
+    responseString.at(26) = 'o';
+    responseString.at(27) = 'n';
+    EXPECT_EQ(response.headers().at(0).name(), "Locati01");
+}

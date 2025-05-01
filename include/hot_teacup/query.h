@@ -2,14 +2,15 @@
 #define HOT_TEACUP_QUERY_H
 
 #include "query_view.h"
+#include "detail/copy_on_write_interface.h"
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
 
 namespace http {
 class QueryView;
 
-class Query {
+class Query : public detail::ICopyOnWrite {
     struct Data{
         std::string_view name() const;
         std::string_view value() const;
@@ -24,6 +25,10 @@ public:
     std::string_view value() const;
     std::string toString() const;
     friend bool operator==(const Query& lhs, const Query& rhs);
+
+private:
+    bool isView() const override;
+    void makeOwnStateFromView() override;
 
 private:
     std::variant<Data, QueryView> data_;

@@ -165,7 +165,7 @@ constexpr const char* methodToString(RequestMethod method)
     detail::ensureNotReachable();
 }
 
-enum class FormFieldType {
+enum class MultipartFormFieldType {
     Param,
     File
 };

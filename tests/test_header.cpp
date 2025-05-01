@@ -195,3 +195,17 @@ TEST(HeaderView, FromStringWithoutHeaderName)
         ASSERT_FALSE(header.has_value());
     }
 }
+
+TEST(HeaderView, CopyInternalStateOnMutation)
+{
+    auto str = std::string{"Test-Header: name=\"foo\"; name2=bar"};
+    const auto headerView = http::headerFromString(str);
+    ASSERT_TRUE(headerView.has_value());
+    auto header = http::Header{headerView.value()};
+    EXPECT_EQ(header.name(), "Test-Header");
+    str.at(0) = 'X';
+    EXPECT_EQ(header.name(), "Xest-Header");
+    header.setParam("name2", "baz"); // Method modifying the object should create the copy of the internal state
+    str.at(0) = 'T';
+    EXPECT_EQ(header.name(), "Xest-Header");
+}
