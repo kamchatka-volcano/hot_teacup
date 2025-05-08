@@ -109,6 +109,137 @@ enum class RequestMethod {
     Patch
 };
 
+constexpr ResponseStatus statusFromCode(int statusCode)
+{
+    using Status = ResponseStatus;
+    switch (statusCode) {
+    case 100:
+        return Status::_100_Continue;
+    case 101:
+        return Status::_101_Switching_Protocol;
+    case 102:
+        return Status::_102_Processing;
+    case 103:
+        return Status::_103_Early_Hints;
+    case 200:
+        return Status::_200_Ok;
+    case 201:
+        return Status::_201_Created;
+    case 202:
+        return Status::_202_Accepted;
+    case 203:
+        return Status::_203_Non_Authoritative_Information;
+    case 204:
+        return Status::_204_No_Content;
+    case 205:
+        return Status::_205_Reset_Content;
+    case 206:
+        return Status::_206_Partial_Content;
+    case 207:
+        return Status::_207_Multi_Status;
+    case 208:
+        return Status::_208_Already_Reported;
+    case 226:
+        return Status::_226_IM_Used;
+    case 300:
+        return Status::_300_Multiple_Choice;
+    case 301:
+        return Status::_301_Moved_Permanently;
+    case 302:
+        return Status::_302_Found;
+    case 303:
+        return Status::_303_See_Other;
+    case 304:
+        return Status::_304_Not_Modified;
+    case 307:
+        return Status::_307_Temporary_Redirect;
+    case 308:
+        return Status::_308_Permanent_Redirect;
+    case 400:
+        return Status::_400_Bad_Request;
+    case 401:
+        return Status::_401_Unauthorized;
+    case 402:
+        return Status::_402_Payment_Required;
+    case 403:
+        return Status::_403_Forbidden;
+    case 404:
+        return Status::_404_Not_Found;
+    case 405:
+        return Status::_405_Method_Not_Allowed;
+    case 406:
+        return Status::_406_Not_Acceptable;
+    case 407:
+        return Status::_407_Proxy_Authentication_Required;
+    case 408:
+        return Status::_408_Request_Timeout;
+    case 409:
+        return Status::_409_Conflict;
+    case 410:
+        return Status::_410_Gone;
+    case 411:
+        return Status::_411_Length_Required;
+    case 412:
+        return Status::_412_Precondition_Failed;
+    case 413:
+        return Status::_413_Payload_Too_Large;
+    case 414:
+        return Status::_414_URI_Too_Long;
+    case 415:
+        return Status::_415_Unsupported_Media_Type;
+    case 416:
+        return Status::_416_Range_Not_Satisfiable;
+    case 417:
+        return Status::_417_Expectation_Failed;
+    case 418:
+        return Status::_418_Im_a_teapot;
+    case 421:
+        return Status::_421_Misdirected_Request;
+    case 422:
+        return Status::_422_Unprocessable_Entity;
+    case 423:
+        return Status::_423_Locked;
+    case 424:
+        return Status::_424_Failed_Dependency;
+    case 425:
+        return Status::_425_Too_Early;
+    case 426:
+        return Status::_426_Upgrade_Required;
+    case 428:
+        return Status::_428_Precondition_Required;
+    case 429:
+        return Status::_429_Too_Many_Requests;
+    case 431:
+        return Status::_431_Request_Header_Fields_Too_Large;
+    case 451:
+        return Status::_451_Unavailable_For_Legal_Reasons;
+    case 500:
+        return Status::_500_Internal_Server_Error;
+    case 501:
+        return Status::_501_Not_Implemented;
+    case 502:
+        return Status::_502_Bad_Gateway;
+    case 503:
+        return Status::_503_Service_Unavailable;
+    case 504:
+        return Status::_504_Gateway_Timeout;
+    case 505:
+        return Status::_505_HTTP_Version_Not_Supported;
+    case 506:
+        return Status::_506_Variant_Also_Negotiates;
+    case 507:
+        return Status::_507_Insufficient_Storage;
+    case 508:
+        return Status::_508_Loop_Detected;
+    case 510:
+        return Status::_510_Not_Extended;
+    case 511:
+        return Status::_511_Network_Authentication_Required;
+    default:
+        return {};
+    }
+}
+
 namespace detail {
 [[noreturn]] inline void ensureNotReachable() noexcept
 {
@@ -334,137 +465,6 @@ constexpr const char* statusToString(ResponseStatus status)
         return "511 Network Authentication Required";
     }
     detail::ensureNotReachable();
-}
-
-constexpr ResponseStatus statusFromCode(int statusCode)
-{
-    using Status = ResponseStatus;
-    switch (statusCode) {
-    case 100:
-        return Status::_100_Continue;
-    case 101:
-        return Status::_101_Switching_Protocol;
-    case 102:
-        return Status::_102_Processing;
-    case 103:
-        return Status::_103_Early_Hints;
-    case 200:
-        return Status::_200_Ok;
-    case 201:
-        return Status::_201_Created;
-    case 202:
-        return Status::_202_Accepted;
-    case 203:
-        return Status::_203_Non_Authoritative_Information;
-    case 204:
-        return Status::_204_No_Content;
-    case 205:
-        return Status::_205_Reset_Content;
-    case 206:
-        return Status::_206_Partial_Content;
-    case 207:
-        return Status::_207_Multi_Status;
-    case 208:
-        return Status::_208_Already_Reported;
-    case 226:
-        return Status::_226_IM_Used;
-    case 300:
-        return Status::_300_Multiple_Choice;
-    case 301:
-        return Status::_301_Moved_Permanently;
-    case 302:
-        return Status::_302_Found;
-    case 303:
-        return Status::_303_See_Other;
-    case 304:
-        return Status::_304_Not_Modified;
-    case 307:
-        return Status::_307_Temporary_Redirect;
-    case 308:
-        return Status::_308_Permanent_Redirect;
-    case 400:
-        return Status::_400_Bad_Request;
-    case 401:
-        return Status::_401_Unauthorized;
-    case 402:
-        return Status::_402_Payment_Required;
-    case 403:
-        return Status::_403_Forbidden;
-    case 404:
-        return Status::_404_Not_Found;
-    case 405:
-        return Status::_405_Method_Not_Allowed;
-    case 406:
-        return Status::_406_Not_Acceptable;
-    case 407:
-        return Status::_407_Proxy_Authentication_Required;
-    case 408:
-        return Status::_408_Request_Timeout;
-    case 409:
-        return Status::_409_Conflict;
-    case 410:
-        return Status::_410_Gone;
-    case 411:
-        return Status::_411_Length_Required;
-    case 412:
-        return Status::_412_Precondition_Failed;
-    case 413:
-        return Status::_413_Payload_Too_Large;
-    case 414:
-        return Status::_414_URI_Too_Long;
-    case 415:
-        return Status::_415_Unsupported_Media_Type;
-    case 416:
-        return Status::_416_Range_Not_Satisfiable;
-    case 417:
-        return Status::_417_Expectation_Failed;
-    case 418:
-        return Status::_418_Im_a_teapot;
-    case 421:
-        return Status::_421_Misdirected_Request;
-    case 422:
-        return Status::_422_Unprocessable_Entity;
-    case 423:
-        return Status::_423_Locked;
-    case 424:
-        return Status::_424_Failed_Dependency;
-    case 425:
-        return Status::_425_Too_Early;
-    case 426:
-        return Status::_426_Upgrade_Required;
-    case 428:
-        return Status::_428_Precondition_Required;
-    case 429:
-        return Status::_429_Too_Many_Requests;
-    case 431:
-        return Status::_431_Request_Header_Fields_Too_Large;
-    case 451:
-        return Status::_451_Unavailable_For_Legal_Reasons;
-    case 500:
-        return Status::_500_Internal_Server_Error;
-    case 501:
-        return Status::_501_Not_Implemented;
-    case 502:
-        return Status::_502_Bad_Gateway;
-    case 503:
-        return Status::_503_Service_Unavailable;
-    case 504:
-        return Status::_504_Gateway_Timeout;
-    case 505:
-        return Status::_505_HTTP_Version_Not_Supported;
-    case 506:
-        return Status::_506_Variant_Also_Negotiates;
-    case 507:
-        return Status::_507_Insufficient_Storage;
-    case 508:
-        return Status::_508_Loop_Detected;
-    case 510:
-        return Status::_510_Not_Extended;
-    case 511:
-        return Status::_511_Network_Authentication_Required;
-    default:
-        return {};
-    }
 }
 
 constexpr const char* contentTypeToString(ContentType type)

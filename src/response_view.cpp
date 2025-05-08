@@ -61,7 +61,7 @@ std::optional<ResponseStatus> statusCodeFromString(const std::string& statusStr)
     if (!std::regex_match(statusStr, statusMatch, statusRegex))
         return std::nullopt;
     auto statusCode = std::stoi(statusMatch[1]);
-    return detail::statusFromCode(statusCode);
+    return statusFromCode(statusCode);
 }
 
 std::string_view getStringLine(std::string_view input, std::size_t& pos, std::string_view lineSeparator = "\r\n")
