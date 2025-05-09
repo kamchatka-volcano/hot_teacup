@@ -26,7 +26,6 @@ struct RequestFcgiData {
 class RequestBody : public detail::ICopyOnWrite {
     class Data {
     public:
-        Data(std::string contentTypeHeaderValue, std::string data);
         Data(Header contentType, std::string data);
         Data(MultipartForm form);
         Data(UrlEncodedForm form);
@@ -44,6 +43,8 @@ class RequestBody : public detail::ICopyOnWrite {
 
 public:
     RequestBody(const RequestBodyView&);
+    RequestBody(std::string data);
+    RequestBody(ContentType, std::string data);
     RequestBody(std::string contentTypeHeaderValue, std::string data);
     RequestBody(Header contentType, std::string data);
     RequestBody(MultipartForm form);

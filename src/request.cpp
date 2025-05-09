@@ -19,12 +19,6 @@ Header makeHeaderFromValueString(std::string_view name, std::string_view headerV
 }
 } //namespace
 
-RequestBody::Data::Data(std::string contentTypeHeaderValue, std::string data)
-    : contentType_{makeHeaderFromValueString("Content-Type", contentTypeHeaderValue)}
-    , content_{std::move(data)}
-{
-}
-
 RequestBody::Data::Data(Header contentType, std::string data)
     : contentType_{std::move(contentType)}
     , content_{std::move(data)}
@@ -76,8 +70,18 @@ RequestBody::RequestBody(const RequestBodyView& bodyView)
 {
 }
 
+RequestBody::RequestBody(std::string data)
+    : data_{Data{Header{"Content-Type", detail::contentTypeToString(ContentType::Json)}, std::move(data)}}
+{
+}
+
+RequestBody::RequestBody(ContentType contentType, std::string data)
+    : data_{Data{Header{"Content-Type", detail::contentTypeToString(contentType)}, std::move(data)}}
+{
+}
+
 RequestBody::RequestBody(std::string contentTypeHeaderValue, std::string data)
-    : data_{Data{std::move(contentTypeHeaderValue), std::move(data)}}
+    : data_{Data{makeHeaderFromValueString("Content-Type", contentTypeHeaderValue), std::move(data)}}
 {
 }
 
