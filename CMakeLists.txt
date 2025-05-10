@@ -51,7 +51,7 @@ set(PUBLIC_HEADERS
         include/hot_teacup/response_view.h
     include/hot_teacup/types.h
         include/hot_teacup/detail/lazy_initialized.h
-        include/hot_teacup/detail/copy_on_write_interface.h
+        include/hot_teacup/detail/view_or_owner_interface.h
         include/hot_teacup/multipart_form_impl.h
 )
 

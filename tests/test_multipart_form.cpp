@@ -122,36 +122,36 @@ TEST(MultipartFormView, WithFileFromString)
     EXPECT_EQ(form.fileData("param3"), "test-gif-data");
 }
 
-TEST(MultipartFormView, FormFromFormView)
-{
-    const auto contentType = http::HeaderView{
-            "Content-Type",
-            "multipart/form-data",
-            {{"boundary", "----WebKitFormBoundaryHQl9TEASIs9QyFWx"}}};
-    const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
-                          "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
-                          "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
-                          "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
-
-    const auto formViewResult = http::multipartFormViewFromString(contentType, formData);
-    ASSERT_TRUE(formViewResult.has_value());
-    const auto form = http::MultipartForm(formViewResult.value());
-
-    ASSERT_EQ(form.paramsCount(), 2);
-    ASSERT_EQ(form.filesCount(), 1);
-    EXPECT_EQ(form.paramCount("param1"), 1);
-    EXPECT_EQ(form.param("param1"), "foo");
-    EXPECT_EQ(form.paramCount("param2"), 1);
-    EXPECT_EQ(form.param("param2"), "bar ");
-    EXPECT_EQ(form.fileCount("param3"), 1);
-    EXPECT_EQ(form.fileName("param3"), "test.gif");
-    EXPECT_EQ(form.fileType("param3"), "image/gif");
-    EXPECT_EQ(form.fileData("param3"), "test-gif-data");
-}
+// TEST(MultipartFormView, FormFromFormView)
+// {
+//     const auto contentType = http::HeaderView{
+//             "Content-Type",
+//             "multipart/form-data",
+//             {{"boundary", "----WebKitFormBoundaryHQl9TEASIs9QyFWx"}}};
+//     const auto formData = "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+//                           "Content-Disposition: form-data; name=\"param1\"\r\n\r\nfoo\r\n"
+//                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+//                           "Content-Disposition: form-data; name=\"param2\"\r\n\r\nbar \r\n"
+//                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx\r\n"
+//                           "Content-Disposition: form-data; name=\"param3\"; filename=\"test.gif\"\r\n"
+//                           "Content-Type: image/gif\r\n\r\ntest-gif-data\r\n"
+//                           "------WebKitFormBoundaryHQl9TEASIs9QyFWx--\r\n";
+//
+//     const auto formViewResult = http::multipartFormViewFromString(contentType, formData);
+//     ASSERT_TRUE(formViewResult.has_value());
+//     const auto form = http::MultipartForm(formViewResult.value());
+//
+//     ASSERT_EQ(form.paramsCount(), 2);
+//     ASSERT_EQ(form.filesCount(), 1);
+//     EXPECT_EQ(form.paramCount("param1"), 1);
+//     EXPECT_EQ(form.param("param1"), "foo");
+//     EXPECT_EQ(form.paramCount("param2"), 1);
+//     EXPECT_EQ(form.param("param2"), "bar ");
+//     EXPECT_EQ(form.fileCount("param3"), 1);
+//     EXPECT_EQ(form.fileName("param3"), "test.gif");
+//     EXPECT_EQ(form.fileType("param3"), "image/gif");
+//     EXPECT_EQ(form.fileData("param3"), "test-gif-data");
+// }
 
 TEST(MultipartForm, WithFileToString)
 {

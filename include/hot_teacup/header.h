@@ -3,8 +3,7 @@
 
 #include "header_view.h"
 #include "types.h"
-#include "detail/copy_on_write_interface.h"
-#include <map>
+#include "detail/view_or_owner_interface.h"
 #include <optional>
 #include <string>
 #include <string_view>
@@ -15,7 +14,7 @@ namespace http {
 class HeaderParamView;
 class HeaderView;
 
-class HeaderParam : public detail::ICopyOnWrite {
+class HeaderParam : public detail::IViewOrOwner {
     struct Data {
         std::string_view name() const;
         std::string_view value() const;
@@ -42,7 +41,7 @@ private:
     std::variant<Data, HeaderParamView> data_;
 };
 
-class Header : public detail::ICopyOnWrite {
+class Header : public detail::IViewOrOwner {
     struct Data{
         std::string_view name() const;
         std::string_view value() const;
@@ -63,8 +62,6 @@ public:
     const std::vector<HeaderParam>& params() const;
 
     std::string toString() const;
-    HeaderView toView() const;
-
     friend bool operator==(const Header& lhs, const Header& rhs);
 
 private:
@@ -78,9 +75,6 @@ private:
 };
 
 using Headers = std::vector<Header>;
-
-std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList);
-std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList);
 
 } //namespace http
 

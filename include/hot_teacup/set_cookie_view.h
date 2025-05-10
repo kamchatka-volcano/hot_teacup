@@ -4,7 +4,6 @@
 #include "header_view.h"
 #include <chrono>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -26,7 +25,7 @@ public:
     const HeaderView& asHeader() const;
 
     friend bool operator==(const SetCookieView& lhs, const SetCookieView& rhs);
-    friend std::optional<SetCookieView> cookieFromHeader(const HeaderView& header);
+    friend std::optional<SetCookieView> setCookieFromHeader(const HeaderView& header);
 
 private:
     HeaderView header_;

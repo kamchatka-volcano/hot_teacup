@@ -155,14 +155,12 @@ TEST(Request, Headers)
     const auto expectedHeaders = std::vector<http::Header>{{"param1", "foo"}, {"param2", "bar"}};
     const auto request = http::Request{http::RequestMethod::Get, "/", expectedHeaders};
     EXPECT_TRUE(request.hasHeader("param1"));
-    ASSERT_TRUE(request.header("param1").has_value());
-    EXPECT_EQ(request.header("param1").value(), (http::HeaderView{"param1", "foo"}));
-    EXPECT_EQ(request.headerValue("param1"), "foo");
+    EXPECT_EQ(request.header("param1"), "foo");
     EXPECT_TRUE(request.hasHeader("param2"));
-    EXPECT_EQ(request.headerValue("param2"), "bar");
+    EXPECT_EQ(request.header("param2"), "bar");
 
     EXPECT_FALSE(request.hasHeader("param3"));
-    EXPECT_EQ(request.headerValue("param3"), "");
+    EXPECT_EQ(request.header("param3"), "");
 }
 
 TEST(RequestView, MultipartFormWithFile)

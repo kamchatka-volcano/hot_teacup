@@ -1,5 +1,6 @@
-#include "utils.h"
 #include <hot_teacup/set_cookie.h>
+
+#include "utils.h"
 #include <hot_teacup/set_cookie_view.h>
 #include <sfun/functional.h>
 #include <sfun/string_utils.h>
@@ -17,7 +18,8 @@ SetCookie::SetCookie(const SetCookieView& cookieView)
 
 void SetCookie::init(std::vector<detail::SetCookieArg>&& args)
 {
-    const auto processArg = [this](detail::SetCookieArg& arg){
+    const auto processArg = [this](detail::SetCookieArg& arg)
+    {
         if (std::holds_alternative<CookieDomain>(arg))
             setDomain(std::move(std::get<CookieDomain>(arg).value));
         else if (std::holds_alternative<CookiePath>(arg))
@@ -66,7 +68,11 @@ std::optional<std::string_view> SetCookie::path() const
 std::optional<std::chrono::seconds> SetCookie::maxAge() const
 {
     if (header_.hasParam("Max-Age")) {
-        return sfun::try_invoke([&]{ return std::chrono::seconds{std::stoi(std::string{header_.param("Max-Age")})}; });
+        return sfun::try_invoke(
+                [&]
+                {
+                    return std::chrono::seconds{std::stoi(std::string{header_.param("Max-Age")})};
+                });
     }
     else
         return std::nullopt;
@@ -84,26 +90,41 @@ bool SetCookie::isRemoved() const
 
 void SetCookie::setDomain(std::string domain)
 {
+    if (isView())
+        makeOwnStateFromView();
+
     header_.setParam("Domain", std::move(domain));
 }
 
 void SetCookie::setPath(std::string path)
 {
+    if (isView())
+        makeOwnStateFromView();
+
     header_.setParam("Path", std::move(path));
 }
 
 void SetCookie::setMaxAge(const std::chrono::seconds& maxAge)
 {
+    if (isView())
+        makeOwnStateFromView();
+
     header_.setParam("Max-Age", std::to_string(maxAge.count()));
 }
 
 void SetCookie::setRemoved()
 {
+    if (isView())
+        makeOwnStateFromView();
+
     header_.setParam("Max-Age", "0");
 }
 
 void SetCookie::setSecure()
 {
+    if (isView())
+        makeOwnStateFromView();
+
     header_.setParam("Secure");
 }
 
@@ -112,14 +133,9 @@ std::string SetCookie::toString() const
     return header_.toString();
 }
 
-SetCookieView SetCookie::toView() const
-{
-    return SetCookieView{header_.toView()};
-}
-
 bool SetCookie::isView() const
 {
-    return static_cast<const ICopyOnWrite&>(header_).isView();
+    return static_cast<const IViewOrOwner&>(header_).isView();
 }
 
 void SetCookie::makeOwnStateFromView()
@@ -127,7 +143,7 @@ void SetCookie::makeOwnStateFromView()
     if (!isView())
         return;
 
-    static_cast<ICopyOnWrite&>(header_).makeOwnStateFromView();
+    static_cast<IViewOrOwner&>(header_).makeOwnStateFromView();
 }
 
 bool operator==(const SetCookie& lhs, const SetCookie& rhs)
@@ -139,21 +155,12 @@ bool operator==(const SetCookie& lhs, const SetCookie& rhs)
 
 std::string setCookiesToString(const std::vector<SetCookie>& cookies)
 {
-    const auto cookieToString = [](const SetCookie& cookie){
+    const auto cookieToString = [](const SetCookie& cookie)
+    {
         return sfun::join_strings(cookie.name(), "=", cookie.value());
     };
     const auto cookieFcgiStringList = utils::transform(cookies, cookieToString);
     return sfun::join(cookieFcgiStringList, "; ");
-}
-
-std::vector<SetCookie> makeSetCookies(const std::vector<SetCookieView>& cookieViewList)
-{
-    return utils::transform(
-            cookieViewList,
-            [](const SetCookieView& cookieView)
-            {
-                return SetCookie{cookieView};
-            });
 }
 
 } //namespace http

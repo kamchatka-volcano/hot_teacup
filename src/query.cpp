@@ -1,5 +1,6 @@
-#include "utils.h"
 #include <hot_teacup/query.h>
+
+#include "utils.h"
 #include <hot_teacup/query_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
@@ -76,16 +77,6 @@ std::string pathWithQueries(const std::string& path, const std::vector<Query>& q
     if (queries.empty())
         return path;
     return sfun::join_strings(path, "?", queriesToString(queries));
-}
-
-std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
-{
-    return utils::transform(
-            queryViewList,
-            [](const QueryView& queryView)
-            {
-                return Query{queryView};
-            });
 }
 
 

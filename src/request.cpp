@@ -1,7 +1,9 @@
+#include <hot_teacup/request.h>
+
 #include "constants.h"
 #include "utils.h"
-#include <hot_teacup/request.h>
 #include <hot_teacup/request_view.h>
+#include <sfun/functional.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
 
@@ -39,9 +41,9 @@ RequestBody::Data::Data(UrlEncodedForm form)
 {
 }
 
-HeaderView RequestBody::Data::contentType() const
+const Header& RequestBody::Data::contentType() const
 {
-    return contentType_.toView();
+    return contentType_;
 }
 
 std::string_view RequestBody::Data::content() const
@@ -100,12 +102,12 @@ RequestBody::RequestBody(UrlEncodedForm form)
 {
 }
 
-HeaderView RequestBody::contentType() const
+Header RequestBody::contentType() const
 {
     return std::visit(
-            [](const auto& data) -> HeaderView
+            [](const auto& data) -> Header
             {
-                return data.contentType();
+                return Header{data.contentType()};
             },
             data_);
 }
@@ -153,7 +155,6 @@ void RequestBody::makeOwnStateFromView()
     const auto& bodyView = std::get<RequestBodyView>(data_);
     if (bodyView.multipartForm().has_value()) {
         auto multiPartForm = MultipartForm{bodyView.multipartForm().value()};
-        static_cast<ICopyOnWrite&>(multiPartForm).makeOwnStateFromView();
         data_ = Data{std::move(multiPartForm)};
     }
     else if (bodyView.urlEncodedForm().has_value()) {
@@ -162,10 +163,33 @@ void RequestBody::makeOwnStateFromView()
     }
     else {
         auto header = Header{bodyView.contentType()};
-        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
         data_ = Data{header, std::string{bodyView.content()}};
     }
 }
+
+namespace {
+std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
+{
+    return utils::transform(
+            queryViewList,
+            [](const QueryView& queryView)
+            {
+                return Query{queryView};
+            });
+}
+
+std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
+{
+    return utils::transform(
+            cookieViewList,
+            [](const CookieView& cookieView)
+            {
+                return Cookie{cookieView};
+            });
+}
+
+} //namespace
 
 Request::Request(const RequestView& requestView)
     : method_{requestView.method()}
@@ -183,14 +207,25 @@ void Request::init(std::vector<detail::RequestArg>&& args)
 {
     const auto processArg = [this](detail::RequestArg& arg)
     {
-        if (std::holds_alternative<std::vector<Query>>(arg))
+        if (std::holds_alternative<std::vector<Query>>(arg)) {
             queries_ = std::move(std::get<std::vector<Query>>(arg));
-        else if (std::holds_alternative<std::vector<Cookie>>(arg))
+            for (auto& query : queries_)
+                static_cast<IViewOrOwner&>(query).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<std::vector<Cookie>>(arg)) {
             cookies_ = std::move(std::get<std::vector<Cookie>>(arg));
-        else if (std::holds_alternative<std::vector<Header>>(arg))
+            for (auto& cookie : cookies_)
+                static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<std::vector<Header>>(arg)) {
             headers_ = std::move(std::get<std::vector<Header>>(arg));
-        else if (std::holds_alternative<RequestBody>(arg))
+            for (auto& header : headers_)
+                static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<RequestBody>(arg)) {
             body_ = std::move(std::get<RequestBody>(arg));
+            static_cast<IViewOrOwner&>(body_.value()).makeOwnStateFromView();
+        }
     };
     std::for_each(args.begin(), args.end(), processArg);
     addDefaultContentTypeHeader();
@@ -210,7 +245,7 @@ void Request::addDefaultContentTypeHeader()
     if (contentTypeHeaderIt != headers_.end())
         headers_.erase(contentTypeHeaderIt);
     auto contentTypeHeader = Header{body_.value().contentType()};
-    static_cast<ICopyOnWrite&>(contentTypeHeader).makeOwnStateFromView();
+    static_cast<IViewOrOwner&>(contentTypeHeader).makeOwnStateFromView();
     headers_.emplace_back(std::move(contentTypeHeader));
 }
 
@@ -234,7 +269,7 @@ void Request::addCookie(Cookie cookie)
 {
     if (isView())
         makeOwnStateFromView();
-
+    static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
     cookies_.emplace_back(std::move(cookie));
 }
 
@@ -242,7 +277,7 @@ void Request::addQuery(Query query)
 {
     if (isView())
         makeOwnStateFromView();
-
+    static_cast<IViewOrOwner&>(query).makeOwnStateFromView();
     queries_.emplace_back(std::move(query));
 }
 
@@ -250,7 +285,7 @@ void Request::addHeader(Header header)
 {
     if (isView())
         makeOwnStateFromView();
-
+    static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
     if (body_.has_value() && header.name() == "Content-Type")
         return;
     headers_.emplace_back(std::move(header));
@@ -260,8 +295,9 @@ void Request::setCookies(const std::vector<Cookie>& cookies)
 {
     if (isView())
         makeOwnStateFromView();
-
     cookies_ = cookies;
+    for (auto& cookie : cookies_)
+        static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
 }
 
 void Request::setQueries(const std::vector<Query>& queries)
@@ -270,6 +306,8 @@ void Request::setQueries(const std::vector<Query>& queries)
         makeOwnStateFromView();
 
     queries_ = queries;
+    for (auto& query : queries_)
+        static_cast<IViewOrOwner&>(query).makeOwnStateFromView();
 }
 
 void Request::setHeaders(const std::vector<Header>& headers)
@@ -278,6 +316,8 @@ void Request::setHeaders(const std::vector<Header>& headers)
         makeOwnStateFromView();
 
     headers_ = headers;
+    for (auto& header : headers_)
+        static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
     addDefaultContentTypeHeader();
 }
 
@@ -375,7 +415,7 @@ const std::vector<Header>& Request::headers() const
     return headers_;
 }
 
-std::string_view Request::headerValue(std::string_view name) const
+std::string_view Request::header(std::string_view name) const
 {
     auto it = std::find_if(
             headers_.begin(),
@@ -386,21 +426,6 @@ std::string_view Request::headerValue(std::string_view name) const
             });
     if (it != headers_.end())
         return it->value();
-
-    return {};
-}
-
-std::optional<HeaderView> Request::header(std::string_view name) const
-{
-    auto it = std::find_if(
-            headers_.begin(),
-            headers_.end(),
-            [&name](const auto& header)
-            {
-                return header.name() == name;
-            });
-    if (it != headers_.end())
-        return it->toView();
 
     return {};
 }
@@ -417,10 +442,10 @@ bool Request::hasHeader(std::string_view name) const
     return it != headers_.end();
 }
 
-std::optional<HeaderView> Request::contentType() const
+std::optional<Header> Request::contentType() const
 {
     if (!body_.has_value())
-        return {};
+        return std::nullopt;
 
     return body_.value().contentType();
 }
@@ -510,6 +535,7 @@ void Request::setBody(const RequestBody& body)
         makeOwnStateFromView();
 
     body_ = body;
+    static_cast<IViewOrOwner&>(body_.value()).makeOwnStateFromView();
     addDefaultContentTypeHeader();
 }
 
@@ -533,16 +559,16 @@ void Request::makeOwnStateFromView()
     domainName_ = std::string{domainName};
 
     for (auto& query : queries_)
-        static_cast<ICopyOnWrite&>(query).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(query).makeOwnStateFromView();
 
     for (auto& cookie : cookies_)
-        static_cast<ICopyOnWrite&>(cookie).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
 
     for (auto& header : headers_)
-        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
 
     if (body_.has_value())
-        static_cast<ICopyOnWrite&>(body_.value()).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(body_.value()).makeOwnStateFromView();
 
     const auto fcgiParams = std::get<std::unordered_map<std::string_view, std::string_view>>(fcgiParams_);
     const auto toOwningPair = [](const std::pair<std::string_view, std::string_view>& nameValuePair)

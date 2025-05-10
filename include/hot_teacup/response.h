@@ -2,11 +2,10 @@
 #define HOT_TEACUP_RESPONSE_H
 
 #include "header.h"
-#include "query.h"
 #include "set_cookie.h"
 #include "trait_utils.h"
 #include "types.h"
-#include "detail/copy_on_write_interface.h"
+#include "detail/view_or_owner_interface.h"
 #include <string>
 #include <variant>
 
@@ -27,7 +26,7 @@ using StatusResponseArg =
 using RedirectResponseArg = std::variant<std::vector<SetCookie>, std::vector<Header>>;
 } //namespace detail
 
-class Response : public detail::ICopyOnWrite {
+class Response : public detail::IViewOrOwner {
 public:
     explicit Response(const ResponseView&);
 
@@ -96,22 +95,21 @@ public:
     ResponseStatus status() const;
     std::string_view body() const;
     const std::vector<SetCookie>& cookies() const;
-    std::string_view cookieValue(std::string_view name) const;
-    std::optional<SetCookieView> cookie(std::string_view name) const;
+    // value of the first cookie with the same name, empty string if not found
+    std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
     const std::vector<Header>& headers() const;
-    std::string_view headerValue(std::string_view name) const;
-    std::optional<HeaderView> header(std::string_view name) const;
+    // value of the first header with the same name, empty string if not found
+    std::string_view header(std::string_view name) const;
     bool hasHeader(std::string_view name) const;
-
-    std::string data(ResponseMode mode = ResponseMode::Http) const;
 
     void addCookie(SetCookie cookie);
     void addHeader(Header header);
     void setCookies(const std::vector<SetCookie>& cookies);
     void setHeaders(const std::vector<Header>& headers);
 
+    std::string toString(ResponseMode mode = ResponseMode::Http) const;
     friend bool operator==(const Response& lhs, const Response& rhs);
 
 private:

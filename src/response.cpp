@@ -1,5 +1,6 @@
-#include "utils.h"
 #include <hot_teacup/response.h>
+
+#include "utils.h"
 #include <hot_teacup/response_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
@@ -7,6 +8,27 @@
 #include <utility>
 
 namespace http {
+
+namespace {
+std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
+{
+    return utils::transform(
+            headerViewList,
+            [](const HeaderView& headerView)
+            {
+                return Header{headerView};
+            });
+}
+std::vector<SetCookie> makeSetCookies(const std::vector<SetCookieView>& cookieViewList)
+{
+    return utils::transform(
+            cookieViewList,
+            [](const SetCookieView& cookieView)
+            {
+                return SetCookie{cookieView};
+            });
+}
+} //namespace
 
 Response::Response(const ResponseView& responseView)
     : status_{responseView.status()}
@@ -20,10 +42,16 @@ void Response::initBodyResponse(std::vector<detail::BodyResponseArg>&& args)
 {
     const auto processArg = [this](detail::BodyResponseArg& arg)
     {
-        if (std::holds_alternative<Cookies>(arg))
-            cookies_ = std::move(std::get<Cookies>(arg));
-        else if (std::holds_alternative<Headers>(arg))
+        if (std::holds_alternative<SetCookies>(arg)) {
+            cookies_ = std::move(std::get<SetCookies>(arg));
+            for (auto& cookie : cookies_)
+                static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<Headers>(arg)) {
             headers_ = std::move(std::get<Headers>(arg));
+            for (auto& header : headers_)
+                static_cast<detail::IViewOrOwner&>(header).makeOwnStateFromView();
+        }
         else if (std::holds_alternative<ContentType>(arg))
             defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))};
         else if (std::holds_alternative<ContentTypeString>(arg))
@@ -41,10 +69,16 @@ void Response::initRedirectResponse(std::vector<detail::RedirectResponseArg>&& a
 {
     const auto processArg = [this](detail::RedirectResponseArg& arg)
     {
-        if (std::holds_alternative<Cookies>(arg))
-            cookies_ = std::move(std::get<Cookies>(arg));
-        else if (std::holds_alternative<Headers>(arg))
+        if (std::holds_alternative<SetCookies>(arg)) {
+            cookies_ = std::move(std::get<SetCookies>(arg));
+            for (auto& cookie : cookies_)
+                static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<Headers>(arg)) {
             headers_ = std::move(std::get<Headers>(arg));
+            for (auto& header : headers_)
+                static_cast<detail::IViewOrOwner&>(header).makeOwnStateFromView();
+        }
     };
 
     std::for_each(args.begin(), args.end(), processArg);
@@ -57,10 +91,16 @@ void Response::initStatusResponse(std::vector<detail::StatusResponseArg>&& args)
     {
         if (std::holds_alternative<std::string>(arg))
             body_ = std::move(std::get<std::string>(arg));
-        else if (std::holds_alternative<Cookies>(arg))
-            cookies_ = std::move(std::get<Cookies>(arg));
-        else if (std::holds_alternative<Headers>(arg))
+        else if (std::holds_alternative<SetCookies>(arg)) {
+            cookies_ = std::move(std::get<SetCookies>(arg));
+            for (auto& cookie : cookies_)
+                static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
+        }
+        else if (std::holds_alternative<Headers>(arg)) {
             headers_ = std::move(std::get<Headers>(arg));
+            for (auto& header : headers_)
+                static_cast<detail::IViewOrOwner&>(header).makeOwnStateFromView();
+        }
         else if (std::holds_alternative<ContentType>(arg))
             defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))};
         else if (std::holds_alternative<ContentTypeString>(arg))
@@ -129,7 +169,7 @@ const std::vector<SetCookie>& Response::cookies() const
     return cookies_;
 }
 
-std::string_view Response::cookieValue(std::string_view name) const
+std::string_view Response::cookie(std::string_view name) const
 {
     auto it = std::find_if(
             cookies_.begin(),
@@ -142,21 +182,6 @@ std::string_view Response::cookieValue(std::string_view name) const
         return it->value();
 
     return {};
-}
-
-std::optional<SetCookieView> Response::cookie(std::string_view name) const
-{
-    auto it = std::find_if(
-            cookies_.begin(),
-            cookies_.end(),
-            [&name](const auto& cookie)
-            {
-                return cookie.name() == name;
-            });
-    if (it != cookies_.end())
-        return it->toView();
-
-    return std::nullopt;
 }
 
 bool Response::hasCookie(std::string_view name) const
@@ -176,7 +201,7 @@ const std::vector<Header>& Response::headers() const
     return headers_;
 }
 
-std::string_view Response::headerValue(std::string_view name) const
+std::string_view Response::header(std::string_view name) const
 {
     auto it = std::find_if(
             headers_.begin(),
@@ -189,21 +214,6 @@ std::string_view Response::headerValue(std::string_view name) const
         return it->value();
 
     return {};
-}
-
-std::optional<HeaderView> Response::header(std::string_view name) const
-{
-    auto it = std::find_if(
-            headers_.begin(),
-            headers_.end(),
-            [&name](const auto& header)
-            {
-                return header.name() == name;
-            });
-    if (it != headers_.end())
-        return it->toView();
-
-    return std::nullopt;
 }
 
 bool Response::hasHeader(std::string_view name) const
@@ -222,7 +232,7 @@ void Response::addCookie(SetCookie cookie)
 {
     if (isView())
         makeOwnStateFromView();
-
+    static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
     cookies_.emplace_back(std::move(cookie));
 }
 
@@ -235,7 +245,7 @@ void Response::addHeader(Header header)
         return;
     if (redirect_.has_value() && header.name() == "Location")
         return;
-
+    static_cast<detail::IViewOrOwner&>(header).makeOwnStateFromView();
     headers_.emplace_back(std::move(header));
 }
 
@@ -245,6 +255,8 @@ void Response::setCookies(const std::vector<SetCookie>& cookies)
         makeOwnStateFromView();
 
     cookies_ = cookies;
+    for (auto& cookie : cookies_)
+        static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
 }
 
 void Response::setHeaders(const std::vector<Header>& headers)
@@ -253,6 +265,8 @@ void Response::setHeaders(const std::vector<Header>& headers)
         makeOwnStateFromView();
 
     headers_ = headers;
+    for (auto& header : headers_)
+        static_cast<detail::IViewOrOwner&>(header).makeOwnStateFromView();
     addDefaultLocationHeader();
     addDefaultContentTypeHeader();
 }
@@ -287,7 +301,7 @@ std::string Response::headersData() const
     return sfun::join_strings(sfun::join(headerStringList, "\r\n"), lastSeparator);
 }
 
-std::string Response::data(ResponseMode mode) const
+std::string Response::toString(ResponseMode mode) const
 {
     const auto body = std::visit(
             [](const auto& body) -> std::string_view
@@ -310,9 +324,9 @@ void Response::makeOwnStateFromView()
 
     body_ = std::string{std::get<std::string_view>(body_)};
     for (auto& cookie : cookies_)
-        static_cast<ICopyOnWrite&>(cookie).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
     for (auto& header : headers_)
-        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(header).makeOwnStateFromView();
 }
 
 bool operator==(const Response& lhs, const Response& rhs)

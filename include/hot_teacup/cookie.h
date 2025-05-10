@@ -2,10 +2,7 @@
 #define HOT_TEACUP_COOKIE_H
 
 #include "header.h"
-#include "trait_utils.h"
-#include "detail/copy_on_write_interface.h"
-#include <chrono>
-#include <optional>
+#include "detail/view_or_owner_interface.h"
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,19 +10,7 @@
 namespace http {
 class CookieView;
 
-struct CookieIsSecure {};
-struct CookieIsRemoved {};
-struct CookieDomain {
-    std::string value;
-};
-struct CookiePath {
-    std::string value;
-};
-struct CookieMaxAge {
-    std::chrono::seconds value;
-};
-
-class Cookie : public detail::ICopyOnWrite {
+class Cookie : public detail::IViewOrOwner {
 
 public:
     explicit Cookie(const CookieView& cookieView);
@@ -51,7 +36,6 @@ private:
 using Cookies = std::vector<Cookie>;
 
 std::string cookiesToString(const std::vector<Cookie>& cookies);
-std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList);
 
 } //namespace http
 

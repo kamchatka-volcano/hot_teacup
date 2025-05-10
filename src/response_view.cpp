@@ -1,7 +1,7 @@
 #include <hot_teacup/response_view.h>
+
 #include <algorithm>
 #include <regex>
-#include <sstream>
 #include <utility>
 
 namespace http {

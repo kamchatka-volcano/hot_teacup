@@ -1,14 +1,11 @@
 #ifndef HOT_TEACUP_URL_ENCODED_FORM_H
 #define HOT_TEACUP_URL_ENCODED_FORM_H
 
-#include "types.h"
 #include "url_encoded_form_impl.h"
 #include "url_encoded_form_view.h"
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace http {
@@ -23,7 +20,6 @@ public:
     using UrlEncodedFormImpl::UrlEncodedFormImpl;
     UrlEncodedForm(const UrlEncodedFormView& formView);
 
-    std::vector<UrlEncodedFormFieldView> fields() const;
     std::string toString() const;
     UrlEncodedFormView toView() const;
 };

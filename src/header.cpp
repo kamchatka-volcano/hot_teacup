@@ -1,5 +1,6 @@
-#include "utils.h"
 #include <hot_teacup/header.h>
+
+#include "utils.h"
 #include <hot_teacup/header_view.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
@@ -96,6 +97,18 @@ std::string_view Header::Data::value() const
     return value_;
 }
 
+namespace {
+std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)
+{
+    return utils::transform(
+            headerParamViewList,
+            [](const HeaderParamView& headerParamView)
+            {
+                return HeaderParam{headerParamView};
+            });
+}
+} //namespace
+
 Header::Header(const HeaderView& headerView)
     : data_{headerView}
     , params_{makeHeaderParams(headerView.params())}
@@ -130,6 +143,8 @@ void Header::setParams(const std::vector<HeaderParam>& params)
         makeOwnStateFromView();
 
     params_ = params;
+    for (auto& param : params_)
+        static_cast<IViewOrOwner&>(param).makeOwnStateFromView();
 }
 
 void Header::setQuotingMode(HeaderQuotingMode mode)
@@ -206,17 +221,6 @@ std::string Header::toString() const
             paramListString);
 }
 
-HeaderView Header::toView() const
-{
-    auto params = utils::transform(
-            params_,
-            [](const HeaderParam& param)
-            {
-                return HeaderParamView{param.name(), param.value()};
-            });
-    return HeaderView{name(), value(), std::move(params)};
-}
-
 std::string_view Header::name() const
 {
     return std::visit([](const auto& data){ return data.name();}, data_);
@@ -240,32 +244,12 @@ void Header::makeOwnStateFromView()
     const auto& headerView = std::get<HeaderView>(data_);
     data_ = Data{std::string{headerView.name()}, std::string{headerView.value()}};
     for (auto& param : params_)
-        static_cast<ICopyOnWrite&>(param).makeOwnStateFromView();
+        static_cast<IViewOrOwner&>(param).makeOwnStateFromView();
 }
 
 bool operator==(const Header& lhs, const Header& rhs)
 {
     return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.params() == rhs.params();
-}
-
-std::vector<HeaderParam> makeHeaderParams(const std::vector<HeaderParamView>& headerParamViewList)
-{
-    return utils::transform(
-            headerParamViewList,
-            [](const HeaderParamView& headerParamView)
-            {
-                return HeaderParam{headerParamView};
-            });
-}
-
-std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
-{
-    return utils::transform(
-            headerViewList,
-            [](const HeaderView& headerView)
-            {
-                return Header{headerView};
-            });
 }
 
 } //namespace http

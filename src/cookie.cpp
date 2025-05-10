@@ -1,7 +1,7 @@
-#include "utils.h"
 #include <hot_teacup/cookie.h>
+
+#include "utils.h"
 #include <hot_teacup/cookie_view.h>
-#include <sfun/functional.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
 #include <iterator>
@@ -43,7 +43,7 @@ std::string Cookie::toString() const
 
 bool Cookie::isView() const
 {
-    return static_cast<const ICopyOnWrite&>(header_).isView();
+    return static_cast<const IViewOrOwner&>(header_).isView();
 }
 
 void Cookie::makeOwnStateFromView()
@@ -51,7 +51,7 @@ void Cookie::makeOwnStateFromView()
     if (!isView())
         return;
 
-    static_cast<ICopyOnWrite&>(header_).makeOwnStateFromView();
+    static_cast<IViewOrOwner&>(header_).makeOwnStateFromView();
 }
 
 bool operator==(const Cookie& lhs, const Cookie& rhs)
@@ -66,16 +66,6 @@ std::string cookiesToString(const std::vector<Cookie>& cookies)
     };
     const auto cookieFcgiStringList = utils::transform(cookies, cookieToString);
     return sfun::join(cookieFcgiStringList, "; ");
-}
-
-std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
-{
-    return utils::transform(
-            cookieViewList,
-            [](const CookieView& cookieView)
-            {
-                return Cookie{cookieView};
-            });
 }
 
 } //namespace http

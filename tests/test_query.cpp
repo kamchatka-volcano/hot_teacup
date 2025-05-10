@@ -66,9 +66,20 @@ TEST(QueryView, FromString)
     }
 }
 
+namespace {
+std::vector<http::Query> makeQueries(const std::vector<http::QueryView>& queryViewList)
+{
+    auto result = std::vector<http::Query>{};
+    for (const auto& queryView : queryViewList) {
+        result.emplace_back(http::Query{queryView});
+    }
+    return result;
+}
+} //namespace
+
 TEST(QueryView, QueryFromQueryView)
 {
     auto queries = http::queriesFromString("name=test&foo=bar");
     auto expectedQueries = std::vector<http::Query>{{"name", "test"}, {"foo", "bar"}};
-    EXPECT_EQ(http::makeQueries(queries), expectedQueries);
+    EXPECT_EQ(makeQueries(queries), expectedQueries);
 }

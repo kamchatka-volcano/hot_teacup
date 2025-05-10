@@ -10,7 +10,7 @@
 #include "types.h"
 #include "url_encoded_form.h"
 #include "url_encoded_form_view.h"
-#include "detail/copy_on_write_interface.h"
+#include "detail/view_or_owner_interface.h"
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -23,13 +23,13 @@ struct RequestFcgiData {
     std::string stdIn;
 };
 
-class RequestBody : public detail::ICopyOnWrite {
+class RequestBody : public detail::IViewOrOwner {
     class Data {
     public:
         Data(Header contentType, std::string data);
         Data(MultipartForm form);
         Data(UrlEncodedForm form);
-        HeaderView contentType() const;
+        const Header& contentType() const;
         std::string_view content() const;
         std::optional<MultipartFormView> multipartForm() const;
         std::optional<UrlEncodedFormView> urlEncodedForm() const;
@@ -50,7 +50,7 @@ public:
     RequestBody(MultipartForm form);
     RequestBody(UrlEncodedForm form);
 
-    HeaderView contentType() const;
+    Header contentType() const;
     std::string_view content() const;
     std::optional<MultipartFormView> multipartForm() const;
     std::optional<UrlEncodedFormView> urlEncodedForm() const;
@@ -67,7 +67,7 @@ namespace detail{
 using RequestArg = std::variant<std::vector<Query>, std::vector<Cookie>, std::vector<Header>, RequestBody>;
 }
 
-class Request : public detail::ICopyOnWrite {
+class Request : public detail::IViewOrOwner {
 public:
     explicit Request(const RequestView&);
     template<
@@ -93,19 +93,21 @@ public:
     std::string_view path() const;
 
     const std::vector<Query>& queries() const;
+    // value of the first query parameter with the same name, empty string if not found
     std::string_view query(std::string_view name) const;
     bool hasQuery(std::string_view name) const;
 
     const std::vector<Cookie>& cookies() const;
+    // value of the first cookie with the same name, empty string if not found
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
     const std::vector<Header>& headers() const;
-    std::string_view headerValue(std::string_view name) const;
-    std::optional<HeaderView> header(std::string_view name) const;
+    // value of the first header with the same name, empty string if not found
+    std::string_view header(std::string_view name) const;
     bool hasHeader(std::string_view name) const;
 
-    std::optional<HeaderView> contentType() const;
+    std::optional<Header> contentType() const;
     std::string_view body() const;
     std::optional<MultipartFormView> multipartForm() const;
     std::optional<UrlEncodedFormView> urlEncodedForm() const;

@@ -1,6 +1,7 @@
+#include <hot_teacup/url_encoded_form.h>
+
 #include "url_encoder.h"
 #include "utils.h"
-#include <hot_teacup/url_encoded_form.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
 
@@ -16,19 +17,24 @@ UrlEncodedForm::UrlEncodedForm(const UrlEncodedFormView& formView)
 {
 }
 
-std::vector<UrlEncodedFormFieldView> UrlEncodedForm::fields() const
+namespace {
+
+std::vector<UrlEncodedFormFieldView> makeFieldList(
+        const std::unordered_map<std::string, std::vector<std::string>>& fieldsMap)
 {
     auto result = std::vector<UrlEncodedFormFieldView>{};
-    for (const auto& [name, values] : getFields()) {
+    for (const auto& [name, values] : fieldsMap) {
         for (const auto& value : values)
             result.emplace_back(UrlEncodedFormFieldView{name, value});
     }
     return result;
 }
 
+} //namespace
+
 UrlEncodedFormView UrlEncodedForm::toView() const
 {
-    return UrlEncodedFormView{fields()};
+    return UrlEncodedFormView{makeFieldList(getFields())};
 }
 
 std::string UrlEncodedForm::toString() const
@@ -40,8 +46,8 @@ std::string UrlEncodedForm::toString() const
     };
     const auto formFields = [this]
     {
-        auto result = fields();
-        std::sort(
+        auto result = makeFieldList(getFields());
+        std::stable_sort(
                 result.begin(),
                 result.end(),
                 [](const auto& lhs, const auto& rhs)

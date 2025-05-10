@@ -1,6 +1,6 @@
 #include <hot_teacup/query_view.h>
+
 #include <sfun/string_utils.h>
-#include <algorithm>
 
 namespace http {
 
