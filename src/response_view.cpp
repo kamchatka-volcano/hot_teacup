@@ -9,7 +9,7 @@ namespace http {
 ResponseView::ResponseView(
         ResponseStatus status,
         std::string_view body,
-        std::vector<CookieView> cookies,
+        std::vector<SetCookieView> cookies,
         std::vector<HeaderView> headers)
     : status_(status)
     , body_(body)
@@ -28,15 +28,100 @@ std::string_view ResponseView::body() const
     return body_;
 }
 
-const std::vector<CookieView>& ResponseView::cookies() const
+const std::vector<SetCookieView>& ResponseView::cookies() const
 {
     return cookies_;
+}
+
+std::string_view ResponseView::cookieValue(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    if (it != cookies_.end())
+        return it->value();
+
+    return {};
+}
+
+std::optional<SetCookieView> ResponseView::cookie(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    if (it != cookies_.end())
+        return *it;
+
+    return std::nullopt;
+}
+
+bool ResponseView::hasCookie(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    return it != cookies_.end();
 }
 
 const std::vector<HeaderView>& ResponseView::headers() const
 {
     return headers_;
 }
+
+std::string_view ResponseView::headerValue(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    if (it != headers_.end())
+        return it->value();
+
+    return {};
+}
+
+std::optional<HeaderView> ResponseView::header(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    if (it != headers_.end())
+        return *it;
+
+    return std::nullopt;
+}
+
+bool ResponseView::hasHeader(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    return it != headers_.end();
+}
+
 bool operator==(const ResponseView& lhs, const ResponseView& rhs)
 {
     return lhs.status() == rhs.status() && lhs.body() == rhs.body() && lhs.cookies() == rhs.cookies() &&
@@ -89,7 +174,7 @@ std::optional<ResponseView> responseFromString(std::string_view data, ResponseMo
     if (status == std::nullopt)
         return std::nullopt;
 
-    auto cookies = std::vector<CookieView>{};
+    auto cookies = std::vector<SetCookieView>{};
     auto headers = std::vector<HeaderView>{};
     while (true) {
         auto headerLine = getStringLine(data, pos);
@@ -100,9 +185,9 @@ std::optional<ResponseView> responseFromString(std::string_view data, ResponseMo
         if (header == std::nullopt)
             return std::nullopt;
         if (header->name() == "Set-Cookie") {
-            auto cookie = cookieFromHeader(*header);
-            if (cookie)
-                cookies.emplace_back(std::move(*cookie));
+            auto cookie = setCookieFromHeader(*header);
+            if (cookie.has_value())
+                cookies.emplace_back(std::move(cookie.value()));
         }
         else
             headers.emplace_back(*header);

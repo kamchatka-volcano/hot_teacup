@@ -17,11 +17,6 @@ public:
 
     std::string_view name() const;
     std::string_view value() const;
-    std::optional<std::string_view> domain() const;
-    std::optional<std::string_view> path() const;
-    std::optional<std::chrono::seconds> maxAge() const;
-    bool isSecure() const;
-    bool isRemoved() const;
     const HeaderView& asHeader() const;
 
     friend bool operator==(const CookieView& lhs, const CookieView& rhs);

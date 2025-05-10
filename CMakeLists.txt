@@ -16,6 +16,8 @@ SealLake_Bundle(
 set(SRC
     src/cookie.cpp
     src/cookie_view.cpp
+        src/set_cookie.cpp
+        src/set_cookie_view.cpp
         src/multipart_form.cpp
         src/multipart_form_view.cpp
     src/header.cpp

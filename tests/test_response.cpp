@@ -9,13 +9,13 @@ void testResponseWithCookies(const http::Response& testResponse, const std::stri
 {
     {
         auto response = testResponse;
-        response.addCookie(http::Cookie{"name", "foo"});
-        response.addCookie(http::Cookie{"age", "77"});
+        response.addCookie(http::SetCookie{"name", "foo"});
+        response.addCookie(http::SetCookie{"age", "77"});
         EXPECT_EQ(response.data(), expectedResponse);
     }
     {
         auto response = testResponse;
-        response.setCookies({http::Cookie{"name", "foo"}, http::Cookie{"age", "77"}});
+        response.setCookies({http::SetCookie{"name", "foo"}, http::SetCookie{"age", "77"}});
         EXPECT_EQ(response.data(), expectedResponse);
     }
 }
@@ -25,12 +25,6 @@ const auto cookiesResponsePart = std::string{"Set-Cookie: name=foo\r\n"
 
 void testResponseWithHeaders(const http::Response& testResponse, const std::string& expectedResponse)
 {
-    {
-        auto response = testResponse;
-        response.addHeader(http::Header{"Host", "HotTeacup"});
-        response.addHeader(http::Header{"User-Agent", "gtest"});
-        EXPECT_EQ(response.data(), expectedResponse);
-    }
     {
         auto response = testResponse;
         response.setHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
@@ -44,9 +38,9 @@ const auto headersResponsePart = std::string{"Host: HotTeacup\r\n"
 void testResponseWithCookiesAndHeaders(const http::Response& testResponse, const std::string& expectedResponse)
 {
     auto response = testResponse;
-    response.addCookie(http::Cookie{"name", "foo"});
+    response.addCookie(http::SetCookie{"name", "foo"});
     response.addHeader(http::Header{"Host", "HotTeacup"});
-    response.addCookie(http::Cookie{"age", "77"});
+    response.addCookie(http::SetCookie{"age", "77"});
     EXPECT_EQ(response.data(), expectedResponse);
 }
 
@@ -232,6 +226,70 @@ TEST(Response, StatusWithCookiesAndHeaders)
     testResponseWithCookiesAndHeaders(response, expectedResponse);
 }
 
+TEST(Response, ContentTypeHeaderNone)
+{
+    auto response = http::Response{http::ResponseStatus::_404_Not_Found};
+    response.setHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
+    EXPECT_EQ(
+            response.headers(),
+            (std::vector<http::Header>{
+                    {"Host", "HotTeacup"},
+                    {"User-Agent", "gtest"},
+            }));
+}
+
+TEST(Response, ContentTypeHeaderDefault)
+{
+    auto response = http::Response{"Hello world"};
+    response.setHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
+    EXPECT_EQ(
+            response.headers(),
+            (std::vector<http::Header>{
+                    {"Host", "HotTeacup"},
+                    {"User-Agent", "gtest"},
+                    {"Content-Type", "text/html"},
+            }));
+}
+
+TEST(Response, ContentTypeHeaderSetInHeaderList)
+{
+    auto response = http::Response{"Hello world"};
+    response.setHeaders(
+            {http::Header{"Content-Type", "application/json"},
+             http::Header{"Host", "HotTeacup"},
+             http::Header{"User-Agent", "gtest"}});
+    EXPECT_EQ(
+            response.headers(),
+            (std::vector<http::Header>{{"Host", "HotTeacup"}, {"User-Agent", "gtest"}, {"Content-Type", "text/html"}}));
+}
+
+TEST(Response, ContentTypeHeaderSetInConstructor)
+{
+    auto response = http::Response{"Hello world", http::ContentType::Json};
+    response.setHeaders({http::Header{"Host", "HotTeacup"}, http::Header{"User-Agent", "gtest"}});
+    EXPECT_EQ(
+            response.headers(),
+            (std::vector<http::Header>{
+                    {"Host", "HotTeacup"},
+                    {"User-Agent", "gtest"},
+                    {"Content-Type", "application/json"}}));
+}
+
+TEST(Response, ContentTypeHeaderSetInConstructorAndHeaderList)
+{
+    auto response = http::Response{"Hello world", http::ContentType::Json};
+    response.setHeaders(
+            {http::Header{"Content-Type", "text/plain"},
+             http::Header{"Host", "HotTeacup"},
+             http::Header{"User-Agent", "gtest"}});
+    EXPECT_EQ(
+            response.headers(),
+            (std::vector<http::Header>{
+                    {"Host", "HotTeacup"},
+                    {"User-Agent", "gtest"},
+                    {"Content-Type", "application/json"}}));
+}
+
 TEST(Response, Text)
 {
     auto response = http::Response{"Hello world"};
@@ -255,9 +313,8 @@ TEST(Response, TextWithCookies)
 
 TEST(Response, TextWithHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 200 OK\r\n"
-                            "Content-Type: text/html\r\n" +
-            headersResponsePart + "\r\nHello world";
+    auto expectedResponse =
+            "HTTP/1.1 200 OK\r\n" + headersResponsePart + "Content-Type: text/html\r\n" + "\r\nHello world";
     auto response = http::Response{"Hello world", http::ContentType::Html};
     testResponseWithHeaders(response, expectedResponse);
 }
@@ -303,7 +360,7 @@ TEST(Response, RedirectWithCookies)
 
 TEST(Response, RedirectWithHeaders)
 {
-    auto expectedResponse = "HTTP/1.1 302 Found\r\nLocation: /\r\n" + headersResponsePart + "\r\n";
+    auto expectedResponse = "HTTP/1.1 302 Found\r\n" + headersResponsePart + "Location: /\r\n" + "\r\n";
     auto response = http::Response{http::Redirect{"/", http::RedirectType::Found}};
     testResponseWithHeaders(response, expectedResponse);
 }
@@ -365,7 +422,11 @@ TEST(ResponseView, ResponseFromResponseView)
     EXPECT_EQ(response.cookies().at(0).name(), "id");
     EXPECT_EQ(response.cookies().at(0).value(), "hello");
     EXPECT_EQ(response.cookies().at(0).maxAge(), std::chrono::minutes{1});
+    EXPECT_EQ(response.headers().at(0).value(), "/");
     EXPECT_EQ(response.headers().at(0).name(), "Location");
+    EXPECT_EQ(response.headerValue("Location"), "/");
+    ASSERT_TRUE(response.header("Location").has_value());
+    EXPECT_EQ(response.header("Location"), (http::HeaderView{"Location", "/"}));
     EXPECT_EQ(response.headers().at(0).value(), "/");
     EXPECT_EQ(response.body(), "Hello world");
 }
@@ -407,7 +468,7 @@ TEST(Response, CopyInternalStateOnMutation)
     responseString.at(26) = '0';
     responseString.at(27) = '1';
     EXPECT_EQ(response.headers().at(0).name(), "Locati01");
-    response.setBody("Hello world"); // Method modifying the object should create the copy of the internal state
+    response.addHeader({"Foo", "Bar"}); // Method modifying the object should create the copy of the internal state
     responseString.at(26) = 'o';
     responseString.at(27) = 'n';
     EXPECT_EQ(response.headers().at(0).name(), "Locati01");

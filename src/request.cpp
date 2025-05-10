@@ -193,6 +193,25 @@ void Request::init(std::vector<detail::RequestArg>&& args)
             body_ = std::move(std::get<RequestBody>(arg));
     };
     std::for_each(args.begin(), args.end(), processArg);
+    addDefaultContentTypeHeader();
+}
+
+void Request::addDefaultContentTypeHeader()
+{
+    if (!body_.has_value())
+        return;
+    const auto contentTypeHeaderIt = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [](const auto& header)
+            {
+                return header.name() == "Content-Type";
+            });
+    if (contentTypeHeaderIt != headers_.end())
+        headers_.erase(contentTypeHeaderIt);
+    auto contentTypeHeader = Header{body_.value().contentType()};
+    static_cast<ICopyOnWrite&>(contentTypeHeader).makeOwnStateFromView();
+    headers_.emplace_back(std::move(contentTypeHeader));
 }
 
 void Request::setIpAddress(const std::string& ipAddress)
@@ -232,6 +251,8 @@ void Request::addHeader(Header header)
     if (isView())
         makeOwnStateFromView();
 
+    if (body_.has_value() && header.name() == "Content-Type")
+        return;
     headers_.emplace_back(std::move(header));
 }
 
@@ -257,6 +278,7 @@ void Request::setHeaders(const std::vector<Header>& headers)
         makeOwnStateFromView();
 
     headers_ = headers;
+    addDefaultContentTypeHeader();
 }
 
 RequestMethod Request::method() const
@@ -345,7 +367,7 @@ bool Request::hasCookie(std::string_view name) const
             {
                 return cookie.name() == name;
             });
-    return (it != cookies_.end());
+    return it != cookies_.end();
 }
 
 const std::vector<Header>& Request::headers() const
@@ -353,7 +375,7 @@ const std::vector<Header>& Request::headers() const
     return headers_;
 }
 
-std::string_view Request::header(std::string_view name) const
+std::string_view Request::headerValue(std::string_view name) const
 {
     auto it = std::find_if(
             headers_.begin(),
@@ -368,6 +390,21 @@ std::string_view Request::header(std::string_view name) const
     return {};
 }
 
+std::optional<HeaderView> Request::header(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    if (it != headers_.end())
+        return it->toView();
+
+    return {};
+}
+
 bool Request::hasHeader(std::string_view name) const
 {
     auto it = std::find_if(
@@ -377,7 +414,7 @@ bool Request::hasHeader(std::string_view name) const
             {
                 return header.name() == name;
             });
-    return (it != headers_.end());
+    return it != headers_.end();
 }
 
 std::optional<HeaderView> Request::contentType() const
@@ -465,6 +502,15 @@ RequestFcgiData Request::toFcgiData(std::map<std::string, std::string> fcgiParam
     };
 
     return {makeFcgiParams(), makeFcgiStdIn()};
+}
+
+void Request::setBody(const RequestBody& body)
+{
+    if (isView())
+        makeOwnStateFromView();
+
+    body_ = body;
+    addDefaultContentTypeHeader();
 }
 
 bool Request::isView() const

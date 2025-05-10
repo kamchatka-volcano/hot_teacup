@@ -23,46 +23,6 @@ std::string_view CookieView::value() const
     return header_.params().at(0).value();
 }
 
-std::optional<std::string_view> CookieView::domain() const
-{
-    if (header_.hasParam("Domain"))
-        return header_.param("Domain");
-    else
-        return {};
-}
-
-std::optional<std::string_view> CookieView::path() const
-{
-    if (header_.hasParam("Path"))
-        return header_.param("Path");
-    else
-        return {};
-}
-
-std::optional<std::chrono::seconds> CookieView::maxAge() const
-{
-    if (header_.hasParam("Max-Age")) {
-        try {
-            return std::chrono::seconds{std::stoi(std::string{header_.param("Max-Age")})};
-        }
-        catch (...) {
-            return {};
-        }
-    }
-    else
-        return {};
-}
-
-bool CookieView::isSecure() const
-{
-    return header_.hasParam("Secure");
-}
-
-bool CookieView::isRemoved() const
-{
-    return header_.hasParam("Max-Age") && header_.param("Max-Age") == "0";
-}
-
 const HeaderView& CookieView::asHeader() const
 {
     return header_;
@@ -70,9 +30,7 @@ const HeaderView& CookieView::asHeader() const
 
 bool operator==(const CookieView& lhs, const CookieView& rhs)
 {
-    return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.domain() == rhs.domain() &&
-            lhs.path() == rhs.path() && lhs.maxAge() == rhs.maxAge() && lhs.isSecure() == rhs.isSecure() &&
-            lhs.isRemoved() == rhs.isRemoved();
+    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
 }
 
 std::vector<CookieView> cookiesFromString(std::string_view input)

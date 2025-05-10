@@ -11,59 +11,102 @@ namespace http {
 Response::Response(const ResponseView& responseView)
     : status_{responseView.status()}
     , body_{responseView.body()}
-    , cookies_{makeCookies(responseView.cookies())}
+    , cookies_{makeSetCookies(responseView.cookies())}
     , headers_{makeHeaders(responseView.headers())}
 {
 }
 
-void Response::init(std::vector<detail::ResponseArg>&& args)
+void Response::initBodyResponse(std::vector<detail::BodyResponseArg>&& args)
 {
-    const auto processArg = [this](detail::ResponseArg& arg)
+    const auto processArg = [this](detail::BodyResponseArg& arg)
     {
-        if (std::holds_alternative<ResponseStatus>(arg))
-            status_ = std::get<ResponseStatus>(arg);
-        else if (std::holds_alternative<std::string>(arg))
+        if (std::holds_alternative<Cookies>(arg))
+            cookies_ = std::move(std::get<Cookies>(arg));
+        else if (std::holds_alternative<Headers>(arg))
+            headers_ = std::move(std::get<Headers>(arg));
+        else if (std::holds_alternative<ContentType>(arg))
+            defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))};
+        else if (std::holds_alternative<ContentTypeString>(arg))
+            defaultContentTypeHeader_ = {"Content-Type", std::move(std::get<ContentTypeString>(arg).value)};
+    };
+
+    std::for_each(args.begin(), args.end(), processArg);
+    if (!defaultContentTypeHeader_.has_value() && !body().empty())
+        defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(ContentType::Html)};
+
+    addDefaultContentTypeHeader();
+}
+
+void Response::initRedirectResponse(std::vector<detail::RedirectResponseArg>&& args)
+{
+    const auto processArg = [this](detail::RedirectResponseArg& arg)
+    {
+        if (std::holds_alternative<Cookies>(arg))
+            cookies_ = std::move(std::get<Cookies>(arg));
+        else if (std::holds_alternative<Headers>(arg))
+            headers_ = std::move(std::get<Headers>(arg));
+    };
+
+    std::for_each(args.begin(), args.end(), processArg);
+    addDefaultLocationHeader();
+}
+
+void Response::initStatusResponse(std::vector<detail::StatusResponseArg>&& args)
+{
+    const auto processArg = [this](detail::StatusResponseArg& arg)
+    {
+        if (std::holds_alternative<std::string>(arg))
             body_ = std::move(std::get<std::string>(arg));
         else if (std::holds_alternative<Cookies>(arg))
             cookies_ = std::move(std::get<Cookies>(arg));
         else if (std::holds_alternative<Headers>(arg))
             headers_ = std::move(std::get<Headers>(arg));
         else if (std::holds_alternative<ContentType>(arg))
-            defaultHeaders_.push_back({"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))});
+            defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(std::get<ContentType>(arg))};
         else if (std::holds_alternative<ContentTypeString>(arg))
-            defaultHeaders_.push_back({"Content-Type", std::move(std::get<ContentTypeString>(arg).value)});
-        else if (std::holds_alternative<Redirect>(arg)) {
-            auto& redirect = std::get<Redirect>(arg);
-            status_ = detail::redirectTypeStatus(redirect.type);
-            defaultHeaders_.push_back({"Location", std::move(redirect.path)});
-        }
+            defaultContentTypeHeader_ = {"Content-Type", std::move(std::get<ContentTypeString>(arg).value)};
     };
-
     std::for_each(args.begin(), args.end(), processArg);
+    if (!defaultContentTypeHeader_.has_value() && !body().empty())
+        defaultContentTypeHeader_ = {"Content-Type", detail::contentTypeToString(ContentType::Html)};
+
     addDefaultContentTypeHeader();
 }
 
 void Response::addDefaultContentTypeHeader()
 {
-    if (!std::get<std::string>(body_).empty()) {
-        const auto defaultHeadersHasContentType = std::find_if(
-                                                          defaultHeaders_.begin(),
-                                                          defaultHeaders_.end(),
-                                                          [](const Header& header)
-                                                          {
-                                                              return header.name() == "Content-Type";
-                                                          }) != defaultHeaders_.end();
-        const auto headersHasContentType = std::find_if(
-                                                   headers_.begin(),
-                                                   headers_.end(),
-                                                   [](const Header& header)
-                                                   {
-                                                       return header.name() == "Content-Type";
-                                                   }) != headers_.end();
+    if (!defaultContentTypeHeader_.has_value())
+        return;
 
-        if (!defaultHeadersHasContentType && !headersHasContentType)
-            defaultHeaders_.emplace_back("Content-Type", detail::contentTypeToString(ContentType::Html));
-    }
+    const auto contentTypeHeaderIt = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [](const auto& header)
+            {
+                return header.name() == "Content-Type";
+            });
+    if (contentTypeHeaderIt != headers_.end())
+        headers_.erase(contentTypeHeaderIt);
+
+    headers_.emplace_back(defaultContentTypeHeader_.value());
+}
+
+void Response::addDefaultLocationHeader()
+{
+    if (!redirect_.has_value())
+        return;
+
+    const auto locationHeaderIt = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [](const auto& header)
+            {
+                return header.name() == "Location";
+            });
+    if (locationHeaderIt != headers_.end())
+        headers_.erase(locationHeaderIt);
+    status_ = detail::redirectTypeStatus(redirect_.value().type);
+    headers_.emplace_back("Location", redirect_.value().path);
 }
 
 ResponseStatus Response::status() const
@@ -81,9 +124,51 @@ std::string_view Response::body() const
             body_);
 }
 
-const std::vector<Cookie>& Response::cookies() const
+const std::vector<SetCookie>& Response::cookies() const
 {
     return cookies_;
+}
+
+std::string_view Response::cookieValue(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    if (it != cookies_.end())
+        return it->value();
+
+    return {};
+}
+
+std::optional<SetCookieView> Response::cookie(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    if (it != cookies_.end())
+        return it->toView();
+
+    return std::nullopt;
+}
+
+bool Response::hasCookie(std::string_view name) const
+{
+    auto it = std::find_if(
+            cookies_.begin(),
+            cookies_.end(),
+            [&name](const auto& cookie)
+            {
+                return cookie.name() == name;
+            });
+    return it != cookies_.end();
 }
 
 const std::vector<Header>& Response::headers() const
@@ -91,20 +176,49 @@ const std::vector<Header>& Response::headers() const
     return headers_;
 }
 
-void Response::setStatus(ResponseStatus status)
+std::string_view Response::headerValue(std::string_view name) const
 {
-    status_ = status;
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    if (it != headers_.end())
+        return it->value();
+
+    return {};
 }
 
-void Response::setBody(const std::string& body)
+std::optional<HeaderView> Response::header(std::string_view name) const
 {
-    if (isView())
-        makeOwnStateFromView();
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    if (it != headers_.end())
+        return it->toView();
 
-    body_ = body;
+    return std::nullopt;
 }
 
-void Response::addCookie(Cookie cookie)
+bool Response::hasHeader(std::string_view name) const
+{
+    auto it = std::find_if(
+            headers_.begin(),
+            headers_.end(),
+            [&name](const auto& header)
+            {
+                return header.name() == name;
+            });
+    return it != headers_.end();
+}
+
+void Response::addCookie(SetCookie cookie)
 {
     if (isView())
         makeOwnStateFromView();
@@ -117,10 +231,15 @@ void Response::addHeader(Header header)
     if (isView())
         makeOwnStateFromView();
 
+    if (defaultContentTypeHeader_.has_value() && header.name() == "Content-Type")
+        return;
+    if (redirect_.has_value() && header.name() == "Location")
+        return;
+
     headers_.emplace_back(std::move(header));
 }
 
-void Response::setCookies(const std::vector<Cookie>& cookies)
+void Response::setCookies(const std::vector<SetCookie>& cookies)
 {
     if (isView())
         makeOwnStateFromView();
@@ -134,6 +253,8 @@ void Response::setHeaders(const std::vector<Header>& headers)
         makeOwnStateFromView();
 
     headers_ = headers;
+    addDefaultLocationHeader();
+    addDefaultContentTypeHeader();
 }
 
 std::string Response::statusData(ResponseMode mode) const
@@ -146,7 +267,7 @@ std::string Response::statusData(ResponseMode mode) const
 
 std::string Response::cookiesData() const
 {
-    const auto cookieToString = [](const Cookie& cookie)
+    const auto cookieToString = [](const SetCookie& cookie)
     {
         return cookie.toString();
     };
@@ -161,15 +282,9 @@ std::string Response::headersData() const
     {
         return header.toString();
     };
-    const auto defaultHeaderStringList = utils::transform(defaultHeaders_, headerToString);
     const auto headerStringList = utils::transform(headers_, headerToString);
-    const auto defaultHeaderSeparator = defaultHeaders_.empty() ? std::string_view{} : std::string_view{"\r\n"};
     const auto lastSeparator = headers_.empty() ? std::string_view{} : std::string_view{"\r\n"};
-    return sfun::join_strings(
-            sfun::join(defaultHeaderStringList, "\r\n"),
-            defaultHeaderSeparator,
-            sfun::join(headerStringList, "\r\n"),
-            lastSeparator);
+    return sfun::join_strings(sfun::join(headerStringList, "\r\n"), lastSeparator);
 }
 
 std::string Response::data(ResponseMode mode) const
@@ -196,8 +311,6 @@ void Response::makeOwnStateFromView()
     body_ = std::string{std::get<std::string_view>(body_)};
     for (auto& cookie : cookies_)
         static_cast<ICopyOnWrite&>(cookie).makeOwnStateFromView();
-    for (auto& header : defaultHeaders_)
-        static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
     for (auto& header : headers_)
         static_cast<ICopyOnWrite&>(header).makeOwnStateFromView();
 }

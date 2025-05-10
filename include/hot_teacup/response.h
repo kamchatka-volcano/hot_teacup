@@ -1,9 +1,9 @@
 #ifndef HOT_TEACUP_RESPONSE_H
 #define HOT_TEACUP_RESPONSE_H
 
-#include "cookie.h"
 #include "header.h"
 #include "query.h"
+#include "set_cookie.h"
 #include "trait_utils.h"
 #include "types.h"
 #include "detail/copy_on_write_interface.h"
@@ -19,15 +19,13 @@ struct Redirect {
 };
 
 namespace detail {
-using ResponseArg = std::variant<
-        ResponseStatus,
-        std::string,
-        ContentType,
-        ContentTypeString,
-        http::Redirect,
-        std::vector<Cookie>,
-        std::vector<Header>>;
-}
+using BodyResponseArg = std::variant<ContentType, ContentTypeString, std::vector<SetCookie>, std::vector<Header>>;
+
+using StatusResponseArg =
+        std::variant<std::string, ContentType, ContentTypeString, std::vector<SetCookie>, std::vector<Header>>;
+
+using RedirectResponseArg = std::variant<std::vector<SetCookie>, std::vector<Header>>;
+} //namespace detail
 
 class Response : public detail::ICopyOnWrite {
 public:
@@ -39,42 +37,93 @@ public:
                     ((!std::is_same_v<std::decay_t<TArgs>, ResponseView> &&
                       !std::is_same_v<std::decay_t<TArgs>, Response>) &&
                      ...)>>
-    Response(TArgs&&... args)
+    Response(std::string body, TArgs&&... args)
+        : body_{std::move(body)}
     {
         static_assert(
                 !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
                 "Response constructor arguments can't contain duplicate types");
         static_assert(
-                !(detail::is_element_of_v<Redirect, TArgs...> && detail::is_element_of_v<ResponseStatus, TArgs...>),
-                "Response status and redirect can't be specified together in response constructor arguments");
-        static_assert(
-                !(detail::is_element_of_v<ContentType, TArgs...> && detail::is_element_of_v<ContentTypeString, TArgs...>),
+                !(detail::is_element_of_v<ContentType, TArgs...> &&
+                  detail::is_element_of_v<ContentTypeString, TArgs...>),
                 "ContentType enum and ContentTypeString can't be specified together in response constructor arguments");
 
-        init({std::forward<TArgs>(args)...});
+        initBodyResponse({std::forward<TArgs>(args)...});
+    }
+
+    template<
+            typename... TArgs,
+            typename = std::enable_if_t<
+                    ((!std::is_same_v<std::decay_t<TArgs>, ResponseView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, Response>) &&
+                     ...)>>
+    Response(ResponseStatus status, TArgs&&... args)
+        : status_{status}
+    {
+        static_assert(
+                !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
+                "Response constructor arguments can't contain duplicate types");
+        static_assert(
+                !(detail::is_element_of_v<ContentType, TArgs...> &&
+                  detail::is_element_of_v<ContentTypeString, TArgs...>),
+                "ContentType enum and ContentTypeString can't be specified together in response constructor arguments");
+        static_assert(
+                !(!detail::is_element_of_v<std::string_view, detail::decay_to_string_view_t<TArgs>...> &&
+                  (detail::is_element_of_v<ContentType, TArgs...> ||
+                   detail::is_element_of_v<ContentTypeString, TArgs...>)),
+                "ContentType enum and ContentTypeString can't be specified without body in response constructor "
+                "arguments");
+
+        initStatusResponse({std::forward<TArgs>(args)...});
+    }
+
+    template<
+            typename... TArgs,
+            typename = std::enable_if_t<
+                    ((!std::is_same_v<std::decay_t<TArgs>, ResponseView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, Response>) &&
+                     ...)>>
+    Response(Redirect redirect, TArgs&&... args)
+        : redirect_{std::move(redirect)}
+    {
+        static_assert(
+                !detail::has_duplicate_v<detail::decay_to_string_view_t<TArgs>...>,
+                "Response constructor arguments can't contain duplicate types");
+
+        initRedirectResponse({std::forward<TArgs>(args)...});
     }
 
     ResponseStatus status() const;
     std::string_view body() const;
-    const std::vector<Cookie>& cookies() const;
+    const std::vector<SetCookie>& cookies() const;
+    std::string_view cookieValue(std::string_view name) const;
+    std::optional<SetCookieView> cookie(std::string_view name) const;
+    bool hasCookie(std::string_view name) const;
+
     const std::vector<Header>& headers() const;
+    std::string_view headerValue(std::string_view name) const;
+    std::optional<HeaderView> header(std::string_view name) const;
+    bool hasHeader(std::string_view name) const;
+
     std::string data(ResponseMode mode = ResponseMode::Http) const;
 
-    void setStatus(ResponseStatus status);
-    void setBody(const std::string& body);
-    void addCookie(Cookie cookie);
+    void addCookie(SetCookie cookie);
     void addHeader(Header header);
-    void setCookies(const std::vector<Cookie>& cookies);
+    void setCookies(const std::vector<SetCookie>& cookies);
     void setHeaders(const std::vector<Header>& headers);
 
     friend bool operator==(const Response& lhs, const Response& rhs);
 
 private:
-    void init(std::vector<detail::ResponseArg>&& args);
+    void initBodyResponse(std::vector<detail::BodyResponseArg>&& args);
+    void initRedirectResponse(std::vector<detail::RedirectResponseArg>&& args);
+    void initStatusResponse(std::vector<detail::StatusResponseArg>&& args);
+
     std::string statusData(ResponseMode mode) const;
     std::string cookiesData() const;
     std::string headersData() const;
     void addDefaultContentTypeHeader();
+    void addDefaultLocationHeader();
 
     bool isView() const override;
     void makeOwnStateFromView() override;
@@ -82,9 +131,10 @@ private:
 private:
     ResponseStatus status_ = ResponseStatus::_200_Ok;
     std::variant<std::string, std::string_view> body_;
-    std::vector<Cookie> cookies_;
-    std::vector<Header> defaultHeaders_;
+    std::vector<SetCookie> cookies_;
     std::vector<Header> headers_;
+    std::optional<Redirect> redirect_;
+    std::optional<Header> defaultContentTypeHeader_;
 };
 
 } //namespace http

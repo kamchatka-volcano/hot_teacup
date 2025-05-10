@@ -101,7 +101,8 @@ public:
     bool hasCookie(std::string_view name) const;
 
     const std::vector<Header>& headers() const;
-    std::string_view header(std::string_view name) const;
+    std::string_view headerValue(std::string_view name) const;
+    std::optional<HeaderView> header(std::string_view name) const;
     bool hasHeader(std::string_view name) const;
 
     std::optional<HeaderView> contentType() const;
@@ -110,9 +111,9 @@ public:
     std::optional<UrlEncodedFormView> urlEncodedForm() const;
 
     std::unordered_map<std::string_view, std::string_view> fcgiParams() const;
-
     RequestFcgiData toFcgiData(std::map<std::string, std::string> fcgiParams = {}) const;
 
+    void setBody(const RequestBody& body);
     void setIpAddress(const std::string&);
     void setDomainName(const std::string&);
     void addCookie(Cookie cookie);
@@ -120,7 +121,7 @@ public:
     void addHeader(Header header);
     void setCookies(const std::vector<Cookie>&);
     void setQueries(const std::vector<Query>&);
-    void setHeaders(const std::vector<Header>&);
+    void setHeaders(const std::vector<Header>& headers);
 
     friend bool operator==(const Request& lhs, const Request& rhs);
 
@@ -129,6 +130,7 @@ private:
     void makeOwnStateFromView() override;
 
     void init(std::vector<detail::RequestArg>&& args);
+    void addDefaultContentTypeHeader();
 
 private:
     RequestMethod method_;
