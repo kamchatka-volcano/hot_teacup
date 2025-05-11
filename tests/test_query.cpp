@@ -5,7 +5,7 @@
 TEST(Query, ToStringSingle)
 {
     auto query = http::Query{"foo", "bar"};
-    EXPECT_EQ(query.toString(), "foo=bar");
+    EXPECT_EQ(http::queryToString(query), "foo=bar");
 }
 
 TEST(Query, ToString)

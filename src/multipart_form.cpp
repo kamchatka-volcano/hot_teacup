@@ -112,26 +112,26 @@ std::vector<const MultipartFormField*> makeFormFieldsList(
 std::string MultipartForm::toString() const
 {
 
-    const auto formFieldPairToString = [](const MultipartFormField* field)
+    const auto formFieldToString = [](const MultipartFormField* field)
     {
         auto header = Header{"Content-Disposition", "form-data"};
         header.setQuotingMode(HeaderQuotingMode::ParamValue);
         header.setParam("name", std::string{field->name()});
         if (field->type() == MultipartFormFieldType::Param)
             return sfun::join_strings(header.toString(), "\r\n\r\n", field->value(), "\r\n");
-        else {
-            header.setParam("filename", std::string{field->fileName()});
-            auto fileHeader = std::optional<Header>{};
-            if (!field->fileType().empty())
-                fileHeader = Header{"Content-Type", std::string{field->fileType()}};
-            const auto fileHeaderString = fileHeader ? sfun::join_strings(fileHeader->toString(), "\r\n")
-                                                     : std::string{};
-            return sfun::join_strings(header.toString(), "\r\n", fileHeaderString, "\r\n", field->value(), "\r\n");
-        }
+
+        header.setParam("filename", std::string{field->fileName()});
+        auto fileHeader = std::optional<Header>{};
+        if (!field->fileType().empty())
+            fileHeader = Header{"Content-Type", std::string{field->fileType()}};
+        const auto fileHeaderString = fileHeader ? sfun::join_strings(fileHeader->toString(), "\r\n")
+                                                 : std::string{};
+        return sfun::join_strings(header.toString(), "\r\n", fileHeaderString, "\r\n", field->value(), "\r\n");
+
     };
 
     const auto formFields = makeFormFieldsList(getFields());
-    const auto formFieldStringList = utils::transform(formFields, formFieldPairToString);
+    const auto formFieldStringList = utils::transform(formFields, formFieldToString);
     const auto formSeparator = sfun::join_strings("--", detail::formBoundary, "\r\n");
     const auto formFieldListString = sfun::join(formFieldStringList, formSeparator);
     const auto openingBoundary = formFields.empty() ? std::string{} : formSeparator;

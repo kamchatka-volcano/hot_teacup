@@ -79,7 +79,7 @@ RequestView::RequestView(
     , domainName_{sfun::before(fcgiParamHttpHost, ":").value_or(fcgiParamHttpHost)}
     , path_{sfun::before(fcgiParamRequestUri, "?").value_or(fcgiParamRequestUri)}
     , queries_{queriesFromString(fcgiParamQueryString)}
-    , cookies_{cookiesFromString(fcgiParamHttpCookie)}
+    , cookies_{requestCookiesFromHeaderValueString(fcgiParamHttpCookie)}
     , body_{readRequestBody(fcgiParamContentType, fcgiStdIn)}
     , fcgiParams_{std::move(fcgiParams)}
 
@@ -202,7 +202,7 @@ const std::vector<QueryView>& RequestView::queries() const
     return queries_;
 }
 
-const std::vector<CookieView>& RequestView::cookies() const
+const std::vector<RequestCookieView>& RequestView::cookies() const
 {
     return cookies_;
 }

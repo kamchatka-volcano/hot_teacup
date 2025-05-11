@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace http {
-class SetCookieView;
+class ResponseCookieView;
 
 struct CookieIsSecure {};
 struct CookieIsRemoved {};
@@ -26,20 +26,20 @@ struct CookieMaxAge {
 };
 
 namespace detail {
-using SetCookieArg = std::variant<CookieDomain, CookiePath, CookieMaxAge, CookieIsSecure, CookieIsRemoved>;
+using ResponseCookieArg = std::variant<CookieDomain, CookiePath, CookieMaxAge, CookieIsSecure, CookieIsRemoved>;
 }
 
-class SetCookie : public detail::IViewOrOwner {
+class ResponseCookie : public detail::IViewOrOwner {
 
 public:
-    explicit SetCookie(const SetCookieView& cookieView);
+    explicit ResponseCookie(const ResponseCookieView& cookieView);
     template<
             typename... TArgs,
             typename = std::enable_if_t<
-                    ((!std::is_same_v<std::decay_t<TArgs>, SetCookieView> &&
-                      !std::is_same_v<std::decay_t<TArgs>, SetCookie>) &&
+                    ((!std::is_same_v<std::decay_t<TArgs>, ResponseCookieView> &&
+                      !std::is_same_v<std::decay_t<TArgs>, ResponseCookie>) &&
                      ...)>>
-    SetCookie(std::string name, std::string value, TArgs&&... args)
+    ResponseCookie(std::string name, std::string value, TArgs&&... args)
         : header_{"Set-Cookie", ""}
     {
         header_.setParam(std::move(name), std::move(value));
@@ -65,23 +65,21 @@ public:
     void setRemoved();
 
     std::string toString() const;
-    friend bool operator==(const SetCookie& lhs, const SetCookie& rhs);
+    friend bool operator==(const ResponseCookie& lhs, const ResponseCookie& rhs);
 
 private:
     bool isView() const override;
     void makeOwnStateFromView() override;
 
 private:
-    explicit SetCookie(Header header);
-    void init(std::vector<detail::SetCookieArg>&& args);
+    explicit ResponseCookie(Header header);
+    void init(std::vector<detail::ResponseCookieArg>&& args);
 
 private:
     Header header_;
 };
 
-using SetCookies = std::vector<SetCookie>;
-
-std::string setCookiesToString(const std::vector<SetCookie>& cookies);
+using ResponseCookies = std::vector<ResponseCookie>;
 
 } //namespace http
 

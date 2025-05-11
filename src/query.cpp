@@ -1,73 +1,21 @@
 #include <hot_teacup/query.h>
 
 #include "utils.h"
-#include <hot_teacup/query_view.h>
 #include <sfun/string_utils.h>
-#include <algorithm>
-#include <iterator>
-#include <utility>
 
 namespace http {
 
-std::string_view Query::Data::name() const
+std::string queryToString(const Query& query)
 {
-    return name_;
-}
-std::string_view Query::Data::value() const
-{
-    return value_;
-}
+    if (!query.hasValue())
+        return std::string{query.name()};
 
-Query::Query(const QueryView& queryView)
-    : data_{queryView}
-{
-}
-
-Query::Query(std::string name, std::string value)
-    : data_{Data{std::move(name), std::move(value)}}
-{
-}
-
-std::string_view Query::name() const
-{
-    return std::visit([](const auto& data){ return data.name();}, data_);
-}
-
-std::string_view Query::value() const
-{
-    return std::visit([](const auto& data){ return data.value();}, data_);
-}
-
-std::string Query::toString() const
-{
-    return sfun::join_strings(name(), "=", value());
-}
-
-bool Query::isView() const
-{
-    return std::holds_alternative<QueryView>(data_);
-}
-
-void Query::makeOwnStateFromView()
-{
-    if (!isView())
-        return;
-
-    const auto& queryView = std::get<QueryView>(data_);
-    data_ = Data{std::string{queryView.name()}, std::string{queryView.value()}};
-}
-
-bool operator==(const Query& lhs, const Query& rhs)
-{
-    return lhs.name() == rhs.name() && lhs.value() == rhs.value();
+    return sfun::join_strings(query.name(), "=", query.value());
 }
 
 std::string queriesToString(const std::vector<Query>& queries)
 {
     auto result = std::string{};
-    const auto queryToString = [](const Query& query){
-        return query.toString();
-    };
     const auto queryStringList = utils::transform(queries, queryToString);
     return sfun::join(queryStringList, "&");
 }
@@ -78,6 +26,5 @@ std::string pathWithQueries(const std::string& path, const std::vector<Query>& q
         return path;
     return sfun::join_strings(path, "?", queriesToString(queries));
 }
-
 
 } //namespace http

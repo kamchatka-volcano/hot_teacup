@@ -6,37 +6,6 @@
 
 namespace http {
 
-HeaderParamView::HeaderParamView(std::string_view name)
-    : name_{name}
-{
-}
-
-HeaderParamView::HeaderParamView(std::string_view name, std::string_view value)
-    : name_{name}
-    , value_{value}
-{
-}
-
-std::string_view HeaderParamView::name() const
-{
-    return name_;
-}
-
-std::string_view HeaderParamView::value() const
-{
-    return value_.value_or(std::string_view{});
-}
-
-bool HeaderParamView::hasValue() const
-{
-    return value_.has_value();
-}
-
-bool operator==(const HeaderParamView& lhs, const HeaderParamView& rhs)
-{
-    return lhs.name() == rhs.name() && lhs.hasValue() == rhs.hasValue() && lhs.value() == rhs.value();
-}
-
 HeaderView::HeaderView(std::string_view name, std::string_view value, std::vector<HeaderParamView> params)
     : name_{name}
     , value_{value}
@@ -54,7 +23,8 @@ std::string_view HeaderView::param(std::string_view name) const
     for (const auto& param : params_)
         if (param.name() == name)
             return param.value();
-    throw std::out_of_range{"Header doesn't contain param '" + std::string{name} + "'"};
+
+    return {};
 }
 
 bool HeaderView::hasParam(std::string_view name) const
@@ -78,7 +48,8 @@ std::string_view unquoted(std::string_view str)
 std::optional<HeaderParamView> makeParam(std::string_view paramPart)
 {
     if (paramPart.find('=') == std::string::npos)
-        return {};
+        return HeaderParamView{paramPart};
+
     const auto name = sfun::trim_front(sfun::before(paramPart, "=").value());
     const auto value = unquoted(sfun::after(paramPart, "=").value());
     return HeaderParamView{name, value};

@@ -1,10 +1,10 @@
 #ifndef HOT_TEACUP_REQUEST_VIEW_H
 #define HOT_TEACUP_REQUEST_VIEW_H
 
-#include "cookie_view.h"
 #include "header_view.h"
 #include "multipart_form_view.h"
 #include "query_view.h"
+#include "request_cookie_view.h"
 #include "types.h"
 #include "url_encoded_form.h"
 #include "url_encoded_form_view.h"
@@ -58,7 +58,7 @@ public:
     std::string_view query(std::string_view name) const;
     bool hasQuery(std::string_view name) const;
 
-    const std::vector<CookieView>& cookies() const;
+    const std::vector<RequestCookieView>& cookies() const;
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
@@ -77,7 +77,7 @@ private:
     std::string_view domainName_;
     std::string_view path_;
     std::vector<QueryView> queries_;
-    std::vector<CookieView> cookies_;
+    std::vector<RequestCookieView> cookies_;
     std::optional<RequestBodyView> body_;
     std::unordered_map<std::string_view, std::string_view> fcgiParams_;
 };

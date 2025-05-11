@@ -179,13 +179,13 @@ std::vector<Query> makeQueries(const std::vector<QueryView>& queryViewList)
             });
 }
 
-std::vector<Cookie> makeCookies(const std::vector<CookieView>& cookieViewList)
+std::vector<RequestCookie> makeCookies(const std::vector<RequestCookieView>& cookieViewList)
 {
     return utils::transform(
             cookieViewList,
-            [](const CookieView& cookieView)
+            [](const RequestCookieView& cookieView)
             {
-                return Cookie{cookieView};
+                return RequestCookie{cookieView};
             });
 }
 
@@ -212,8 +212,8 @@ void Request::init(std::vector<detail::RequestArg>&& args)
             for (auto& query : queries_)
                 static_cast<IViewOrOwner&>(query).makeOwnStateFromView();
         }
-        else if (std::holds_alternative<std::vector<Cookie>>(arg)) {
-            cookies_ = std::move(std::get<std::vector<Cookie>>(arg));
+        else if (std::holds_alternative<std::vector<RequestCookie>>(arg)) {
+            cookies_ = std::move(std::get<std::vector<RequestCookie>>(arg));
             for (auto& cookie : cookies_)
                 static_cast<IViewOrOwner&>(cookie).makeOwnStateFromView();
         }
@@ -265,7 +265,7 @@ void Request::setDomainName(const std::string& domainName)
     domainName_ = domainName;
 }
 
-void Request::addCookie(Cookie cookie)
+void Request::addCookie(RequestCookie cookie)
 {
     if (isView())
         makeOwnStateFromView();
@@ -291,7 +291,7 @@ void Request::addHeader(Header header)
     headers_.emplace_back(std::move(header));
 }
 
-void Request::setCookies(const std::vector<Cookie>& cookies)
+void Request::setCookies(const std::vector<RequestCookie>& cookies)
 {
     if (isView())
         makeOwnStateFromView();
@@ -479,7 +479,7 @@ const std::vector<Query>& Request::queries() const
     return queries_;
 }
 
-const std::vector<Cookie>& Request::cookies() const
+const std::vector<RequestCookie>& Request::cookies() const
 {
     return cookies_;
 }
@@ -511,7 +511,7 @@ RequestFcgiData Request::toFcgiData(std::map<std::string, std::string> fcgiParam
         if (!queries_.empty())
             fcgiParams["QUERY_STRING"] = queriesToString(queries_);
         if (!cookies_.empty())
-            fcgiParams["HTTP_COOKIE"] = cookiesToString(cookies_);
+            fcgiParams["HTTP_COOKIE"] = requestCookiesToHeaderValueString(cookies_);
         if (body_.has_value())
             fcgiParams["CONTENT_TYPE"] =
                     sfun::trim_front(sfun::after(Header{body_.value().contentType()}.toString(), ":").value());

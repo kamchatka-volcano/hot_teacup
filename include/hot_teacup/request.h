@@ -1,10 +1,10 @@
 #ifndef HOT_TEACUP_REQUEST_H
 #define HOT_TEACUP_REQUEST_H
 
-#include "cookie.h"
 #include "header.h"
 #include "multipart_form.h"
 #include "query.h"
+#include "request_cookie.h"
 #include "request_view.h"
 #include "trait_utils.h"
 #include "types.h"
@@ -64,7 +64,7 @@ private:
 };
 
 namespace detail{
-using RequestArg = std::variant<std::vector<Query>, std::vector<Cookie>, std::vector<Header>, RequestBody>;
+using RequestArg = std::variant<std::vector<Query>, std::vector<RequestCookie>, std::vector<Header>, RequestBody>;
 }
 
 class Request : public detail::IViewOrOwner {
@@ -97,7 +97,7 @@ public:
     std::string_view query(std::string_view name) const;
     bool hasQuery(std::string_view name) const;
 
-    const std::vector<Cookie>& cookies() const;
+    const std::vector<RequestCookie>& cookies() const;
     // value of the first cookie with the same name, empty string if not found
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
@@ -118,10 +118,10 @@ public:
     void setBody(const RequestBody& body);
     void setIpAddress(const std::string&);
     void setDomainName(const std::string&);
-    void addCookie(Cookie cookie);
+    void addCookie(RequestCookie cookie);
     void addQuery(Query query);
     void addHeader(Header header);
-    void setCookies(const std::vector<Cookie>&);
+    void setCookies(const std::vector<RequestCookie>&);
     void setQueries(const std::vector<Query>&);
     void setHeaders(const std::vector<Header>& headers);
 
@@ -140,7 +140,7 @@ private:
     std::variant<std::string, std::string_view> ipAddress_;
     std::variant<std::string, std::string_view> domainName_;
     std::vector<Query> queries_;
-    std::vector<Cookie> cookies_;
+    std::vector<RequestCookie> cookies_;
     std::vector<Header> headers_;
     std::optional<RequestBody> body_;
     std::variant<std::unordered_map<std::string_view, std::string_view>, std::unordered_map<std::string, std::string>>

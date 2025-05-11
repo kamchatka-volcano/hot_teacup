@@ -4,27 +4,6 @@
 
 namespace http {
 
-QueryView::QueryView(std::string_view name, std::string_view value)
-    : name_{name}
-    , value_{value}
-{
-}
-
-std::string_view QueryView::name() const
-{
-    return name_;
-}
-
-std::string_view QueryView::value() const
-{
-    return value_;
-}
-
-bool operator==(const QueryView& lhs, const QueryView& rhs)
-{
-    return lhs.name_ == rhs.name_ && lhs.value_ == rhs.value_;
-}
-
 std::vector<QueryView> queriesFromString(std::string_view input)
 {
     auto result = std::vector<QueryView>{};
@@ -35,7 +14,7 @@ std::vector<QueryView> queriesFromString(std::string_view input)
         if (!namePart.has_value()) {
             const auto name = sfun::trim(query);
             if (!name.empty())
-                result.emplace_back(name, "");
+                result.emplace_back(name);
         }
         else {
             const auto name = sfun::trim(namePart.value());

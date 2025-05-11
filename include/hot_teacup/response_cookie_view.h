@@ -9,11 +9,11 @@
 
 namespace http {
 
-class SetCookieView {
+class ResponseCookieView {
 
 public:
-    SetCookieView(std::string_view name, std::string_view value);
-    explicit SetCookieView(HeaderView header);
+    ResponseCookieView(std::string_view name, std::string_view value);
+    explicit ResponseCookieView(HeaderView header);
 
     std::string_view name() const;
     std::string_view value() const;
@@ -24,15 +24,13 @@ public:
     bool isRemoved() const;
     const HeaderView& asHeader() const;
 
-    friend bool operator==(const SetCookieView& lhs, const SetCookieView& rhs);
-    friend std::optional<SetCookieView> setCookieFromHeader(const HeaderView& header);
+    friend bool operator==(const ResponseCookieView& lhs, const ResponseCookieView& rhs);
 
 private:
     HeaderView header_;
 };
 
-std::vector<SetCookieView> setCookiesFromString(std::string_view input);
-std::optional<SetCookieView> setCookieFromHeader(const HeaderView& header);
+std::optional<ResponseCookieView> responseCookieFromHeader(const HeaderView& header);
 
 } //namespace http
 

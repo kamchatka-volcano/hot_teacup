@@ -2,7 +2,7 @@
 #define HOT_TEACUP_RESPONSE_H
 
 #include "header.h"
-#include "set_cookie.h"
+#include "response_cookie.h"
 #include "trait_utils.h"
 #include "types.h"
 #include "detail/view_or_owner_interface.h"
@@ -18,12 +18,12 @@ struct Redirect {
 };
 
 namespace detail {
-using BodyResponseArg = std::variant<ContentType, ContentTypeString, std::vector<SetCookie>, std::vector<Header>>;
+using BodyResponseArg = std::variant<ContentType, ContentTypeString, std::vector<ResponseCookie>, std::vector<Header>>;
 
 using StatusResponseArg =
-        std::variant<std::string, ContentType, ContentTypeString, std::vector<SetCookie>, std::vector<Header>>;
+        std::variant<std::string, ContentType, ContentTypeString, std::vector<ResponseCookie>, std::vector<Header>>;
 
-using RedirectResponseArg = std::variant<std::vector<SetCookie>, std::vector<Header>>;
+using RedirectResponseArg = std::variant<std::vector<ResponseCookie>, std::vector<Header>>;
 } //namespace detail
 
 class Response : public detail::IViewOrOwner {
@@ -94,7 +94,7 @@ public:
 
     ResponseStatus status() const;
     std::string_view body() const;
-    const std::vector<SetCookie>& cookies() const;
+    const std::vector<ResponseCookie>& cookies() const;
     // value of the first cookie with the same name, empty string if not found
     std::string_view cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
@@ -104,9 +104,9 @@ public:
     std::string_view header(std::string_view name) const;
     bool hasHeader(std::string_view name) const;
 
-    void addCookie(SetCookie cookie);
+    void addCookie(ResponseCookie cookie);
     void addHeader(Header header);
-    void setCookies(const std::vector<SetCookie>& cookies);
+    void setCookies(const std::vector<ResponseCookie>& cookies);
     void setHeaders(const std::vector<Header>& headers);
 
     std::string toString(ResponseMode mode = ResponseMode::Http) const;
@@ -129,7 +129,7 @@ private:
 private:
     ResponseStatus status_ = ResponseStatus::_200_Ok;
     std::variant<std::string, std::string_view> body_;
-    std::vector<SetCookie> cookies_;
+    std::vector<ResponseCookie> cookies_;
     std::vector<Header> headers_;
     std::optional<Redirect> redirect_;
     std::optional<Header> defaultContentTypeHeader_;

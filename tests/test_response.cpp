@@ -9,13 +9,13 @@ void testResponseWithCookies(const http::Response& testResponse, const std::stri
 {
     {
         auto response = testResponse;
-        response.addCookie(http::SetCookie{"name", "foo"});
-        response.addCookie(http::SetCookie{"age", "77"});
+        response.addCookie(http::ResponseCookie{"name", "foo"});
+        response.addCookie(http::ResponseCookie{"age", "77"});
         EXPECT_EQ(response.toString(), expectedResponse);
     }
     {
         auto response = testResponse;
-        response.setCookies({http::SetCookie{"name", "foo"}, http::SetCookie{"age", "77"}});
+        response.setCookies({http::ResponseCookie{"name", "foo"}, http::ResponseCookie{"age", "77"}});
         EXPECT_EQ(response.toString(), expectedResponse);
     }
 }
@@ -38,9 +38,9 @@ const auto headersResponsePart = std::string{"Host: HotTeacup\r\n"
 void testResponseWithCookiesAndHeaders(const http::Response& testResponse, const std::string& expectedResponse)
 {
     auto response = testResponse;
-    response.addCookie(http::SetCookie{"name", "foo"});
+    response.addCookie(http::ResponseCookie{"name", "foo"});
     response.addHeader(http::Header{"Host", "HotTeacup"});
-    response.addCookie(http::SetCookie{"age", "77"});
+    response.addCookie(http::ResponseCookie{"age", "77"});
     EXPECT_EQ(response.toString(), expectedResponse);
 }
 

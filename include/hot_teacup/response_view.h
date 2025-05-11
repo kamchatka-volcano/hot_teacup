@@ -1,8 +1,8 @@
 #ifndef HOT_TEACUP_RESPONSE_VIEW_H
 #define HOT_TEACUP_RESPONSE_VIEW_H
 
-#include "set_cookie_view.h"
 #include "header_view.h"
+#include "response_cookie_view.h"
 #include "types.h"
 #include <string>
 
@@ -13,15 +13,15 @@ public:
     ResponseView(
             ResponseStatus status,
             std::string_view body = {},
-            std::vector<SetCookieView> cookies = {},
+            std::vector<ResponseCookieView> cookies = {},
             std::vector<HeaderView> headers = {});
 
     ResponseStatus status() const;
     std::string_view body() const;
 
-    const std::vector<SetCookieView>& cookies() const;
+    const std::vector<ResponseCookieView>& cookies() const;
     std::string_view cookieValue(std::string_view name) const;
-    std::optional<SetCookieView> cookie(std::string_view name) const;
+    std::optional<ResponseCookieView> cookie(std::string_view name) const;
     bool hasCookie(std::string_view name) const;
 
     const std::vector<HeaderView>& headers() const;
@@ -34,7 +34,7 @@ public:
 private:
     ResponseStatus status_ = ResponseStatus::_404_Not_Found;
     std::string body_;
-    std::vector<SetCookieView> cookies_;
+    std::vector<ResponseCookieView> cookies_;
     std::vector<HeaderView> headers_;
 };
 

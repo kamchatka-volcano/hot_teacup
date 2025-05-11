@@ -3,43 +3,19 @@
 
 #include "header_view.h"
 #include "types.h"
+#include "detail/param.h"
 #include "detail/view_or_owner_interface.h"
-#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
 
 namespace http {
-class HeaderParamView;
-class HeaderView;
-
-class HeaderParam : public detail::IViewOrOwner {
-    struct Data {
-        std::string_view name() const;
-        std::string_view value() const;
-        bool hasValue() const;
-        std::string name_;
-        std::optional<std::string> value_;
-    };
-
-public:
-    explicit HeaderParam(const HeaderParamView&);
-    explicit HeaderParam(std::string name, std::optional<std::string> value = {});
-    std::string_view name() const;
-    std::string_view value() const;
-    bool hasValue() const;
-    std::string toString(HeaderQuotingMode quotingMode) const;
-
-    friend bool operator==(const HeaderParam& lhs, const HeaderParam& rhs);
-
-private:
-    bool isView() const override;
-    void makeOwnStateFromView() override;
-
-private:
-    std::variant<Data, HeaderParamView> data_;
-};
+namespace detail {
+struct HeaderParamTag;
+}
+using HeaderParam = detail::Param<detail::HeaderParamTag>;
+std::string headerParamToString(const HeaderParam&, HeaderQuotingMode quotingMode);
 
 class Header : public detail::IViewOrOwner {
     struct Data{

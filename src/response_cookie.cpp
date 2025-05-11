@@ -1,7 +1,7 @@
-#include <hot_teacup/set_cookie.h>
+#include <hot_teacup/response_cookie.h>
 
 #include "utils.h"
-#include <hot_teacup/set_cookie_view.h>
+#include <hot_teacup/response_cookie_view.h>
 #include <sfun/functional.h>
 #include <sfun/string_utils.h>
 #include <algorithm>
@@ -11,14 +11,14 @@
 
 namespace http {
 
-SetCookie::SetCookie(const SetCookieView& cookieView)
-    : SetCookie{Header{cookieView.asHeader()}}
+ResponseCookie::ResponseCookie(const ResponseCookieView& cookieView)
+    : ResponseCookie{Header{cookieView.asHeader()}}
 {
 }
 
-void SetCookie::init(std::vector<detail::SetCookieArg>&& args)
+void ResponseCookie::init(std::vector<detail::ResponseCookieArg>&& args)
 {
-    const auto processArg = [this](detail::SetCookieArg& arg)
+    const auto processArg = [this](detail::ResponseCookieArg& arg)
     {
         if (std::holds_alternative<CookieDomain>(arg))
             setDomain(std::move(std::get<CookieDomain>(arg).value));
@@ -34,22 +34,22 @@ void SetCookie::init(std::vector<detail::SetCookieArg>&& args)
     std::for_each(args.begin(), args.end(), processArg);
 }
 
-SetCookie::SetCookie(Header header)
+ResponseCookie::ResponseCookie(Header header)
     : header_(std::move(header))
 {
 }
 
-std::string_view SetCookie::name() const
+std::string_view ResponseCookie::name() const
 {
     return header_.params().at(0).name();
 }
 
-std::string_view SetCookie::value() const
+std::string_view ResponseCookie::value() const
 {
     return header_.params().at(0).value();
 }
 
-std::optional<std::string_view> SetCookie::domain() const
+std::optional<std::string_view> ResponseCookie::domain() const
 {
     if (header_.hasParam("Domain"))
         return header_.param("Domain");
@@ -57,7 +57,7 @@ std::optional<std::string_view> SetCookie::domain() const
         return {};
 }
 
-std::optional<std::string_view> SetCookie::path() const
+std::optional<std::string_view> ResponseCookie::path() const
 {
     if (header_.hasParam("Path"))
         return header_.param("Path");
@@ -65,7 +65,7 @@ std::optional<std::string_view> SetCookie::path() const
         return {};
 }
 
-std::optional<std::chrono::seconds> SetCookie::maxAge() const
+std::optional<std::chrono::seconds> ResponseCookie::maxAge() const
 {
     if (header_.hasParam("Max-Age")) {
         return sfun::try_invoke(
@@ -78,17 +78,17 @@ std::optional<std::chrono::seconds> SetCookie::maxAge() const
         return std::nullopt;
 }
 
-bool SetCookie::isSecure() const
+bool ResponseCookie::isSecure() const
 {
     return header_.hasParam("Secure");
 }
 
-bool SetCookie::isRemoved() const
+bool ResponseCookie::isRemoved() const
 {
     return header_.hasParam("Max-Age") && header_.param("Max-Age") == "0";
 }
 
-void SetCookie::setDomain(std::string domain)
+void ResponseCookie::setDomain(std::string domain)
 {
     if (isView())
         makeOwnStateFromView();
@@ -96,7 +96,7 @@ void SetCookie::setDomain(std::string domain)
     header_.setParam("Domain", std::move(domain));
 }
 
-void SetCookie::setPath(std::string path)
+void ResponseCookie::setPath(std::string path)
 {
     if (isView())
         makeOwnStateFromView();
@@ -104,7 +104,7 @@ void SetCookie::setPath(std::string path)
     header_.setParam("Path", std::move(path));
 }
 
-void SetCookie::setMaxAge(const std::chrono::seconds& maxAge)
+void ResponseCookie::setMaxAge(const std::chrono::seconds& maxAge)
 {
     if (isView())
         makeOwnStateFromView();
@@ -112,7 +112,7 @@ void SetCookie::setMaxAge(const std::chrono::seconds& maxAge)
     header_.setParam("Max-Age", std::to_string(maxAge.count()));
 }
 
-void SetCookie::setRemoved()
+void ResponseCookie::setRemoved()
 {
     if (isView())
         makeOwnStateFromView();
@@ -120,7 +120,7 @@ void SetCookie::setRemoved()
     header_.setParam("Max-Age", "0");
 }
 
-void SetCookie::setSecure()
+void ResponseCookie::setSecure()
 {
     if (isView())
         makeOwnStateFromView();
@@ -128,17 +128,17 @@ void SetCookie::setSecure()
     header_.setParam("Secure");
 }
 
-std::string SetCookie::toString() const
+std::string ResponseCookie::toString() const
 {
     return header_.toString();
 }
 
-bool SetCookie::isView() const
+bool ResponseCookie::isView() const
 {
     return static_cast<const IViewOrOwner&>(header_).isView();
 }
 
-void SetCookie::makeOwnStateFromView()
+void ResponseCookie::makeOwnStateFromView()
 {
     if (!isView())
         return;
@@ -146,21 +146,11 @@ void SetCookie::makeOwnStateFromView()
     static_cast<IViewOrOwner&>(header_).makeOwnStateFromView();
 }
 
-bool operator==(const SetCookie& lhs, const SetCookie& rhs)
+bool operator==(const ResponseCookie& lhs, const ResponseCookie& rhs)
 {
     return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.domain() == rhs.domain() &&
             lhs.path() == rhs.path() && lhs.maxAge() == rhs.maxAge() && lhs.isSecure() == rhs.isSecure() &&
             lhs.isRemoved() == rhs.isRemoved();
-}
-
-std::string setCookiesToString(const std::vector<SetCookie>& cookies)
-{
-    const auto cookieToString = [](const SetCookie& cookie)
-    {
-        return sfun::join_strings(cookie.name(), "=", cookie.value());
-    };
-    const auto cookieFcgiStringList = utils::transform(cookies, cookieToString);
-    return sfun::join(cookieFcgiStringList, "; ");
 }
 
 } //namespace http

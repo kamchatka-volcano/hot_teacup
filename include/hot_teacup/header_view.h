@@ -1,25 +1,16 @@
 #ifndef HOT_TEACUP_HEADER_VIEW_H
 #define HOT_TEACUP_HEADER_VIEW_H
 
+#include "detail/param_view.h"
 #include <optional>
 #include <string_view>
 #include <vector>
 
 namespace http {
-
-class HeaderParamView {
-public:
-    explicit HeaderParamView(std::string_view name);
-    HeaderParamView(std::string_view name, std::string_view value);
-    std::string_view name() const;
-    std::string_view value() const;
-    bool hasValue() const;
-
-    friend bool operator==(const HeaderParamView& lhs, const HeaderParamView& rhs);
-private:
-    std::string_view name_;
-    std::optional<std::string_view> value_;
-};
+namespace detail {
+struct HeaderParamTag;
+}
+using HeaderParamView = detail::ParamView<detail::HeaderParamTag>;
 
 class HeaderView {
 public:

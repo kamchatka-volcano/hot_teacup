@@ -139,7 +139,7 @@ TEST(RequestView, RequestFromRequestViewWithCookies)
 
 TEST(Request, Cookies)
 {
-    const auto expectedCookies = std::vector<http::Cookie>{{"param1", "foo"}, {"param2", "bar"}};
+    const auto expectedCookies = std::vector<http::RequestCookie>{{"param1", "foo"}, {"param2", "bar"}};
     const auto request = http::Request{http::RequestMethod::Get, "/", expectedCookies};
     EXPECT_TRUE(request.hasCookie("param1"));
     EXPECT_EQ(request.cookie("param1"), "foo");
@@ -328,7 +328,7 @@ TEST(Request, ToFcgiDataWithQueries)
 
 TEST(Request, ToFcgiDataWithCookies)
 {
-    const auto request = http::Request{http::RequestMethod::Get, "/", std::vector<http::Cookie>{{"id", "100"}}};
+    const auto request = http::Request{http::RequestMethod::Get, "/", std::vector<http::RequestCookie>{{"id", "100"}}};
     const auto fcgiData = request.toFcgiData();
 
     EXPECT_EQ(fcgiData.params.size(), 3);

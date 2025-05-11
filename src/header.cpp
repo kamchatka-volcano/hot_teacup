@@ -10,84 +10,6 @@
 
 namespace http {
 
-std::string_view HeaderParam::Data::name() const
-{
-    return name_;
-}
-
-std::string_view HeaderParam::Data::value() const
-{
-    if (value_)
-        return *value_;
-    return {};
-}
-
-bool HeaderParam::Data::hasValue() const
-{
-    return value_.has_value();
-}
-
-HeaderParam::HeaderParam(const HeaderParamView& paramView)
-    : data_{paramView}
-{
-}
-
-HeaderParam::HeaderParam(std::string name, std::optional<std::string> value)
-    : data_{Data{std::move(name), std::move(value)}}
-{
-}
-
-std::string_view HeaderParam::name() const
-{
-    return std::visit([](const auto& data){ return data.name();}, data_);
-}
-
-std::string_view HeaderParam::value() const
-{
-    return std::visit([](const auto& data){ return data.value();}, data_);
-}
-
-bool HeaderParam::hasValue() const
-{
-    return std::visit([](const auto& data){ return data.hasValue();}, data_);
-}
-
-std::string HeaderParam::toString(HeaderQuotingMode quotingMode) const
-{
-    if (!hasValue())
-        return std::string{name()};
-
-    switch (quotingMode) {
-    case HeaderQuotingMode::ParamValue:
-    case HeaderQuotingMode::AllValues:
-        return sfun::join_strings(name(), "=", "\"", value(), "\"");
-    default:
-        return sfun::join_strings(name(), "=", value());
-    }
-}
-
-bool HeaderParam::isView() const
-{
-    return std::holds_alternative<HeaderParamView>(data_);
-}
-
-void HeaderParam::makeOwnStateFromView()
-{
-    if (!isView())
-        return;
-
-    const auto& paramView = std::get<HeaderParamView>(data_);
-    if (paramView.hasValue())
-        data_ = Data{std::string{paramView.name()}, std::string{paramView.value()}};
-    else
-        data_ = Data{std::string{paramView.name()}, std::nullopt};
-}
-
-bool operator==(const HeaderParam& lhs, const HeaderParam& rhs)
-{
-    return lhs.name() == rhs.name() && lhs.hasValue() == rhs.hasValue() && lhs.value() == rhs.value();
-}
-
 std::string_view Header::Data::name() const
 {
     return name_;
@@ -121,6 +43,13 @@ Header::Header(std::string name, std::string value, std::vector<HeaderParam> par
 {
 }
 
+namespace {
+HeaderParam makeHeaderParam(std::string name, std::optional<std::string> value)
+{
+    return value.has_value() ? HeaderParam{std::move(name), std::move(value.value())} : HeaderParam{std::move(name)};
+}
+} //namespace
+
 void Header::setParam(std::string name, std::optional<std::string> value)
 {
     if (isView())
@@ -131,10 +60,10 @@ void Header::setParam(std::string name, std::optional<std::string> value)
 
     for (auto& param : params_)
         if (param.name() == name) {
-            param = HeaderParam{std::move(name), std::move(value)};
+            param = makeHeaderParam(std::move(name), std::move(value));
             return;
         }
-    params_.emplace_back(std::move(name), std::move(value));
+    params_.emplace_back(makeHeaderParam(std::move(name), std::move(value)));
 }
 
 void Header::setParams(const std::vector<HeaderParam>& params)
@@ -183,7 +112,8 @@ std::string_view Header::param(std::string_view name) const
     for (const auto& param : params_)
         if (param.name() == name)
             return param.value();
-    throw std::out_of_range{"Header doesn't contain param '" + std::string{name} + "'"};
+
+    return {};
 }
 
 bool Header::hasParam(std::string_view name) const
@@ -207,7 +137,7 @@ std::string Header::toString() const
     {
         const auto paramToString = [&](const HeaderParam& param)
         {
-            return param.toString(quotingMode_);
+            return headerParamToString(param, quotingMode_);
         };
         const auto paramStringList = utils::transform(params_, paramToString);
         return sfun::join(paramStringList, "; ");
@@ -250,6 +180,20 @@ void Header::makeOwnStateFromView()
 bool operator==(const Header& lhs, const Header& rhs)
 {
     return lhs.name() == rhs.name() && lhs.value() == rhs.value() && lhs.params() == rhs.params();
+}
+
+std::string headerParamToString(const HeaderParam& param, HeaderQuotingMode quotingMode)
+{
+    if (!param.hasValue())
+        return std::string{param.name()};
+
+    switch (quotingMode) {
+    case HeaderQuotingMode::ParamValue:
+    case HeaderQuotingMode::AllValues:
+        return sfun::join_strings(param.name(), "=", "\"", param.value(), "\"");
+    default:
+        return sfun::join_strings(param.name(), "=", param.value());
+    }
 }
 
 } //namespace http

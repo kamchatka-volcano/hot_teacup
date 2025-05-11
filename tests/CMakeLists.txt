@@ -5,8 +5,8 @@ SealLake_GoogleTest(
         SOURCES
             test_request.cpp
             test_response.cpp
-        test_set_cookie.cpp
-            test_cookie.cpp
+        test_response_cookie.cpp
+        test_request_cookie.cpp
             test_header.cpp
             test_query.cpp
         test_multipart_form.cpp

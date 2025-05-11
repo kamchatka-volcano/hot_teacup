@@ -19,13 +19,13 @@ std::vector<Header> makeHeaders(const std::vector<HeaderView>& headerViewList)
                 return Header{headerView};
             });
 }
-std::vector<SetCookie> makeSetCookies(const std::vector<SetCookieView>& cookieViewList)
+std::vector<ResponseCookie> makeResponseCookies(const std::vector<ResponseCookieView>& cookieViewList)
 {
     return utils::transform(
             cookieViewList,
-            [](const SetCookieView& cookieView)
+            [](const ResponseCookieView& cookieView)
             {
-                return SetCookie{cookieView};
+                return ResponseCookie{cookieView};
             });
 }
 } //namespace
@@ -33,7 +33,7 @@ std::vector<SetCookie> makeSetCookies(const std::vector<SetCookieView>& cookieVi
 Response::Response(const ResponseView& responseView)
     : status_{responseView.status()}
     , body_{responseView.body()}
-    , cookies_{makeSetCookies(responseView.cookies())}
+    , cookies_{makeResponseCookies(responseView.cookies())}
     , headers_{makeHeaders(responseView.headers())}
 {
 }
@@ -42,8 +42,8 @@ void Response::initBodyResponse(std::vector<detail::BodyResponseArg>&& args)
 {
     const auto processArg = [this](detail::BodyResponseArg& arg)
     {
-        if (std::holds_alternative<SetCookies>(arg)) {
-            cookies_ = std::move(std::get<SetCookies>(arg));
+        if (std::holds_alternative<ResponseCookies>(arg)) {
+            cookies_ = std::move(std::get<ResponseCookies>(arg));
             for (auto& cookie : cookies_)
                 static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
         }
@@ -69,8 +69,8 @@ void Response::initRedirectResponse(std::vector<detail::RedirectResponseArg>&& a
 {
     const auto processArg = [this](detail::RedirectResponseArg& arg)
     {
-        if (std::holds_alternative<SetCookies>(arg)) {
-            cookies_ = std::move(std::get<SetCookies>(arg));
+        if (std::holds_alternative<ResponseCookies>(arg)) {
+            cookies_ = std::move(std::get<ResponseCookies>(arg));
             for (auto& cookie : cookies_)
                 static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
         }
@@ -91,8 +91,8 @@ void Response::initStatusResponse(std::vector<detail::StatusResponseArg>&& args)
     {
         if (std::holds_alternative<std::string>(arg))
             body_ = std::move(std::get<std::string>(arg));
-        else if (std::holds_alternative<SetCookies>(arg)) {
-            cookies_ = std::move(std::get<SetCookies>(arg));
+        else if (std::holds_alternative<ResponseCookies>(arg)) {
+            cookies_ = std::move(std::get<ResponseCookies>(arg));
             for (auto& cookie : cookies_)
                 static_cast<detail::IViewOrOwner&>(cookie).makeOwnStateFromView();
         }
@@ -164,7 +164,7 @@ std::string_view Response::body() const
             body_);
 }
 
-const std::vector<SetCookie>& Response::cookies() const
+const std::vector<ResponseCookie>& Response::cookies() const
 {
     return cookies_;
 }
@@ -228,7 +228,7 @@ bool Response::hasHeader(std::string_view name) const
     return it != headers_.end();
 }
 
-void Response::addCookie(SetCookie cookie)
+void Response::addCookie(ResponseCookie cookie)
 {
     if (isView())
         makeOwnStateFromView();
@@ -249,7 +249,7 @@ void Response::addHeader(Header header)
     headers_.emplace_back(std::move(header));
 }
 
-void Response::setCookies(const std::vector<SetCookie>& cookies)
+void Response::setCookies(const std::vector<ResponseCookie>& cookies)
 {
     if (isView())
         makeOwnStateFromView();
@@ -281,7 +281,7 @@ std::string Response::statusData(ResponseMode mode) const
 
 std::string Response::cookiesData() const
 {
-    const auto cookieToString = [](const SetCookie& cookie)
+    const auto cookieToString = [](const ResponseCookie& cookie)
     {
         return cookie.toString();
     };
